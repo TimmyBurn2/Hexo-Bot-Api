@@ -2,17 +2,28 @@
 # seed a whole evaluation ladder headlessly (e.g. round-robin a set of bots).
 post:
   operationId: createBulkPairing
-  summary: Create a bulk pairing (seed an eval ladder), optional
+  summary: Create a bulk pairing (seed an eval ladder), organizer-only
   description: >-
-    **Optional, advanced.** Creates many games at once from an explicit list of
-    pairings, useful for headlessly seeding an evaluation ladder (e.g. a
+    **Organizer-only, advanced.** Creates many games at once from an explicit
+    list of pairings, useful for headlessly seeding an evaluation ladder (e.g. a
     round-robin between several bots). Not required to play normally; a single
     challenge is enough for that.
 
 
-    Every game in the batch shares the same `variant`, `rated` flag, and ladder
-    mode (`wallclock` + `clock`, or `fixedsim` + `simBudget`). Each listed bot
-    receives a `gameStart` event when its game begins.
+    **Requires the `bot:organize` scope**, granted by HeXO to vetted tournament
+    organizers, not self-served. This operation pairs accounts other than the
+    caller, so it is restricted to organizer tokens; an ordinary `bot:play` token
+    is rejected with `403`. This keeps self-initiated play and tournament seeding
+    on separate authority.
+
+
+    Every game in the batch shares the same `variant` and ladder mode
+    (`wallclock` + `clock`, or `fixedsim` + `simBudget`). The `rated` field is
+    the organizer's **requested default**; the server remains the referee and
+    forces any **same-owner** pairing to `rated: false` (enforced via the
+    forthcoming `owner` link, see `bot-discovery-and-registration.md` section 4).
+    The authoritative per-game value is reported back on each entry in `games`.
+    Each listed bot receives a `gameStart` event when its game begins.
   tags:
     - Challenge
   requestBody:
@@ -49,7 +60,11 @@ post:
               $ref: ../components/schemas/Variant.yaml
             rated:
               type: boolean
-              description: Whether results affect ratings.
+              description: >-
+                Organizer's requested default for the batch; omitted defaults to
+                `false`. The server forces same-owner pairings to `false`
+                regardless; the authoritative per-game value is returned in the
+                response `games`.
             mode:
               type: string
               enum:
@@ -96,6 +111,7 @@ post:
                     - id
                     - p1
                     - p2
+                    - rated
                   properties:
                     id:
                       type: string
@@ -104,15 +120,21 @@ post:
                       type: string
                     p2:
                       type: string
+                    rated:
+                      type: boolean
+                      description: >-
+                        Authoritative rated-ness for this game. Equals the
+                        requested default unless the server forced it to `false`
+                        (e.g. a same-owner pairing).
           example:
             id: bulk_7Qm2
             games:
-              - { id: J9kP2qLm, p1: krakenbot, p2: sealbot }
-              - { id: K2xR8tNp, p1: sealbot, p2: krakenbot }
+              - { id: J9kP2qLm, p1: krakenbot, p2: sealbot, rated: true }
+              - { id: K2xR8tNp, p1: sealbot, p2: krakenbot, rated: true }
     "401":
       $ref: ../components/responses/Unauthorized.yaml
     "403":
-      $ref: ../components/responses/Forbidden.yaml
+      $ref: ../components/responses/ForbiddenOrganizer.yaml
     "422":
       $ref: ../components/responses/Unprocessable.yaml
     "429":
