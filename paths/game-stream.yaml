@@ -59,6 +59,7 @@ get:
                     name: SealBot
                     rating: 1480
                     title: BOT
+                rated: true
                 mode: wallclock
                 clock:
                   initial: 300000
