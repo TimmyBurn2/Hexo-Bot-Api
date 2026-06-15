@@ -32,7 +32,7 @@ info:
 
     ## Authentication
 
-    All operations require a **Personal Access Token (PAT)**: `Authorization: Bearer hxo_...`. Tokens are long-lived and revocable. The scope for play is **`bot:play`**; organizer operations (bulk pairing) require **`bot:organize`**. A token missing the required scope → `403`.
+    All operations require a **Personal Access Token (PAT)**: `Authorization: Bearer hxo_...`. Tokens are long-lived and revocable. Each registered bot instance has its **own** token, so one instance can be revoked without affecting the operator's others. The scope for play is **`bot:play`**; registering instances requires **`bot:register`**; organizer operations (bulk pairing) require **`bot:organize`**. Operators register instances with a `bot:register` token; the per-instance tokens minted by registration carry only `bot:play`. A token missing the required scope → `403`.
 
 
     ## Ladder modes
@@ -49,7 +49,7 @@ info:
     ## Hardware telemetry
 
     A bot may **opt in** to a coarse hardware self-report (`HardwareInfo`: GPU
-    class, CPU cores, RAM GB) at upgrade time. It is shown as a **label only**
+    class, CPU cores, RAM GB) at registration time. It is shown as a **label only**
     and is **explicitly excluded from rating math**: it never affects ratings
     or pairing. No serials, MAC addresses, or hostnames are collected.
 
@@ -79,7 +79,7 @@ security:
 
 tags:
   - name: Account
-    description: Account identity and the irreversible upgrade-to-bot flow.
+    description: Account identity and bot instance registration.
   - name: Stream
     description: >-
       Long-lived NDJSON streams. The global event stream never closes; the
@@ -93,8 +93,8 @@ tags:
 paths:
   /api/account:
     $ref: ./paths/account.yaml
-  /api/bot/account/upgrade:
-    $ref: ./paths/account-upgrade.yaml
+  /api/bot/register:
+    $ref: ./paths/bot-register.yaml
   /api/stream/event:
     $ref: ./paths/stream-event.yaml
   /api/bot/game/stream/{gameId}:
@@ -120,6 +120,8 @@ components:
       bearerFormat: opaque
       description: >-
         Personal Access Token (PAT) sent as `Authorization: Bearer hxo_...`.
-        Long-lived, revocable, scoped: play requires `bot:play`, organizer
-        operations (bulk pairing) require `bot:organize`. A token missing the
-        scope an operation requires is rejected with `403`.
+        Long-lived, revocable, scoped: play requires `bot:play`, registering
+        instances requires `bot:register`, organizer operations (bulk pairing)
+        require `bot:organize`. Each registered instance has its own token,
+        independently revocable. A token missing the scope an operation requires
+        is rejected with `403`.
