@@ -1,0 +1,11 @@
+description: >-
+  The token is valid but lacks the `bot:organize` scope. Bulk pairing is an
+  organizer-only operation; an ordinary `bot:play` token cannot seed games for
+  other accounts.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: missing-scope
+      message: This token lacks the bot:organize scope.

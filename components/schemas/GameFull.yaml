@@ -8,6 +8,7 @@ required:
   - id
   - variant
   - players
+  - rated
   - mode
   - state
 additionalProperties: false
@@ -37,6 +38,11 @@ properties:
       p2:
         description: Player 2.
         $ref: ./Player.yaml
+  rated:
+    type: boolean
+    description: >-
+      Whether the result affects ratings. Server-authoritative; the bot reads
+      it here (a bulk-paired game has no Challenge object to carry it).
   mode:
     type: string
     description: >-
@@ -72,6 +78,7 @@ example:
       name: SealBot
       rating: 1480
       title: BOT
+  rated: true
   mode: wallclock
   clock:
     initial: 300000
