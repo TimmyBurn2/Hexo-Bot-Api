@@ -1,0 +1,123 @@
+post:
+  operationId: registerBotInstance
+  summary: Register a bot instance
+  description: >-
+    Mints a new bot instance for the authenticated operator and returns its own
+    scoped, revocable token. This is the single registration path: an operator
+    (a Discord-authenticated party) may call it repeatedly to run a fleet of
+    instances, each with its own handle, owner link, and token.
+
+
+    **Operator authority is a distinct scope.** This call requires the
+    `bot:register` scope, granted by HeXO to a Discord-authenticated operator
+    (not self-served, mirroring how `bot:organize` is granted). A `bot:play`
+    instance token cannot register instances and is rejected with `403`. The
+    minted token carries `bot:play` only, so a registered instance can never
+    mint siblings or escalate to operator actions.
+
+
+    **The owner link is server-set.** The new instance's `owner` is derived from
+    the authenticated operator credential; it is never read from the request
+    body, so a caller cannot forge it or attach an instance to another operator.
+    The server enforces "same-owner games are always unrated" against this link;
+    a caller never sees another instance's `owner` and observes only the
+    resulting authoritative `rated` value on the challenge or game.
+
+
+    **Handle rules** (server-authoritative, enforced here):
+
+    - Accepted input: `^[A-Za-z0-9_]{3,20}$` (ASCII letters, digits, underscore;
+      3 to 20 characters).
+
+    - The handle is lowercased to form the canonical id (`^[a-z0-9_]{3,20}$`);
+      both uniqueness and the reserved-word check run on that lowercased form.
+
+    - Reserved words are rejected. The set is non-exhaustive and
+      server-authoritative; it includes path-segment collisions (`api`, `bot`,
+      `account`, `register`, `stream`, `event`, `game`, `move`, `resign`,
+      `challenge`, `create`, `accept`, `decline`, `me`, `self`) and
+      impersonation tokens (`hexo`, `official`, `admin`, `system`, `mod`,
+      `support`, `staff`, `root`).
+
+    - Handles are **permanent and never reused**: once registered, a handle is
+      never freed, so it cannot be claimed again even after its instance stops
+      playing.
+
+
+    A handle that is taken or reserved is rejected with `409`; a malformed
+    handle fails request validation against the pattern above.
+  tags:
+    - Account
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - handle
+          properties:
+            handle:
+              type: string
+              description: >-
+                Desired permanent handle, `^[A-Za-z0-9_]{3,20}$`. Lowercased to
+                form the instance's `id`; the lowercased form must be unique and
+                must not be a reserved word. Permanent and never reused.
+              pattern: "^[A-Za-z0-9_]{3,20}$"
+              minLength: 3
+              maxLength: 20
+              example: krakenbot
+            name:
+              type: string
+              description: Optional display name. Defaults to the handle when omitted.
+              maxLength: 64
+              example: KrakenBot
+            hardware:
+              description: >-
+                Optional, opt-in coarse hardware self-report. Label only; never
+                affects rating or pairing. Omit to register without disclosing
+                anything.
+              $ref: ../components/schemas/HardwareInfo.yaml
+        examples:
+          withHardware:
+            summary: Register and disclose coarse hardware
+            value:
+              handle: krakenbot
+              name: KrakenBot
+              hardware:
+                gpu: consumer
+                cpu_cores: 16
+                ram_gb: 64
+          minimal:
+            summary: Register with handle only
+            value:
+              handle: krakenbot
+  responses:
+    "200":
+      description: The instance was registered. The response carries its one-time token.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/RegisteredInstance.yaml
+          example:
+            instance:
+              id: krakenbot
+              name: KrakenBot
+              owner: op_7Qm2Kx
+              title: BOT
+              hardware:
+                gpu: consumer
+                cpu_cores: 16
+                ram_gb: 64
+            token: hxo_9f3c1a8b2e7d40559c6a1d2e3f4b5a60
+            scopes:
+              - bot:play
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/ForbiddenRegister.yaml
+    "409":
+      $ref: ../components/responses/HandleUnavailable.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml
