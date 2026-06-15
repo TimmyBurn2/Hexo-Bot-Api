@@ -1,0 +1,13 @@
+description: >-
+  **CAS failure.** The submitted `ply` did not match the server's next expected
+  ply, the move was stale, duplicated, or out of order. No move was applied.
+  The response carries the authoritative `expectedPly`; resubmit there (or
+  re-read the game stream) to recover deterministically.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: not-your-turn
+      message: It is not your turn; resubmit at the expected ply.
+      expectedPly: 5

@@ -1,0 +1,8 @@
+description: The referenced resource (game, challenge, or user) does not exist or is not visible to you.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: not-found
+      message: No such game.

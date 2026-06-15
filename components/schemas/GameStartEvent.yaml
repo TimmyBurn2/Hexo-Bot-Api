@@ -1,0 +1,29 @@
+type: object
+title: GameStartEvent
+description: >-
+  A game you are in has started. Member of the global event stream union. Open
+  the per-game stream at `game.id` to receive `gameFull` then `gameState`.
+required:
+  - type
+  - game
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `gameStart`.
+    const: gameStart
+  game:
+    description: Pointer to the started game.
+    $ref: ./GameEventInfo.yaml
+example:
+  type: gameStart
+  game:
+    id: J9kP2qLm
+    side: p1
+    opponent:
+      id: sealbot
+      name: SealBot
+      rating: 1480
+      title: BOT
+    variant: httt6
+    mode: wallclock

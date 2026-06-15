@@ -1,0 +1,49 @@
+type: object
+title: Error
+description: >-
+  Uniform error envelope returned by every non-2xx response. The `error` field
+  is a stable machine-readable code; additional fields are present only for the
+  error kinds that can use them.
+required:
+  - error
+additionalProperties: false
+properties:
+  error:
+    type: string
+    description: >-
+      Stable, machine-readable error code. Known values include:
+      `unauthorized` (401), `forbidden` / `missing-scope` (403),
+      `not-found` (404), `not-your-turn` (409), `occupied` /
+      `wrong-stone-count` / `out-of-bounds` / `illegal-move` (422),
+      `rate-limited` (429).
+    example: not-your-turn
+  message:
+    type: string
+    description: Optional human-readable explanation. Never parse this, branch on `error`.
+    example: It is not your turn; resubmit at the expected ply.
+  expectedPly:
+    type: integer
+    format: int32
+    minimum: 0
+    description: >-
+      **CAS recovery hint.** Present on `409 not-your-turn`. The server's
+      authoritative next expected ply. A bot that submitted a stale or
+      duplicate `ply` should re-read the game stream (or trust this value) and
+      resubmit at `expectedPly`. This makes 409 recovery deterministic.
+    example: 5
+  stone:
+    type: array
+    description: >-
+      **Offending coordinate.** Present on `422` illegal-placement errors
+      (`occupied`, `out-of-bounds`, etc.). The specific axial `[q, r]` stone
+      that was rejected, so the bot can pinpoint which half of its compound
+      turn was illegal.
+    minItems: 2
+    maxItems: 2
+    items:
+      type: integer
+    example: [2, -1]
+example:
+  error: not-your-turn
+  message: It is not your turn; resubmit at the expected ply.
+  expectedPly: 5

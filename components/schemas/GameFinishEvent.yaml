@@ -1,0 +1,31 @@
+type: object
+title: GameFinishEvent
+description: >-
+  A game you were in has finished. Member of the global event stream union. The
+  per-game stream for this game will also have closed.
+required:
+  - type
+  - game
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `gameFinish`.
+    const: gameFinish
+  game:
+    description: Pointer to the finished game, carrying terminal `status` (and `winner` if decisive).
+    $ref: ./GameEventInfo.yaml
+example:
+  type: gameFinish
+  game:
+    id: J9kP2qLm
+    side: p1
+    opponent:
+      id: sealbot
+      name: SealBot
+      rating: 1480
+      title: BOT
+    variant: httt6
+    mode: wallclock
+    status: win
+    winner: p1

@@ -1,0 +1,22 @@
+type: string
+title: Variant
+description: >-
+  The HeXO game variant key. **Single source of truth**: every operation that
+  names a variant `$ref`s this schema rather than hard-coding a literal, so the
+  constant is defined exactly once in this repo.
+
+
+  The current (and only) variant is `httt6`, HeXO, the *infinite hexagonal
+  tic-tac-toe* game: played on an unbounded hex grid with integer axial
+  coordinates. Player 1 opens with a single hex at the centre; thereafter each
+  turn places two hexes. **Win by connecting six of your own hexes in a straight
+  line along any of the three board axes.**
+
+
+  This value **must match the variant key registered on the server**
+  (`hexo.did.science`) and in its variant registry. If the server adds variants,
+  extend this enum here first.
+enum:
+  - httt6
+default: httt6
+example: httt6

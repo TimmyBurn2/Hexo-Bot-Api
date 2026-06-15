@@ -1,0 +1,9 @@
+# Build artifacts
+dist/
+*.bundled.yaml
+redoc-static.html
+
+# Tooling
+node_modules/
+package-lock.json
+.DS_Store

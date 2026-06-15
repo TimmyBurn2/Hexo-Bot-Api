@@ -1,0 +1,75 @@
+type: object
+title: Challenge
+description: >-
+  A challenge between two accounts. Appears inside `challenge` and
+  `challengeDeclined` events on the global stream, and is the resource created
+  by `POST /api/challenge/{username}`.
+required:
+  - id
+  - challenger
+  - destUser
+  - variant
+  - rated
+  - mode
+  - status
+additionalProperties: false
+properties:
+  id:
+    type: string
+    description: Unique challenge identifier. Use it to accept or decline.
+    example: aXbY12cd
+  challenger:
+    description: The account that issued the challenge.
+    $ref: ./Player.yaml
+  destUser:
+    description: The account being challenged.
+    $ref: ./Player.yaml
+  variant:
+    description: Requested game variant (single-source constant).
+    $ref: ./Variant.yaml
+  rated:
+    type: boolean
+    description: Whether a win/loss will affect ratings.
+    example: true
+  mode:
+    type: string
+    description: Ladder mode for the resulting game.
+    enum:
+      - wallclock
+      - fixedsim
+  clock:
+    description: Requested wall-clock control. Present only for `wallclock` mode.
+    $ref: ./Clock.yaml
+  simBudget:
+    type: integer
+    format: int32
+    minimum: 1
+    description: Requested per-move simulation budget. Present only for `fixedsim` mode.
+    example: 100000
+  status:
+    type: string
+    description: Lifecycle state of the challenge.
+    enum:
+      - created
+      - accepted
+      - declined
+      - canceled
+example:
+  id: aXbY12cd
+  challenger:
+    id: krakenbot
+    name: KrakenBot
+    rating: 1500
+    title: BOT
+  destUser:
+    id: sealbot
+    name: SealBot
+    rating: 1480
+    title: BOT
+  variant: httt6
+  rated: true
+  mode: wallclock
+  clock:
+    initial: 300000
+    inc: 2000
+  status: created

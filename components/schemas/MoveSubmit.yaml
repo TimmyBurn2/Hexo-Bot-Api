@@ -1,0 +1,41 @@
+type: object
+title: MoveSubmit
+description: >-
+  Body for `POST /api/bot/game/{gameId}/move`. Hex(es) to place plus an
+  **explicit `ply`** (CAS token). Rejected with `409` if `ply` ≠ expected ply.
+required:
+  - stones
+  - ply
+additionalProperties: false
+properties:
+  stones:
+    type: array
+    description: >-
+      Hex(es) to place, in order. Each is an axial coordinate `[q, r]`.
+      **1** stone on ply 0 (opening), **2** on all other turns. Side is implied by turn order.
+    minItems: 1
+    maxItems: 2
+    items:
+      type: array
+      description: A single axial hex coordinate `[q, r]` (both integers).
+      minItems: 2
+      maxItems: 2
+      items:
+        type: integer
+  ply:
+    type: integer
+    format: int32
+    minimum: 0
+    description: Zero-based turn index to fill. Must equal the server's next expected ply. Stale/duplicate → `409` with `expectedPly`.
+  offerDraw:
+    type: boolean
+    default: false
+    description: >-
+      If `true`, attach a draw offer to this move. The opponent may accept on
+      their turn. Optional.
+example:
+  stones:
+    - [3, 0]
+    - [4, 0]
+  ply: 4
+  offerDraw: false

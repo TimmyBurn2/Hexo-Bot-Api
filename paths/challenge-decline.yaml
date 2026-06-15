@@ -1,0 +1,58 @@
+post:
+  operationId: declineChallenge
+  summary: Decline an incoming challenge
+  description: >-
+    Declines the challenge `challengeId`. The challenger receives a
+    `challengeDeclined` event. An optional `reason` lets the challenger's bot
+    decide whether to re-challenge with different terms.
+  tags:
+    - Challenge
+  parameters:
+    - name: challengeId
+      in: path
+      required: true
+      description: The challenge id.
+      schema:
+        type: string
+      example: aXbY12cd
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          properties:
+            reason:
+              type: string
+              description: Why the challenge was declined. Defaults to `generic`.
+              default: generic
+              enum:
+                - generic
+                - later
+                - tooFast
+                - tooSlow
+                - timeControl
+                - rated
+                - casual
+                - noBot
+                - onlyBot
+        example:
+          reason: timeControl
+  responses:
+    "200":
+      description: The challenge was declined.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

@@ -1,0 +1,123 @@
+openapi: 3.1.0
+
+info:
+  title: HeXO Bot API
+  version: 0.1.0-draft
+  summary: "PROPOSAL: the bot protocol contract for HeXO on hexo.did.science (not yet implemented)."
+  description: >-
+    > ⚠️ **Status: PROPOSAL, not yet implemented.** Field names, shapes, and
+    > paths may change before `1.0.0`. Treat this as a request-for-comment.
+
+
+    The **HeXO Bot API** is the contract a bot speaks to play HeXO on
+    `https://hexo.did.science`.
+
+
+    ## Design in one paragraph
+
+    The **server is the referee**: it owns legality, turn order, pairing,
+    clocks, and ratings. **Bots own everything else**: their state, search, time
+    management, and reconnection. The wire protocol is **stateless by design**:
+    a bot rebuilds the whole board by replaying the *cumulative* move list the
+    server sends, so it can crash and rejoin a live game with zero local memory.
+
+
+    ## Shape (modelled on the Lichess Bot/Board API)
+
+    - **Two NDJSON streams.** A global event stream (`GET /api/stream/event`) and a per-game stream (`GET /api/bot/game/stream/{gameId}`). Long-lived `application/x-ndjson` GETs; one JSON object per line, blank line as keepalive.
+
+    - **Moves POST up, state streams down.** Moves are submitted with a separate
+      `POST`; the resulting state arrives on the per-game stream.
+
+
+    ## Authentication
+
+    All operations require a **Personal Access Token (PAT)**: `Authorization: Bearer hxo_...`. Tokens are long-lived and revocable. The scope for play is **`bot:play`**; missing it → `403`.
+
+
+    ## Ladder modes
+
+    Games run in one of two modes, set on the challenge and echoed on the game:
+
+    - **`wallclock`**: real clocks tick (`clock.initial` + `clock.inc`, ms).
+      Measures the *whole engine*, speed included.
+
+    - **`fixedsim`**: the server enforces a per-move simulation budget
+      (`simBudget`) for both sides. Hardware-neutral; compares *model quality*.
+
+
+    ## Hardware telemetry
+
+    A bot may **opt in** to a coarse hardware self-report (`HardwareInfo`: GPU
+    class, CPU cores, RAM GB) at upgrade time. It is shown as a **label only**
+    and is **explicitly excluded from rating math**: it never affects ratings
+    or pairing. No serials, MAC addresses, or hostnames are collected.
+
+
+    ## Variant & sides
+
+    This API currently serves a single variant, `httt6`, HeXO, the *infinite
+    hexagonal tic-tac-toe* game on an unbounded axial hex grid. **Player 1 (`p1`)
+    opens with a single hex at the centre; thereafter each turn places two
+    hexes.** Win by connecting six of your own hexes in a line along any of the
+    three board axes. The two sides are identified by play order, `p1` and `p2`
+    (not colours). Both constants are defined once (see the `Variant` and `Side`
+    schemas) and must match the server's registry.
+  license:
+    name: MIT
+    identifier: MIT
+  contact:
+    name: HeXO community
+    url: https://hexo.did.science
+
+servers:
+  - url: https://hexo.did.science
+    description: HeXO server (proposed, endpoints not yet implemented).
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Account
+    description: Account identity and the irreversible upgrade-to-bot flow.
+  - name: Stream
+    description: >-
+      Long-lived NDJSON streams. The global event stream never closes; the
+      per-game stream closes once the game reaches a terminal status. Both send
+      a blank line as a keepalive.
+  - name: Bot
+    description: "Bot-only gameplay: streaming a game, submitting moves, resigning."
+  - name: Challenge
+    description: Creating, accepting, and declining challenges (and bulk pairings).
+
+paths:
+  /api/account:
+    $ref: ./paths/account.yaml
+  /api/bot/account/upgrade:
+    $ref: ./paths/account-upgrade.yaml
+  /api/stream/event:
+    $ref: ./paths/stream-event.yaml
+  /api/bot/game/stream/{gameId}:
+    $ref: ./paths/game-stream.yaml
+  /api/bot/game/{gameId}/move:
+    $ref: ./paths/game-move.yaml
+  /api/bot/game/{gameId}/resign:
+    $ref: ./paths/game-resign.yaml
+  /api/challenge/{username}:
+    $ref: ./paths/challenge-create.yaml
+  /api/challenge/{challengeId}/accept:
+    $ref: ./paths/challenge-accept.yaml
+  /api/challenge/{challengeId}/decline:
+    $ref: ./paths/challenge-decline.yaml
+  /api/bulk-pairing:
+    $ref: ./paths/bulk-pairing.yaml
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: >-
+        Personal Access Token (PAT) sent as `Authorization: Bearer hxo_...`.
+        Long-lived, revocable, scoped (play requires `bot:play`).

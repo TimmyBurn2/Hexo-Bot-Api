@@ -1,0 +1,168 @@
+# HeXO Bot API
+
+> **Status: PROPOSAL, not yet implemented.**
+
+> This repository is a *proposed* bot protocol for HeXO, published for review.
+> No server currently serves these endpoints; they still need to be implemented.
+> Names, shapes, and paths may change before a `1.0.0` release.
+> Treat this as a request-for-comment, not a finalized contract.
+
+The **bot protocol contract** for [HeXO](https://hexo.did.science) — the [OpenAPI 3.1](./openapi.yaml) spec a bot speaks to play on `https://hexo.did.science`.
+
+**Just the contract:** spec + this README.
+No server, no bot; those are separate programs that agree only on `openapi.yaml`.
+A reference bridge (bot adapter) is planned as its own repo.
+Modelled on the [Lichess Bot/Board API](https://github.com/lichess-org/api).
+
+---
+
+## 1. What this is
+
+- **Server (proposed):** `https://hexo.did.science`
+- **Product:** [`openapi.yaml`](./openapi.yaml) (split into [`paths/`](./paths) and [`components/`](./components)) + this README.
+- **Game:** `httt6`, HeXO, the *infinite hexagonal tic-tac-toe* game.
+  Played on an unbounded hex grid with integer **axial coordinates** `[q, r]`.
+  **Player 1 opens with a single hex at the centre; every turn after that places two hexes.**
+  Win by connecting **six** of your own hexes in a straight line along any of the **3 board axes**.
+  The variant key is defined once in [`components/schemas/Variant.yaml`](./components/schemas/Variant.yaml) and must match the server's registry.
+- **Sides:** the two players are identified by **play order, `p1` and `p2`** (not colours; the game UI renders colours, the protocol does not).
+  Defined once in [`components/schemas/Side.yaml`](./components/schemas/Side.yaml).
+- **Examples:** runnable-shaped samples in [`examples/`](./examples).
+
+---
+
+## 2. How a move works
+
+A HeXO **turn** places hexes on the board, and the protocol models one turn as a single object, a *compound move*, because a normal turn is two hexes at once.
+
+**Coordinates.**
+Every cell is an **axial coordinate** `[q, r]` (two integers).
+`q` runs along one axis, `r` along another; the implied third axis is `s = −q − r`.
+The centre is `[0, 0]`, and because the board is infinite, `q`/`r` can be **any integer, including negatives**.
+A cell's six neighbours are the six axial directions: `[+1,0] [+1,−1] [0,−1] [−1,0] [−1,+1] [0,+1]`.
+You win with six of your hexes in a line along one of the three axes.
+
+**The opening is asymmetric:**
+
+| Ply | Side | Hexes placed |
+| --- | --- | --- |
+| 0 | `p1` | **1** (the centre, `[0,0]`) |
+| 1 | `p2` | 2 |
+| 2+ | alternating | 2 each |
+
+**Down-stream: what the server sends you.**
+Inside every `gameState`, `moves` is the **cumulative** list of all turns so far:
+
+```json
+"moves": [
+  { "p": "p1", "s": [[0,0]] },          // ply 0: opening single hex at centre
+  { "p": "p2", "s": [[0,1],[1,1]] },    // ply 1: two hexes
+  { "p": "p1", "s": [[1,0],[2,0]] }     // ply 2: two hexes
+]
+```
+
+- **`p`**: the side that made the turn (`p1` or `p2`).
+- **`s`**: the hex(es) placed that turn, each an `[q, r]` axial coordinate (length 1 only on ply 0, otherwise 2).
+- **Position in the array = the ply** (0-based).
+  The list **grows by one entry each turn**, turn 5's `moves` contains turns 0-4 plus turn 5.
+  That is what makes the protocol stateless:
+  you replay this list from scratch to rebuild the board, so you never store anything locally.
+
+**Up-stream: what you send back.** When it's your turn you POST a `MoveSubmit`:
+
+```json
+{ "stones": [[3,0],[4,0]], "ply": 4 }
+```
+
+- **`stones`**: the hex(es) you're placing (1 on the opening, else 2).
+- **`ply`**: which turn index you're filling. It must equal the server's next expected ply:
+  this is a **compare-and-set token** that makes retries safe.
+  A stale/duplicate `ply` → `409 { expectedPly }`;
+  an illegal placement → `422 { stone }`.
+  You **don't** send your side; the server knows whose turn it is from the ply.
+
+---
+
+## 3. Design philosophy (the ideas behind it)
+
+**The server is the referee.**
+It is the single source of truth for legality, turn order, pairing, clocks, and ratings.
+Bots never adjudicate; they ask, and the server decides.
+
+**Bots own everything else.** State, reconnection, search, and time management are the bot's problem.
+The contract assumes nothing about how a bot thinks.
+
+**Stateless by design.**
+Both streams send the **cumulative** move list, not deltas. A bot replays it to rebuild the board -> zero required local state.
+A crash mid-game won't cause a problem.
+Reconnect and receive a fresh `gameFull`, replay and continue. (See [`examples/bot-loop.md`](./examples/bot-loop.md).)
+
+**Bot-agnostic.**
+Nothing depends on any particular bot's internals. **KrakenBot** and **SealBot** in the examples are illustrative only.
+
+**Two ways to rank.** Each game runs in one mode:
+
+| Mode | What ticks | What it measures |
+| --- | --- | --- |
+| `wallclock` | real clocks (`clock.initial` + `clock.inc`, ms) | the **whole engine**: speed counts |
+| `fixedsim` | a server-enforced per-move `simBudget` for both sides | **model quality**, hardware-neutral |
+
+Pick the mode that matches what you're testing.
+
+**Hardware telemetry is a label, never a lever.**
+A bot may *opt in* to a coarse self-report (`HardwareInfo`:
+GPU class, CPU cores, RAM GB) at upgrade time.
+It is shown as a **label only** and is **explicitly excluded from rating math**:
+it never affects ratings or pairing. No serials, MAC addresses, or hostnames are collected.
+
+---
+
+## 4. Rendering & linting the docs
+
+The spec is the product, so it is kept lint-clean and renderable.
+You only need Node.js (`npx`); nothing is installed globally.
+
+```bash
+make docs      # render a static HTML reference (Redocly build-docs → dist/index.html)
+make preview   # live-reloading docs preview
+make lint      # Redocly + Spectral, must be 0 errors
+make bundle    # resolve every $ref into one self-contained file
+```
+
+Or call the tools directly:
+
+```bash
+npx @redocly/cli@latest lint openapi.yaml
+npx @redocly/cli@latest bundle openapi.yaml -o dist/openapi.bundled.yaml
+npx @stoplight/spectral-cli@latest lint dist/openapi.bundled.yaml
+npx @redocly/cli@latest build-docs openapi.yaml -o dist/index.html
+```
+
+> Note: Spectral is run against the **bundled** spec.
+> Its external-`$ref` resolver mis-flags multi-file 3.1 path items; the bundle is semantically identical and lints clean.
+> `make lint` and CI handle this for you.
+
+CI runs the same checks on every push and PR, see [`.github/workflows/lint.yml`](./.github/workflows/lint.yml).
+
+---
+
+## 5. Contributing & roadmap
+
+This repo is a **community proposal**, and contributions that sharpen it are welcome:
+
+- Extend or clarify the spec via pull request; keep it lint-clean (`make lint` → 0 errors) and every operation fully documented (`operationId`, `summary`, `tags`, responses with schemas + an example).
+- Coordinate new variants or fields with the server's registry; the `Variant` and `Side` keys here must match what `hexo.did.science` accepts.
+- **Implement it.** This is a proposal; the endpoints still need to be built on the server side, and a reference **bridge** (a ready-to-run bot adapter that speaks this protocol) is planned as a **separate** repository. This repo stays spec-only.
+- **Add a quickstart.** A step-by-step walkthrough (create account → upgrade → mint token → stream events → accept a challenge → play), built on the files in [`examples/`](./examples), is planned; it was left out of this first proposal to keep the focus on the contract itself.
+
+---
+
+## 6. Thanks
+
+Thanks to the **HeXO community**:
+
+---
+
+## 7. License
+
+[MIT](./LICENSE)

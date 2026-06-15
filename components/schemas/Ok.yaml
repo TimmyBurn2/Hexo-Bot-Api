@@ -1,0 +1,13 @@
+type: object
+title: Ok
+description: Minimal success envelope returned by write operations that have no resource body.
+required:
+  - ok
+additionalProperties: false
+properties:
+  ok:
+    type: boolean
+    const: true
+    description: Always `true`. The operation succeeded.
+example:
+  ok: true

@@ -1,0 +1,119 @@
+# OPTIONAL / ADVANCED operation. Not needed to play a single game, it exists to
+# seed a whole evaluation ladder headlessly (e.g. round-robin a set of bots).
+post:
+  operationId: createBulkPairing
+  summary: Create a bulk pairing (seed an eval ladder), optional
+  description: >-
+    **Optional, advanced.** Creates many games at once from an explicit list of
+    pairings, useful for headlessly seeding an evaluation ladder (e.g. a
+    round-robin between several bots). Not required to play normally; a single
+    challenge is enough for that.
+
+
+    Every game in the batch shares the same `variant`, `rated` flag, and ladder
+    mode (`wallclock` + `clock`, or `fixedsim` + `simBudget`). Each listed bot
+    receives a `gameStart` event when its game begins.
+  tags:
+    - Challenge
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - pairings
+            - variant
+            - rated
+            - mode
+          properties:
+            pairings:
+              type: array
+              minItems: 1
+              description: The games to create, each an explicit p1/p2 account-id pair.
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                  - p1
+                  - p2
+                properties:
+                  p1:
+                    type: string
+                    description: Account id to play Player 1 (opens with the single centre hex).
+                  p2:
+                    type: string
+                    description: Account id to play Player 2.
+            variant:
+              $ref: ../components/schemas/Variant.yaml
+            rated:
+              type: boolean
+              description: Whether results affect ratings.
+            mode:
+              type: string
+              enum:
+                - wallclock
+                - fixedsim
+            clock:
+              description: Wall-clock control for every game. Required when `mode` is `wallclock`.
+              $ref: ../components/schemas/Clock.yaml
+            simBudget:
+              type: integer
+              format: int32
+              minimum: 1
+              description: Per-move sim budget for every game. Required when `mode` is `fixedsim`.
+        example:
+          pairings:
+            - { p1: krakenbot, p2: sealbot }
+            - { p1: sealbot, p2: krakenbot }
+          variant: httt6
+          rated: true
+          mode: fixedsim
+          simBudget: 100000
+  responses:
+    "200":
+      description: The batch was created; games are starting.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - games
+            properties:
+              id:
+                type: string
+                description: Identifier for the created batch.
+              games:
+                type: array
+                description: The created games, in input order.
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - id
+                    - p1
+                    - p2
+                  properties:
+                    id:
+                      type: string
+                      description: The game id (open its stream to play/observe).
+                    p1:
+                      type: string
+                    p2:
+                      type: string
+          example:
+            id: bulk_7Qm2
+            games:
+              - { id: J9kP2qLm, p1: krakenbot, p2: sealbot }
+              - { id: K2xR8tNp, p1: sealbot, p2: krakenbot }
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "422":
+      $ref: ../components/responses/Unprocessable.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

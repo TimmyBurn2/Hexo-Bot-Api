@@ -1,0 +1,26 @@
+type: object
+title: HardwareInfo
+description: Opt-in coarse hardware self-report. Shown as a **label only** — excluded from rating math. All fields optional.
+additionalProperties: false
+properties:
+  gpu:
+    type: string
+    description: "Coarse GPU class, e.g. `\"none\"`, `\"consumer\"`, `\"datacenter\"`, `\"rtx-40xx\"`."
+    maxLength: 64
+    example: consumer
+  cpu_cores:
+    type: integer
+    format: int32
+    minimum: 1
+    description: Number of physical CPU cores available to the bot. Coarse count only.
+    example: 16
+  ram_gb:
+    type: integer
+    format: int32
+    minimum: 1
+    description: System RAM in whole gigabytes. Coarse size only.
+    example: 64
+example:
+  gpu: consumer
+  cpu_cores: 16
+  ram_gb: 64

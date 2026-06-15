@@ -1,0 +1,18 @@
+# Spectral ruleset, secondary linter, extends the built-in OpenAPI rules.
+# Run:  make lint-spectral   (npx @stoplight/spectral-cli@latest lint openapi.yaml)
+
+extends:
+  - spectral:oas
+
+rules:
+  # Reinforce the same governance Redocly enforces, so either linter alone
+  # catches an undocumented operation.
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-tag-defined: error
+  operation-description: warn
+
+  # The spec is split across many files and uses shared $ref'd examples;
+  # Spectral's duplicate-example heuristic is noisy here and adds no signal.
+  oas3-valid-media-example: warn
+  oas3-valid-schema-example: warn

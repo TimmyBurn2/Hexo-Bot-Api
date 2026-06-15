@@ -1,0 +1,17 @@
+title: Event
+description: >-
+  One line of the **global event stream** (`GET /api/stream/event`). Each line
+  is exactly one of these objects, discriminated on the `type` field. A client
+  reads the stream line by line and dispatches on `type`.
+oneOf:
+  - $ref: ./ChallengeEvent.yaml
+  - $ref: ./GameStartEvent.yaml
+  - $ref: ./GameFinishEvent.yaml
+  - $ref: ./ChallengeDeclinedEvent.yaml
+discriminator:
+  propertyName: type
+  mapping:
+    challenge: ./ChallengeEvent.yaml
+    gameStart: ./GameStartEvent.yaml
+    gameFinish: ./GameFinishEvent.yaml
+    challengeDeclined: ./ChallengeDeclinedEvent.yaml

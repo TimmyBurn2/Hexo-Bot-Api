@@ -1,0 +1,8 @@
+description: Missing or invalid bearer token.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: unauthorized
+      message: Missing or invalid bearer token.

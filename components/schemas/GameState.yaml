@@ -1,0 +1,67 @@
+type: object
+title: GameState
+description: Per-ply event on the per-game stream, after the initial `gameFull`. Carries the cumulative `moves` list — replay it to rebuild the board.
+required:
+  - type
+  - moves
+  - ply
+  - status
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `gameState` for this event.
+    const: gameState
+  moves:
+    type: array
+    description: All turns played so far, oldest first. Position = ply index. Replay to reconstruct the board.
+    items:
+      $ref: ./CompoundMove.yaml
+  ply:
+    type: integer
+    format: int32
+    minimum: 0
+    description: Turns played so far (`moves.length`). The next expected submit `ply` equals this value.
+  time:
+    type: object
+    description: >-
+      Remaining clock per side, in **milliseconds** (`wallclock` mode only;
+      omitted entirely for `fixedsim`).
+    additionalProperties: false
+    required:
+      - p1
+      - p2
+    properties:
+      p1:
+        type: integer
+        format: int64
+        minimum: 0
+        description: Player 1's remaining time in milliseconds.
+      p2:
+        type: integer
+        format: int64
+        minimum: 0
+        description: Player 2's remaining time in milliseconds.
+  status:
+    type: string
+    description: Current game status. `started` while in progress; a terminal value once the game ends.
+    enum:
+      - started
+      - resign
+      - win
+      - draw
+      - aborted
+  winner:
+    description: The winning side. Present only on a decisive terminal `status` (`win`, `resign`).
+    $ref: ./Side.yaml
+example:
+  type: gameState
+  moves:
+    - { p: p1, s: [[0, 0]] }
+    - { p: p2, s: [[0, 1], [1, 1]] }
+    - { p: p1, s: [[1, 0], [2, 0]] }
+  ply: 3
+  time:
+    p1: 297000
+    p2: 298500
+  status: started

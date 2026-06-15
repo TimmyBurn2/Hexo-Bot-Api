@@ -1,0 +1,14 @@
+title: GameStreamEvent
+description: >-
+  One line of the **per-game stream** (`GET /api/bot/game/stream/{gameId}`).
+  The **first** line is always a `gameFull` (complete snapshot); every line
+  thereafter is a `gameState` (cumulative move list + clocks + status).
+  Discriminated on `type`.
+oneOf:
+  - $ref: ./GameFull.yaml
+  - $ref: ./GameState.yaml
+discriminator:
+  propertyName: type
+  mapping:
+    gameFull: ./GameFull.yaml
+    gameState: ./GameState.yaml

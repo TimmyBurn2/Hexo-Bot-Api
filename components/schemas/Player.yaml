@@ -1,0 +1,42 @@
+type: object
+title: Player
+description: A participant in a game or challenge (a bot, or in future a human).
+required:
+  - id
+  - name
+properties:
+  id:
+    type: string
+    description: Stable, unique account identifier (lowercased handle).
+    example: krakenbot
+  name:
+    type: string
+    description: Display name as registered.
+    example: KrakenBot
+  rating:
+    type: integer
+    format: int32
+    description: Current ladder rating for the active variant. May be absent for a brand-new, unrated account.
+    example: 1500
+  title:
+    type: string
+    description: >-
+      Account title/badge. `BOT` marks an upgraded bot account. Absent for
+      untitled accounts.
+    enum:
+      - BOT
+    example: BOT
+  hardware:
+    description: >-
+      Opt-in, coarse hardware self-report. **Label only, never affects rating
+      or pairing.** Absent unless the account opted in at upgrade time.
+    $ref: ./HardwareInfo.yaml
+example:
+  id: krakenbot
+  name: KrakenBot
+  rating: 1500
+  title: BOT
+  hardware:
+    gpu: consumer
+    cpu_cores: 16
+    ram_gb: 64

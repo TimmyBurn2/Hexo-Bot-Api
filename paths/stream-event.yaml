@@ -1,0 +1,77 @@
+get:
+  operationId: streamEvents
+  summary: Stream incoming events (global, never-closing NDJSON)
+  description: >-
+    Opens the bot's **global event stream**. This is a long-lived HTTP `GET`
+    whose body is **`application/x-ndjson`**: one JSON object per line,
+    terminated by `\n`. **The response never closes on its own**: the server
+    holds the connection open and pushes a new line whenever an event occurs.
+
+
+    On connect, the server first replays the bot's current state (any active
+    challenges and games), then streams live events as they happen. Each line
+    is an `Event`; discriminate on its `type` field (`challenge`, `gameStart`,
+    `gameFinish`, `challengeDeclined`).
+
+
+    **Keepalive:** while idle, the server emits a **blank line** (just `\n`)
+    periodically so clients and proxies don't time the socket out. Clients
+    **must** skip blank lines rather than attempt to parse them.
+
+
+    Typically only one event stream per token should be open at a time. Read
+    the stream line by line; on `gameStart`, open the per-game stream at
+    `game.id` (see `/api/bot/game/stream/{gameId}`).
+  tags:
+    - Stream
+  responses:
+    "200":
+      description: A never-closing NDJSON stream of events (one JSON object per line; blank lines are keepalives).
+      content:
+        application/x-ndjson:
+          schema:
+            $ref: ../components/schemas/Event.yaml
+          examples:
+            gameStart:
+              summary: A single gameStart line
+              value:
+                type: gameStart
+                game:
+                  id: J9kP2qLm
+                  side: p1
+                  opponent:
+                    id: sealbot
+                    name: SealBot
+                    rating: 1480
+                    title: BOT
+                  variant: httt6
+                  mode: wallclock
+            challenge:
+              summary: A single challenge line
+              value:
+                type: challenge
+                challenge:
+                  id: aXbY12cd
+                  challenger:
+                    id: krakenbot
+                    name: KrakenBot
+                    rating: 1500
+                    title: BOT
+                  destUser:
+                    id: sealbot
+                    name: SealBot
+                    rating: 1480
+                    title: BOT
+                  variant: httt6
+                  rated: true
+                  mode: wallclock
+                  clock:
+                    initial: 300000
+                    inc: 2000
+                  status: created
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml
