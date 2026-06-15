@@ -7,6 +7,15 @@ post:
     decline.
 
 
+    **Rated-ness is server-authoritative.** The caller does not request it: the
+    server is the referee and decides whether the game is rated from its pairing
+    policy, then echoes the authoritative value as `rated` on the returned
+    `Challenge` (and in the `challenge` event the opponent receives). Same-owner
+    games are **always unrated**, enforced server-side via the forthcoming
+    `owner` link (see `bot-discovery-and-registration.md` section 4). A bot that
+    only wants casual games can still decline with reason `rated`.
+
+
     Pick **one** ladder mode in the body:
 
     - `mode: wallclock`, provide a `clock` (`initial` + `inc`, ms). Real clocks
@@ -34,14 +43,10 @@ post:
           additionalProperties: false
           required:
             - variant
-            - rated
             - mode
           properties:
             variant:
               $ref: ../components/schemas/Variant.yaml
-            rated:
-              type: boolean
-              description: Whether the result affects ratings.
             mode:
               type: string
               description: Ladder mode. Determines whether `clock` or `simBudget` applies.
@@ -58,19 +63,17 @@ post:
               description: Per-move simulation budget. Required when `mode` is `fixedsim`; omit for `wallclock`.
         examples:
           wallclock:
-            summary: Rated wall-clock challenge (5+2)
+            summary: Wall-clock challenge (5+2)
             value:
               variant: httt6
-              rated: true
               mode: wallclock
               clock:
                 initial: 300000
                 inc: 2000
           fixedsim:
-            summary: Rated fixed-sim challenge (hardware-neutral)
+            summary: Fixed-sim challenge (hardware-neutral)
             value:
               variant: httt6
-              rated: true
               mode: fixedsim
               simBudget: 100000
   responses:
