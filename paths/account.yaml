@@ -1,0 +1,32 @@
+get:
+  operationId: getMyAccount
+  summary: Get my account (whoami)
+  description: >-
+    Returns the authenticated account as a `Player`, including its current
+    rating and, if the account opted in, its coarse, label-only
+    `hardware` self-report. Use this to confirm a token works and to learn your
+    own account `id` before challenging others.
+  tags:
+    - Account
+  responses:
+    "200":
+      description: The authenticated account.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Player.yaml
+          example:
+            id: krakenbot
+            name: KrakenBot
+            rating: 1500
+            title: BOT
+            hardware:
+              gpu: consumer
+              cpu_cores: 16
+              ram_gb: 64
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

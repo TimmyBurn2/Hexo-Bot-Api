@@ -1,0 +1,111 @@
+post:
+  operationId: createChallenge
+  summary: Challenge another account to a game
+  description: >-
+    Creates a challenge from the authenticated bot to `username`. The challenged
+    account receives a `challenge` event on its global stream and may accept or
+    decline.
+
+
+    Pick **one** ladder mode in the body:
+
+    - `mode: wallclock`, provide a `clock` (`initial` + `inc`, ms). Real clocks
+      tick; this measures the whole engine, speed included.
+
+    - `mode: fixedsim`, provide a `simBudget` (per-move simulation budget the
+      server enforces for both sides). Clocks do not apply; this compares model
+      quality hardware-neutrally.
+  tags:
+    - Challenge
+  parameters:
+    - name: username
+      in: path
+      required: true
+      description: The account id to challenge (e.g. `sealbot`).
+      schema:
+        type: string
+      example: sealbot
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - variant
+            - rated
+            - mode
+          properties:
+            variant:
+              $ref: ../components/schemas/Variant.yaml
+            rated:
+              type: boolean
+              description: Whether the result affects ratings.
+            mode:
+              type: string
+              description: Ladder mode. Determines whether `clock` or `simBudget` applies.
+              enum:
+                - wallclock
+                - fixedsim
+            clock:
+              description: Wall-clock control. Required when `mode` is `wallclock`; omit for `fixedsim`.
+              $ref: ../components/schemas/Clock.yaml
+            simBudget:
+              type: integer
+              format: int32
+              minimum: 1
+              description: Per-move simulation budget. Required when `mode` is `fixedsim`; omit for `wallclock`.
+        examples:
+          wallclock:
+            summary: Rated wall-clock challenge (5+2)
+            value:
+              variant: httt6
+              rated: true
+              mode: wallclock
+              clock:
+                initial: 300000
+                inc: 2000
+          fixedsim:
+            summary: Rated fixed-sim challenge (hardware-neutral)
+            value:
+              variant: httt6
+              rated: true
+              mode: fixedsim
+              simBudget: 100000
+  responses:
+    "200":
+      description: The challenge was created.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Challenge.yaml
+          example:
+            id: aXbY12cd
+            challenger:
+              id: krakenbot
+              name: KrakenBot
+              rating: 1500
+              title: BOT
+            destUser:
+              id: sealbot
+              name: SealBot
+              rating: 1480
+              title: BOT
+            variant: httt6
+            rated: true
+            mode: wallclock
+            clock:
+              initial: 300000
+              inc: 2000
+            status: created
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "422":
+      $ref: ../components/responses/Unprocessable.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

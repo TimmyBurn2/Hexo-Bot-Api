@@ -1,0 +1,41 @@
+type: object
+title: CompoundMove
+description: >-
+  One **turn** in HeXO, as it appears in the cumulative `moves` array of a
+  `gameState`. A turn places hexes for one side:
+
+
+  - **Player 1's opening turn (ply 0)** places a **single** hex, at the centre
+    `[0, 0]`.
+
+  - **Every turn after that** places **two** hexes.
+
+  Position in `moves` is the (zero-based) ply — not repeated on the object.
+required:
+  - p
+  - s
+additionalProperties: false
+properties:
+  p:
+    description: The side that made this turn.
+    $ref: ./Side.yaml
+  s:
+    type: array
+    description: >-
+      The hex(es) placed this turn, in placement order. Each hex is an integer
+      **axial coordinate** `[q, r]`. Length is **1** only for Player 1's opening
+      turn; otherwise **2**.
+    minItems: 1
+    maxItems: 2
+    items:
+      type: array
+      description: A single axial hex coordinate `[q, r]` (both integers).
+      minItems: 2
+      maxItems: 2
+      items:
+        type: integer
+example:
+  p: p1
+  s:
+    - [1, 0]
+    - [2, 0]

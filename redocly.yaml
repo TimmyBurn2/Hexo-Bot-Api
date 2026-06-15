@@ -1,0 +1,41 @@
+# Redocly CLI config, lint, bundle, and docs for the HeXO Bot API spec.
+# Run:  make lint   (npx @redocly/cli@latest lint openapi.yaml)
+#       make bundle  /  make docs
+
+extends:
+  - recommended
+
+rules:
+  # --- Governance: every operation is fully described -------------------
+  # The spec-repo contract from the project brief. (Tag *presence* is covered
+  # by operation-tag-defined below, every operation here carries a tag.)
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-summary: error
+
+  # Every operation documents success and at least one error response.
+  operation-2xx-response: error
+  operation-4xx-response: error
+
+  # The Lichess-style game paths (`.../game/stream/{gameId}` vs
+  # `.../game/{gameId}/move`) are pre-registered by the project brief and
+  # match the upstream API we mirror. A real router resolves them
+  # unambiguously (the `stream` and `/move`/`/resign` segments are literal),
+  # so we silence the conservative static-ambiguity check.
+  no-ambiguous-paths: off
+
+  # No orphan / dangling pieces.
+  no-unused-components: error
+  no-unresolved-refs: error
+
+  # Examples must actually validate against their schemas.
+  no-invalid-media-type-examples: error
+  no-invalid-schema-examples: error
+
+  # Tags used by operations must be declared (with descriptions) at the root.
+  operation-tag-defined: error
+  tag-description: error
+
+# Docs rendering options (used by `redocly build-docs`).
+openapi:
+  schemaExpansionLevel: 2

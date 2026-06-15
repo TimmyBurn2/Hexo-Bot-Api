@@ -1,0 +1,86 @@
+type: object
+title: GameFull
+description: >-
+  First line on the per-game stream. Complete snapshot: players, variant,
+  mode, time/sim budget, and current `state` (with cumulative move list).
+required:
+  - type
+  - id
+  - variant
+  - players
+  - mode
+  - state
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `gameFull` for this event.
+    const: gameFull
+  id:
+    type: string
+    description: Unique game identifier.
+    example: J9kP2qLm
+  variant:
+    description: The game variant (single-source constant).
+    $ref: ./Variant.yaml
+  players:
+    type: object
+    description: The two players, keyed by side.
+    additionalProperties: false
+    required:
+      - p1
+      - p2
+    properties:
+      p1:
+        description: Player 1 (moves first; opens with a single hex at the centre).
+        $ref: ./Player.yaml
+      p2:
+        description: Player 2.
+        $ref: ./Player.yaml
+  mode:
+    type: string
+    description: >-
+      Ladder mode. `wallclock`: real clocks tick, `clock` present.
+      `fixedsim`: server-enforced per-move sim budget, `simBudget` present.
+    enum:
+      - wallclock
+      - fixedsim
+  clock:
+    description: Wall-clock time control. Present only when `mode` is `wallclock`.
+    $ref: ./Clock.yaml
+  simBudget:
+    type: integer
+    format: int32
+    minimum: 1
+    description: Per-move simulation budget the server enforces for both sides. Present only when `mode` is `fixedsim`.
+    example: 100000
+  state:
+    description: The current game state (cumulative moves, clocks, status).
+    $ref: ./GameState.yaml
+example:
+  type: gameFull
+  id: J9kP2qLm
+  variant: httt6
+  players:
+    p1:
+      id: krakenbot
+      name: KrakenBot
+      rating: 1500
+      title: BOT
+    p2:
+      id: sealbot
+      name: SealBot
+      rating: 1480
+      title: BOT
+  mode: wallclock
+  clock:
+    initial: 300000
+    inc: 2000
+  state:
+    type: gameState
+    moves: []
+    ply: 0
+    time:
+      p1: 300000
+      p2: 300000
+    status: started

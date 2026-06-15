@@ -1,0 +1,55 @@
+type: object
+title: GameEventInfo
+description: >-
+  Lightweight pointer to a game, carried by `gameStart` and `gameFinish`
+  events. The bot uses `id` to open the per-game stream
+  (`GET /api/bot/game/stream/{id}`) and `side` to know which side it plays.
+required:
+  - id
+  - side
+  - opponent
+  - variant
+  - mode
+additionalProperties: false
+properties:
+  id:
+    type: string
+    description: The game id. Open the per-game stream with this.
+    example: J9kP2qLm
+  side:
+    description: The side **this bot** plays in the game.
+    $ref: ./Side.yaml
+  opponent:
+    description: The opposing player.
+    $ref: ./Player.yaml
+  variant:
+    description: The game variant (single-source constant).
+    $ref: ./Variant.yaml
+  mode:
+    type: string
+    description: Ladder mode of the game.
+    enum:
+      - wallclock
+      - fixedsim
+  status:
+    type: string
+    description: Terminal status. Present on `gameFinish`; omitted on `gameStart`.
+    enum:
+      - started
+      - resign
+      - win
+      - draw
+      - aborted
+  winner:
+    description: The winning side. Present on a decisive `gameFinish`.
+    $ref: ./Side.yaml
+example:
+  id: J9kP2qLm
+  side: p1
+  opponent:
+    id: sealbot
+    name: SealBot
+    rating: 1480
+    title: BOT
+  variant: httt6
+  mode: wallclock

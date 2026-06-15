@@ -1,0 +1,31 @@
+post:
+  operationId: resignGame
+  summary: Resign a game
+  description: Resigns the game `gameId` on behalf of the authenticated bot. The game ends immediately with the opponent as winner.
+  tags:
+    - Bot
+  parameters:
+    - name: gameId
+      in: path
+      required: true
+      description: The game id.
+      schema:
+        type: string
+      example: J9kP2qLm
+  responses:
+    "200":
+      description: The game was resigned.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

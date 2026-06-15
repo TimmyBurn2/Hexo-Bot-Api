@@ -1,0 +1,66 @@
+post:
+  operationId: makeBotMove
+  summary: Make a move (compound turn) in a game
+  description: >-
+    Submits the bot's **compound turn** (two stones) for `gameId`. The body is
+    a `MoveSubmit` carrying the two stones and an **explicit `ply`** index.
+
+
+    The `ply` is a compare-and-set token: the move is applied only if `ply`
+    equals the server's next expected ply. This makes the write **idempotent**,
+    safe to retry over a flaky network without risk of double-applying.
+
+
+    Error contract:
+
+    - **`409 not-your-turn`**: stale, duplicate, or out-of-order `ply` (CAS
+      miss). No move applied; the body carries the authoritative `expectedPly`
+      so the bot can resynchronise and resubmit deterministically.
+
+    - **`422`**: it was your turn but the move is illegal: a cell is
+      `occupied`, the wrong number of stones was sent (`wrong-stone-count`, 1 is
+      only valid on the ply-0 opening, otherwise 2), or the placement is
+      otherwise rejected. The body carries the offending `stone` when applicable.
+  tags:
+    - Bot
+  parameters:
+    - name: gameId
+      in: path
+      required: true
+      description: The game id.
+      schema:
+        type: string
+      example: J9kP2qLm
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/MoveSubmit.yaml
+        example:
+          stones:
+            - [2, -1]
+            - [2, 0]
+          ply: 4
+          offerDraw: false
+  responses:
+    "200":
+      description: The compound turn was applied.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "409":
+      $ref: ../components/responses/Conflict.yaml
+    "422":
+      $ref: ../components/responses/Unprocessable.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

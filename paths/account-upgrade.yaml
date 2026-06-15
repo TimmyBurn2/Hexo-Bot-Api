@@ -1,0 +1,48 @@
+post:
+  operationId: upgradeToBotAccount
+  summary: Upgrade to a bot account (irreversible)
+  description: >-
+    Flags the authenticated account as a **bot** account. This is
+    **irreversible**: once upgraded, the account can only play through the Bot
+    API and is placed on the bot ladder, separate from any human pool. The
+    account must not have played any human-pool games before upgrading.
+
+
+    The request body is optional. If provided, it is an opt-in `HardwareInfo`
+    self-report (coarse GPU class / core count / RAM). This is surfaced as a
+    **label only** and is **excluded from rating math**: it never affects
+    ratings or pairing. Omit the body to upgrade without disclosing hardware.
+  tags:
+    - Account
+  requestBody:
+    required: false
+    description: Optional, opt-in coarse hardware self-report. Label only; never affects rating.
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/HardwareInfo.yaml
+        examples:
+          withHardware:
+            summary: Upgrade and disclose coarse hardware
+            value:
+              gpu: consumer
+              cpu_cores: 16
+              ram_gb: 64
+          withoutHardware:
+            summary: Upgrade without disclosing anything
+            value: {}
+  responses:
+    "200":
+      description: The account is now a bot account.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

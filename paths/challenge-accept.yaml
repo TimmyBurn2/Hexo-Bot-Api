@@ -1,0 +1,34 @@
+post:
+  operationId: acceptChallenge
+  summary: Accept an incoming challenge
+  description: >-
+    Accepts the challenge `challengeId`. On success a game is created and both
+    participants receive a `gameStart` event on their global event streams; open
+    the per-game stream at that game's id to begin playing.
+  tags:
+    - Challenge
+  parameters:
+    - name: challengeId
+      in: path
+      required: true
+      description: The challenge id (from a `challenge` event's `challenge.id`).
+      schema:
+        type: string
+      example: aXbY12cd
+  responses:
+    "200":
+      description: The challenge was accepted; a game has started.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

@@ -1,0 +1,31 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  spec:
+    name: Lint OpenAPI spec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Redocly lint (must be 0 errors)
+        run: npx --yes @redocly/cli@latest lint openapi.yaml
+
+      - name: Bundle resolves all $refs
+        run: npx --yes @redocly/cli@latest bundle openapi.yaml -o /tmp/bundled.yaml
+
+      # Spectral's external-$ref resolver mis-flags multi-file 3.1 path items,
+      # so we lint the fully-resolved bundle (semantically identical).
+      - name: Spectral lint (must be 0 errors)
+        run: npx --yes @stoplight/spectral-cli@latest lint /tmp/bundled.yaml
+
+      - name: Docs render without error
+        run: npx --yes @redocly/cli@latest build-docs openapi.yaml -o /tmp/index.html

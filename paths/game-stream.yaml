@@ -1,0 +1,93 @@
+get:
+  operationId: streamGame
+  summary: Stream a game's state (per-game, NDJSON)
+  description: >-
+    Opens the **per-game stream** for `gameId`. Body is
+    **`application/x-ndjson`**: one JSON object per line.
+
+
+    The **first** line is always a `gameFull`, a complete snapshot of the game
+    (players, variant, mode, clock or sim budget, and the current `state` with
+    the cumulative move list). **Every line thereafter is a `gameState`**, emitted
+    once per ply, each carrying the **cumulative** `moves` array (every compound
+    turn so far, not a delta).
+
+
+    **Stateless:** replay `moves` to rebuild the board. A crashed bot reconnects, receives the fresh `gameFull`, and resumes with zero local memory.
+
+
+    **Keepalive:** a **blank line** (`\n`) is emitted periodically while idle;
+    clients must skip blank lines. **The stream closes** once the game reaches a
+    terminal `status` (`resign`, `win`, `draw`, `aborted`), unlike the global
+    event stream, this one ends.
+
+
+    Discriminate each line on its `type` field (`gameFull` | `gameState`).
+  tags:
+    - Bot
+    - Stream
+  parameters:
+    - name: gameId
+      in: path
+      required: true
+      description: The game id (from a `gameStart` event's `game.id`).
+      schema:
+        type: string
+      example: J9kP2qLm
+  responses:
+    "200":
+      description: "An NDJSON stream: one `gameFull`, then one `gameState` per ply, until the game ends."
+      content:
+        application/x-ndjson:
+          schema:
+            $ref: ../components/schemas/GameStreamEvent.yaml
+          examples:
+            gameFull:
+              summary: First line, full snapshot on connect
+              value:
+                type: gameFull
+                id: J9kP2qLm
+                variant: httt6
+                players:
+                  p1:
+                    id: krakenbot
+                    name: KrakenBot
+                    rating: 1500
+                    title: BOT
+                  p2:
+                    id: sealbot
+                    name: SealBot
+                    rating: 1480
+                    title: BOT
+                mode: wallclock
+                clock:
+                  initial: 300000
+                  inc: 2000
+                state:
+                  type: gameState
+                  moves: []
+                  ply: 0
+                  time:
+                    p1: 300000
+                    p2: 300000
+                  status: started
+            gameState:
+              summary: A subsequent per-ply line carrying the cumulative move list
+              value:
+                type: gameState
+                moves:
+                  - { p: p1, s: [[0, 0]] }
+                  - { p: p2, s: [[0, 1], [1, 1]] }
+                ply: 2
+                time:
+                  p1: 299000
+                  p2: 298500
+                status: started
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

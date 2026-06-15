@@ -1,0 +1,20 @@
+type: string
+title: Side
+description: >-
+  Which side a player is on. **Single source of truth** for side identity: every
+  schema that names a side `$ref`s this rather than repeating the enum.
+
+
+  - `p1` = **Player 1**: moves first and opens the game with a **single** hex at
+    the centre `[0, 0]`.
+
+  - `p2` = **Player 2**: replies with two hexes, and every turn after the
+    opening is two hexes for both sides.
+
+
+  HeXO has no fixed "colours" in the protocol; the game UI renders the sides
+  visually, but the contract identifies them by play order (`p1`/`p2`).
+enum:
+  - p1
+  - p2
+example: p1

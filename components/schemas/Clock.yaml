@@ -1,0 +1,24 @@
+type: object
+title: Clock
+description: >-
+  Wall-clock time control for a `wallclock`-mode game. Both fields are in
+  **milliseconds**. Present only when `mode` is `wallclock`; omitted for
+  `fixedsim` games (which use `simBudget` instead).
+required:
+  - initial
+  - inc
+additionalProperties: false
+properties:
+  initial:
+    type: integer
+    format: int64
+    minimum: 0
+    description: Initial time on each player's clock, in milliseconds.
+  inc:
+    type: integer
+    format: int64
+    minimum: 0
+    description: Increment added to a player's clock after each compound turn, in milliseconds.
+example:
+  initial: 300000
+  inc: 2000

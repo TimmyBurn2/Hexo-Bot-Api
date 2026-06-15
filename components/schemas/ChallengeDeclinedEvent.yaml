@@ -1,0 +1,33 @@
+type: object
+title: ChallengeDeclinedEvent
+description: A challenge you issued was declined. Member of the global event stream union.
+required:
+  - type
+  - challenge
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `challengeDeclined`.
+    const: challengeDeclined
+  challenge:
+    description: The declined challenge (its `status` will be `declined`).
+    $ref: ./Challenge.yaml
+example:
+  type: challengeDeclined
+  challenge:
+    id: aXbY12cd
+    challenger:
+      id: krakenbot
+      name: KrakenBot
+      rating: 1500
+      title: BOT
+    destUser:
+      id: sealbot
+      name: SealBot
+      rating: 1480
+      title: BOT
+    variant: httt6
+    rated: true
+    mode: wallclock
+    status: declined

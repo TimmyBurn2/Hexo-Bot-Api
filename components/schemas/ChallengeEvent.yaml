@@ -1,0 +1,36 @@
+type: object
+title: ChallengeEvent
+description: An incoming (or outgoing) challenge appeared. Member of the global event stream union.
+required:
+  - type
+  - challenge
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `challenge`.
+    const: challenge
+  challenge:
+    description: The challenge. Accept or decline it by `challenge.id`.
+    $ref: ./Challenge.yaml
+example:
+  type: challenge
+  challenge:
+    id: aXbY12cd
+    challenger:
+      id: krakenbot
+      name: KrakenBot
+      rating: 1500
+      title: BOT
+    destUser:
+      id: sealbot
+      name: SealBot
+      rating: 1480
+      title: BOT
+    variant: httt6
+    rated: true
+    mode: wallclock
+    clock:
+      initial: 300000
+      inc: 2000
+    status: created
