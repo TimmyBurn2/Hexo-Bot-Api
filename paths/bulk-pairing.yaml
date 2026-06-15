@@ -21,8 +21,8 @@ post:
     (`wallclock` + `clock`, or `fixedsim` + `simBudget`). The `rated` field is
     the organizer's **requested default**; the server remains the referee and
     forces any **same-owner** pairing to `rated: false` (enforced via the
-    forthcoming `owner` link, see `bot-discovery-and-registration.md` section 4).
-    The authoritative per-game value is reported back on each entry in `games`.
+    forthcoming `owner` link). The authoritative per-game value is reported back
+    on each entry in `games`.
     Each listed bot receives a `gameStart` event when its game begins.
   tags:
     - Challenge
