@@ -32,7 +32,7 @@ info:
 
     ## Authentication
 
-    All operations require a **Personal Access Token (PAT)**: `Authorization: Bearer hxo_...`. Tokens are long-lived and revocable. The scope for play is **`bot:play`**; missing it → `403`.
+    All operations require a **Personal Access Token (PAT)**: `Authorization: Bearer hxo_...`. Tokens are long-lived and revocable. The scope for play is **`bot:play`**; organizer operations (bulk pairing) require **`bot:organize`**. A token missing the required scope → `403`.
 
 
     ## Ladder modes
@@ -120,4 +120,6 @@ components:
       bearerFormat: opaque
       description: >-
         Personal Access Token (PAT) sent as `Authorization: Bearer hxo_...`.
-        Long-lived, revocable, scoped (play requires `bot:play`).
+        Long-lived, revocable, scoped: play requires `bot:play`, organizer
+        operations (bulk pairing) require `bot:organize`. A token missing the
+        scope an operation requires is rejected with `403`.
