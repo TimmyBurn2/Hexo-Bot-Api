@@ -29,7 +29,10 @@ properties:
     $ref: ./Variant.yaml
   rated:
     type: boolean
-    description: Whether a win/loss will affect ratings.
+    description: >-
+      Whether a win/loss will affect ratings. **Server-authoritative**: the
+      server sets this from its pairing policy; the challenger cannot request it.
+      Same-owner games are always `false`.
     example: true
   mode:
     type: string
