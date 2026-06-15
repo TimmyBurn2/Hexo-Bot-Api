@@ -1,0 +1,11 @@
+description: >-
+  The token is valid but lacks the `bot:register` scope. Registering an instance
+  is an operator-only action; an instance's own `bot:play` token cannot mint new
+  instances. This keeps operator authority separate from gameplay authority.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: missing-scope
+      message: This token lacks the bot:register scope.

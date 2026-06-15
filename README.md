@@ -111,7 +111,7 @@ Pick the mode that matches what you're testing.
 
 **Hardware telemetry is a label, never a lever.**
 A bot may *opt in* to a coarse self-report (`HardwareInfo`:
-GPU class, CPU cores, RAM GB) at upgrade time.
+GPU class, CPU cores, RAM GB) at registration time.
 It is shown as a **label only** and is **explicitly excluded from rating math**:
 it never affects ratings or pairing. No serials, MAC addresses, or hostnames are collected.
 
@@ -153,7 +153,7 @@ This repo is a **community proposal**, and contributions that sharpen it are wel
 - Extend or clarify the spec via pull request; keep it lint-clean (`make lint` → 0 errors) and every operation fully documented (`operationId`, `summary`, `tags`, responses with schemas + an example).
 - Coordinate new variants or fields with the server's registry; the `Variant` and `Side` keys here must match what `hexo.did.science` accepts.
 - **Implement it.** This is a proposal; the endpoints still need to be built on the server side, and a reference **bridge** (a ready-to-run bot adapter that speaks this protocol) is planned as a **separate** repository. This repo stays spec-only.
-- **Add a quickstart.** A step-by-step walkthrough (create account → upgrade → mint token → stream events → accept a challenge → play), built on the files in [`examples/`](./examples), is planned; it was left out of this first proposal to keep the focus on the contract itself.
+- **Add a quickstart.** A step-by-step walkthrough (register an instance → receive its token → stream events → accept a challenge → play), built on the files in [`examples/`](./examples), is planned; it was left out of this first proposal to keep the focus on the contract itself.
 
 ---
 

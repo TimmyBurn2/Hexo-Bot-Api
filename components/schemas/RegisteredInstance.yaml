@@ -1,0 +1,53 @@
+type: object
+title: RegisteredInstance
+description: >-
+  Result of registering a bot instance. Carries the new `instance` and the
+  freshly minted `token` for it. The `token` is the instance's own scoped,
+  revocable Personal Access Token and is shown **once**, only in this response:
+  the server does not store it in a retrievable form, so it cannot be read back
+  later. Each instance has its own token, so one instance can be revoked or
+  banned without affecting the operator's other instances.
+required:
+  - instance
+  - token
+  - scopes
+additionalProperties: false
+properties:
+  instance:
+    description: The newly registered bot instance.
+    $ref: ./BotInstance.yaml
+  token:
+    type: string
+    description: >-
+      The instance's own Personal Access Token, sent as
+      `Authorization: Bearer hxo_...` on every later call this instance makes.
+      Shown once here and never again. Store it securely; if lost, register a
+      new instance.
+    example: hxo_9f3c1a8b2e7d40559c6a1d2e3f4b5a60
+  scopes:
+    type: array
+    description: >-
+      Scopes granted to `token`. A registered instance plays games, so its
+      token carries `bot:play`. It never carries `bot:register` or
+      `bot:organize`: an instance token cannot register sibling instances or
+      seed pairings, which keeps gameplay authority separate from operator
+      authority.
+    items:
+      type: string
+      enum:
+        - bot:play
+    example:
+      - bot:play
+example:
+  instance:
+    id: krakenbot
+    name: KrakenBot
+    owner: op_7Qm2Kx
+    title: BOT
+    hardware:
+      gpu: consumer
+      cpu_cores: 16
+      ram_gb: 64
+  token: hxo_9f3c1a8b2e7d40559c6a1d2e3f4b5a60
+  scopes:
+    - bot:play
