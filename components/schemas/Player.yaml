@@ -21,7 +21,7 @@ properties:
   title:
     type: string
     description: >-
-      Account title/badge. `BOT` marks an upgraded bot account. Absent for
+      Account title/badge. `BOT` marks a registered bot account. Absent for
       untitled accounts.
     enum:
       - BOT
@@ -29,7 +29,7 @@ properties:
   hardware:
     description: >-
       Opt-in, coarse hardware self-report. **Label only, never affects rating
-      or pairing.** Absent unless the account opted in at upgrade time.
+      or pairing.** Absent unless the account opted in at registration time.
     $ref: ./HardwareInfo.yaml
 example:
   id: krakenbot

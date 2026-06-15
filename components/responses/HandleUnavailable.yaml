@@ -1,0 +1,12 @@
+description: >-
+  The requested handle cannot be registered. Either it is already registered
+  (handles are permanent and never reused, even after an instance stops
+  playing), or it is on the server-authoritative reserved-word set. No instance
+  was created; pick a different handle.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: handle-unavailable
+      message: That handle is already in use or reserved.

@@ -1,0 +1,66 @@
+type: object
+title: BotInstance
+description: >-
+  A registered bot instance: the rated, listed, challengeable unit. It owns a
+  permanent `id` (handle), a display `name`, its own revocable token, and an
+  `owner` link to the operator that runs it. One operator may run many
+  instances. Unlike `Player` (which is embedded in every challenge and game
+  event), `BotInstance` carries owner-bearing identity and is never inlined into
+  gameplay objects.
+required:
+  - id
+  - name
+  - owner
+additionalProperties: false
+properties:
+  id:
+    type: string
+    description: >-
+      Permanent, unique handle (the account id used everywhere else as a
+      `Player.id`). Lowercased ASCII, `^[a-z0-9_]{3,20}$`. Handles are never
+      reused: once registered, this id always resolves to the same historical
+      instance, even after it stops playing.
+    pattern: "^[a-z0-9_]{3,20}$"
+    example: krakenbot
+  name:
+    type: string
+    description: Display name. Defaults to the handle when none was given at registration.
+    example: KrakenBot
+  owner:
+    type: string
+    description: >-
+      Server-assigned, stable, canonical identifier of the operator (the
+      Discord-authenticated party) that runs this instance: one per operator,
+      never reassigned, so two instances of the same operator carry a
+      byte-identical `owner`. Set by the server from the authenticated operator
+      credential at registration; never accepted from a request body, so it
+      cannot be forged or reassigned by a caller. The server forces same-owner
+      games to unrated via this link.
+    pattern: "^[A-Za-z0-9_]{3,40}$"
+    example: op_7Qm2Kx
+  rating:
+    type: integer
+    format: int32
+    description: Current ladder rating for the active variant. Absent for a brand-new, unrated instance.
+    example: 1500
+  title:
+    type: string
+    description: Account title/badge. `BOT` marks a registered bot account.
+    enum:
+      - BOT
+    example: BOT
+  hardware:
+    description: >-
+      Opt-in, coarse hardware self-report. **Label only, never affects rating
+      or pairing.** Absent unless the operator opted in at registration.
+    $ref: ./HardwareInfo.yaml
+example:
+  id: krakenbot
+  name: KrakenBot
+  owner: op_7Qm2Kx
+  rating: 1500
+  title: BOT
+  hardware:
+    gpu: consumer
+    cpu_cores: 16
+    ram_gb: 64
