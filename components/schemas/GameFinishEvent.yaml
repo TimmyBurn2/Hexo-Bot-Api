@@ -26,6 +26,7 @@ example:
       rating: 1480
       title: BOT
     variant: httt6
+    rated: true
     mode: wallclock
     status: win
     winner: p1

@@ -9,6 +9,7 @@ required:
   - side
   - opponent
   - variant
+  - rated
   - mode
 additionalProperties: false
 properties:
@@ -25,6 +26,11 @@ properties:
   variant:
     description: The game variant (single-source constant).
     $ref: ./Variant.yaml
+  rated:
+    type: boolean
+    description: >-
+      Whether the result affects ratings. Server-authoritative; lets a
+      bulk-paired bot know its game's rated-ness without a Challenge object.
   mode:
     type: string
     description: Ladder mode of the game.
@@ -52,4 +58,5 @@ example:
     rating: 1480
     title: BOT
   variant: httt6
+  rated: true
   mode: wallclock
