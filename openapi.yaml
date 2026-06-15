@@ -5,7 +5,7 @@ info:
   version: 0.1.0-draft
   summary: "PROPOSAL: the bot protocol contract for HeXO on hexo.did.science (not yet implemented)."
   description: >-
-    > ⚠️ **Status: PROPOSAL, not yet implemented.** Field names, shapes, and
+    > **Status: WIP, not yet implemented.** Field names, shapes, and
     > paths may change before `1.0.0`. Treat this as a request-for-comment.
 
 
