@@ -1,6 +1,6 @@
 # HeXO Bot API
 
-> **Status: PROPOSAL, not yet implemented.**
+> **Status: WIP, not yet implemented.**
 
 > This repository is a *proposed* bot protocol for HeXO, published for review.
 > No server currently serves these endpoints; they still need to be implemented.
