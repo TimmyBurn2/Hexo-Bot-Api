@@ -12,8 +12,8 @@ post:
     policy, then echoes the authoritative value as `rated` on the returned
     `Challenge` (and in the `challenge` event the opponent receives). Same-owner
     games are **always unrated**, enforced server-side via the forthcoming
-    `owner` link (see `bot-discovery-and-registration.md` section 4). A bot that
-    only wants casual games can still decline with reason `rated`.
+    `owner` link. A bot that only wants casual games can still decline with
+    reason `rated`.
 
 
     Pick **one** ladder mode in the body:
