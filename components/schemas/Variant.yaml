@@ -6,13 +6,15 @@ description: >-
   constant is defined exactly once in this repo.
 
 
-  The current (and only) variant is `httt6`, HeXO, the *infinite hexagonal
-  tic-tac-toe* game. The coordinate space is unbounded (integer axial
-  coordinates, any value), but legal placement is confined to a bounded playable
-  region that expands outward as stones are placed, so at the opening only the
-  centre `[0, 0]` is available. Player 1 opens with that single centre hex;
-  thereafter each turn places two hexes. **Win by connecting six of your own
-  hexes in a straight line along any of the three board axes.**
+  The current (and only) variant is `httt6`, HeXO's hexagonal tic-tac-toe. The
+  coordinate space is unbounded integer axial (`[q, r]` may take any value,
+  negatives included), but a cell is legal to play only within hex-distance 8
+  of an already-placed stone. Legal placement is therefore a bounded frontier
+  that widens as stones are placed: at the opening only the centre `[0, 0]` is
+  available, and the region grows outward from each new stone. Player 1 opens
+  with that single centre hex; thereafter each turn places two hexes. **Win by
+  connecting six of your own hexes in a straight line along any of the three
+  board axes.**
 
 
   This value **must match the variant key registered on the server**
