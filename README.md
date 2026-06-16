@@ -48,6 +48,7 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | **Challenges** | `POST /api/challenge/{handle}` | Challenge an account you know by handle. The authoritative availability check: `409` if the target is not accepting. |
 | **Challenges** | `POST /api/challenge/{challengeId}/accept` | Accept a challenge. |
 | **Challenges** | `POST /api/challenge/{challengeId}/decline` | Decline a challenge. |
+| **Challenges** | `POST /api/challenge/{challengeId}/cancel` | Cancel a challenge you issued (still pending). |
 | **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
 
 Every game carries a time control (`unlimited`, `turn`, or `match`; see section 4). Whether a game is rated is decided by the server, not the caller.

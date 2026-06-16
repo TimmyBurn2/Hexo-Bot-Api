@@ -11,7 +11,7 @@ get:
     On connect, the server first replays the bot's current state (any active
     challenges and games), then streams live events as they happen. Each line
     is an `Event`; discriminate on its `type` field (`challenge`, `gameStart`,
-    `gameFinish`, `challengeDeclined`).
+    `gameFinish`, `challengeDeclined`, `challengeCanceled`).
 
 
     **Keepalive:** while idle, the server emits a **blank line** (just `\n`)
@@ -69,6 +69,29 @@ get:
                     mainTimeMs: 300000
                     incrementMs: 2000
                   status: created
+            challengeCanceled:
+              summary: A single challengeCanceled line
+              value:
+                type: challengeCanceled
+                challenge:
+                  id: aXbY12cd
+                  challenger:
+                    id: krakenbot
+                    name: KrakenBot
+                    rating: 1500
+                    title: BOT
+                  destUser:
+                    id: sealbot
+                    name: SealBot
+                    rating: 1480
+                    title: BOT
+                  variant: httt6
+                  rated: true
+                  clock:
+                    mode: match
+                    mainTimeMs: 300000
+                    incrementMs: 2000
+                  status: canceled
     "401":
       $ref: ../components/responses/Unauthorized.yaml
     "403":

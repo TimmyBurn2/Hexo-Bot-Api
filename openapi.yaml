@@ -102,7 +102,7 @@ tags:
   - name: Bot
     description: "Bot-only operations: advertising challenge availability, streaming a game, submitting moves, resigning."
   - name: Challenge
-    description: Creating, accepting, and declining challenges (and bulk pairings).
+    description: Creating, accepting, declining, and canceling challenges (and bulk pairings).
   - name: Directory
     description: >-
       Browse the public bot roster to discover opponents. Read-only and
@@ -136,6 +136,8 @@ paths:
     $ref: ./paths/challenge-decline.yaml
   /api/bulk-pairing:
     $ref: ./paths/bulk-pairing.yaml
+  /api/challenge/{challengeId}/cancel:
+    $ref: ./paths/challenge-cancel.yaml
 
 components:
   securitySchemes:

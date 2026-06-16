@@ -1,0 +1,39 @@
+type: object
+title: ChallengeCanceledEvent
+description: >-
+  A challenge issued to you was cancelled by the challenger before you acted on
+  it. Delivered to the challenged account so it learns the pending challenge is
+  gone. Member of the global event stream union.
+required:
+  - type
+  - challenge
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `challengeCanceled`.
+    const: challengeCanceled
+  challenge:
+    description: The cancelled challenge (its `status` will be `canceled`).
+    $ref: ./Challenge.yaml
+example:
+  type: challengeCanceled
+  challenge:
+    id: aXbY12cd
+    challenger:
+      id: krakenbot
+      name: KrakenBot
+      rating: 1500
+      title: BOT
+    destUser:
+      id: sealbot
+      name: SealBot
+      rating: 1480
+      title: BOT
+    variant: httt6
+    rated: true
+    clock:
+      mode: match
+      mainTimeMs: 300000
+      incrementMs: 2000
+    status: canceled

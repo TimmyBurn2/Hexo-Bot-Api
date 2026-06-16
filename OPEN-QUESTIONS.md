@@ -2,7 +2,8 @@
 
 Tracked design questions for the HeXO bot protocol. This file is intentionally
 **not referenced from the spec**: the contract must read on its own. It is a
-working list, not part of the contract.
+working list, not part of the contract. Items the current proposal settles are
+marked **(resolved)** in place with a short note; the rest stay open.
 
 ## 1. Playable-frontier rule: descriptive or normative?
 
@@ -62,11 +63,12 @@ The server already has a tournament subsystem (Swiss + bracket). Does the spec's
 `bulk-pairing` duplicate server-owned tournament logic, and should it instead
 expose the existing system rather than carry its own pairing surface?
 
-## 7. Challenge-cancel endpoint + event
+## 7. Challenge-cancel endpoint + event (resolved)
 
-The `canceled` challenge status is currently unreachable: no operation or event
-produces it. Decide whether to add a challenge-cancel endpoint plus a matching
-event on the global stream.
+**Resolved: added.** `POST /api/challenge/{challengeId}/cancel` lets the
+challenger withdraw a still-pending challenge, and a `challengeCanceled` event
+notifies the challenged account. The `canceled` challenge status is now
+reachable.
 
 ## 8. Organizer-settable `rated`
 
