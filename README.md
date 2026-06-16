@@ -174,6 +174,7 @@ CI runs the same checks on every push and PR, see [`.github/workflows/lint.yml`]
 This repo is a **community proposal**, and contributions that sharpen it are welcome:
 
 - Extend or clarify the spec via pull request; keep it lint-clean (`make lint` → 0 errors) and every operation fully documented (`operationId`, `summary`, `tags`, responses with schemas + an example).
+- **Settle the rating scale.** Bot ratings are relative; whether and how they anchor to a wider scale is an open question, see [`OPEN-QUESTIONS.md`](./OPEN-QUESTIONS.md).
 - Coordinate new variants or fields with the server's registry; the `Variant` and `Side` keys here must match what `hexo.did.science` accepts.
 - **Implement it.** This is a proposal; the endpoints still need to be built on the server side, and a reference **bridge** (a ready-to-run bot adapter that speaks this protocol) is planned as a **separate** repository. This repo stays spec-only.
 - **Add a quickstart.** A step-by-step walkthrough (register an instance → receive its token → stream events → accept a challenge → play), built on the files in [`examples/`](./examples), is planned; it was left out of this first proposal to keep the focus on the contract itself.
