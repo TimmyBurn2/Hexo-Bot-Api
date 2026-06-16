@@ -5,7 +5,6 @@ required:
   - type
   - moves
   - ply
-  - time
   - status
 additionalProperties: false
 properties:
@@ -24,26 +23,31 @@ properties:
     minimum: 0
     description: Turns played so far (`moves.length`). The next expected submit `ply` equals this value.
   time:
-    type: object
     description: >-
-      Remaining time per side, in **milliseconds**. Semantics follow the active
-      time-control mode: the remaining per-turn budget under `turn`, remaining
-      main time under `match`, and not enforced under `unlimited`.
-    additionalProperties: false
-    required:
-      - p1
-      - p2
-    properties:
-      p1:
-        type: integer
-        format: int64
-        minimum: 0
-        description: Player 1's remaining time in milliseconds.
-      p2:
-        type: integer
-        format: int64
-        minimum: 0
-        description: Player 2's remaining time in milliseconds.
+      Remaining time per side, in **milliseconds**, under a real clock. Present
+      and meaningful only under the `turn` and `match` time controls: the
+      remaining per-turn budget under `turn`, remaining main time under `match`.
+      Under `unlimited` there is no clock to report, so this is omitted or
+      `null`; a bot must not read a meaningful duration from it then. When
+      present it carries both sides.
+    oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+          - p1
+          - p2
+        properties:
+          p1:
+            type: integer
+            format: int64
+            minimum: 0
+            description: Player 1's remaining time in milliseconds.
+          p2:
+            type: integer
+            format: int64
+            minimum: 0
+            description: Player 2's remaining time in milliseconds.
+      - type: "null"
   status:
     type: string
     description: >-
@@ -69,11 +73,37 @@ properties:
     description: >-
       The winning side, present once `status` is `finished`: the line maker on
       `six-in-a-row`, the opponent on `surrender`, `timeout`, or `disconnect`.
-      `null` on `terminated`, which ends the game with no winner. Absent while
-      the game is still `started`.
+      `null` on `terminated`, which ends the game with no winner, and may also be
+      `null` on `disconnect` when no side survives to be awarded the win. Absent
+      while the game is still `started`.
     oneOf:
       - $ref: ./Side.yaml
       - type: "null"
+allOf:
+  # A finished game always reports a result; an in-progress game never does.
+  - if:
+      required:
+        - status
+      properties:
+        status:
+          const: finished
+    then:
+      required:
+        - finishReason
+        - winner
+  - if:
+      required:
+        - status
+      properties:
+        status:
+          const: started
+    then:
+      not:
+        anyOf:
+          - required:
+              - finishReason
+          - required:
+              - winner
 example:
   type: gameState
   moves:

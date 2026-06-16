@@ -1,13 +1,33 @@
 description: >-
-  **CAS failure.** The submitted `ply` did not match the server's next expected
-  ply, the move was stale, duplicated, or out of order. No move was applied.
-  The response carries the authoritative `expectedPly`; resubmit there (or
-  re-read the game stream) to recover deterministically.
+  **409 Conflict.** The move could not be applied because the request conflicts
+  with the game's current state. Two cases, distinguished by `error`:
+
+
+  - **`not-your-turn`** (CAS miss): the submitted `ply` did not match the
+    server's next expected ply, or the move was stale, duplicated, or out of
+    order. No move was applied. The body carries the authoritative `expectedPly`;
+    resubmit there (or re-read the game stream) to recover deterministically. A
+    `409` seen right after a network retry can also mean the *prior* submit
+    already landed: trust `expectedPly` (or re-read the stream) rather than
+    treating the `409` as a failure.
+
+
+  - **`game-finished`**: the game exists but has already ended, so no further
+    move is accepted. A finished game still exists and is reported here, not as
+    `404`.
 content:
   application/json:
     schema:
       $ref: ../schemas/Error.yaml
-    example:
-      error: not-your-turn
-      message: It is not your turn; resubmit at the expected ply.
-      expectedPly: 5
+    examples:
+      notYourTurn:
+        summary: Stale, duplicate, or out-of-order ply (CAS miss)
+        value:
+          error: not-your-turn
+          message: It is not your turn; resubmit at the expected ply.
+          expectedPly: 5
+      gameFinished:
+        summary: Move submitted to a game that has already ended
+        value:
+          error: game-finished
+          message: This game has already finished.

@@ -1,0 +1,32 @@
+description: >-
+  The batch request was well-formed but cannot be created, for one of two
+  reasons:
+
+
+  - **`invalid-time-control`**: the shared `timeControl` is not a usable time
+    control (for example a `turn` mode with a zero budget, or values outside the
+    range the server allows).
+
+
+  - **`invalid-pairing`**: a pairing names an account that is unknown or is not a
+    bot account. Batch creation is all-or-nothing: the server validates every
+    pairing first, and on any bad account it creates no games and returns the
+    offending account id(s) in `accounts`.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    examples:
+      invalidPairing:
+        summary: A pairing names an unknown or non-bot account
+        value:
+          error: invalid-pairing
+          message: One or more pairings name an unknown or non-bot account; no games were created.
+          accounts:
+            - ghostbot
+            - not_a_bot
+      invalidTimeControl:
+        summary: The shared time control is not usable
+        value:
+          error: invalid-time-control
+          message: time control is not usable; a turn budget must leave playable time.

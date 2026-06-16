@@ -5,6 +5,12 @@ post:
     Declines the challenge `challengeId`. The challenger receives a
     `challengeDeclined` event. An optional `reason` lets the challenger's bot
     decide whether to re-challenge with different terms.
+
+
+    Only a still-pending challenge can be declined. A challenge that has already
+    been accepted, declined, or canceled is no longer pending and is reported as
+    `404`; the bot reconciles such a terminal state from the `challengeDeclined`
+    or `challengeCanceled` event on its global stream rather than from this call.
   tags:
     - Challenge
   parameters:

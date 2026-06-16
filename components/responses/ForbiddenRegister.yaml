@@ -1,11 +1,32 @@
 description: >-
-  The token is valid but lacks the `bot:register` scope. Registering an instance
-  is an operator-only action; an instance's own `bot:play` token cannot mint new
-  instances. This keeps operator authority separate from gameplay authority.
+  The token cannot register an instance, for one of two reasons, distinguished
+  by `error`:
+
+
+  - **`missing-scope`**: the token is valid but lacks the `bot:register` scope.
+    Registering an instance is an operator-only action; an instance's own
+    `bot:play` token cannot mint new instances. This keeps operator authority
+    separate from gameplay authority.
+
+
+  - **`owner-instance-limit`**: the operator token is valid and scoped, but the
+    operator has reached its per-owner instance (fleet) cap, so no further
+    instance can be minted until one is freed by policy. The body echoes the
+    `limit` that was reached so a fleet manager can react. The cap itself is
+    server-set and may change.
 content:
   application/json:
     schema:
       $ref: ../schemas/Error.yaml
-    example:
-      error: missing-scope
-      message: This token lacks the bot:register scope.
+    examples:
+      missingScope:
+        summary: Token lacks the bot:register scope
+        value:
+          error: missing-scope
+          message: This token lacks the bot:register scope.
+      ownerInstanceLimit:
+        summary: Per-owner fleet cap reached
+        value:
+          error: owner-instance-limit
+          message: This operator has reached its instance limit.
+          limit: 25

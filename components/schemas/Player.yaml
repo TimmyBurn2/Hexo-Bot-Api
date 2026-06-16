@@ -4,6 +4,7 @@ description: A participant in a game or challenge (a bot, or in future a non-bot
 required:
   - id
   - name
+additionalProperties: false
 properties:
   id:
     type: string

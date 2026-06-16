@@ -7,20 +7,33 @@ post:
 
 
     The `ply` is a compare-and-set token: the move is applied only if `ply`
-    equals the server's next expected ply. This makes the write **idempotent**,
-    safe to retry over a flaky network without risk of double-applying.
+    equals the server's next expected ply. This makes the write **retry-safe
+    (no double-apply)**: resubmitting after a flaky-network timeout cannot apply
+    the turn twice, because the second submit's `ply` no longer matches the
+    expected ply once the first has landed.
+
+
+    **A compound turn is applied atomically.** Both stones land together or
+    neither does. A `422` (illegal placement) applies *neither* stone and leaves
+    the expected ply unchanged, so the correct recovery is to choose a legal pair
+    and resubmit *both* stones at the same `ply`.
 
 
     Error contract:
 
-    - **`409 not-your-turn`**: stale, duplicate, or out-of-order `ply` (CAS
-      miss). No move applied; the body carries the authoritative `expectedPly`
-      so the bot can resynchronise and resubmit deterministically.
+    - **`409`**: the request conflicts with the game's current state, in one of
+      two ways. `not-your-turn` is a stale, duplicate, or out-of-order `ply`
+      (CAS miss): no move was applied, and the body carries the authoritative
+      `expectedPly` so the bot can resynchronise and resubmit deterministically.
+      `game-finished` means the game exists but has already ended, so no further
+      move is accepted; a finished game is reported here, never as `404`.
 
     - **`422`**: it was your turn but the move is illegal: a cell is
       `occupied`, the wrong number of stones was sent (`wrong-stone-count`: a
       submitted turn requires exactly 2 stones), or the placement is otherwise
-      rejected. The body carries the offending `stone` when applicable.
+      rejected. The body carries the offending `stone` when applicable. Because
+      the turn is atomic, a `422` places neither stone; resubmit both at the
+      same `ply`.
   tags:
     - Bot
   parameters:
