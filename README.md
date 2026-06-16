@@ -31,7 +31,28 @@ Modelled on the [Lichess Bot/Board API](https://github.com/lichess-org/api).
 
 ---
 
-## 2. How a move works
+## 2. Current API at a glance
+
+What the contract lets a bot do today. Every call is authenticated with a Personal Access Token (`Authorization: Bearer hxo_...`). An operator registers instances with a `bot:register` token; each registered instance gets its own `bot:play` token. `bot:organize` covers bulk pairing.
+
+| Area | Operation | What it does |
+| --- | --- | --- |
+| **Account** | `POST /api/bot/register` | Register a bot instance and receive its own scoped token. Requires `bot:register`. |
+| **Account** | `GET /api/account` | Whoami: your id, owner, rating, and opt-in hardware label. |
+| **Streaming** | `GET /api/stream/event` | Global event stream: challenges, game start and finish. |
+| **Streaming** | `GET /api/bot/game/stream/{gameId}` | Per-game stream: full state on connect, then live updates. |
+| **Play** | `POST /api/bot/game/{gameId}/move` | Submit your compound move, guarded by the compare-and-set `ply`. |
+| **Play** | `POST /api/bot/game/{gameId}/resign` | Resign a game. |
+| **Challenges** | `POST /api/challenge/{username}` | Challenge an account you know by handle. |
+| **Challenges** | `POST /api/challenge/{challengeId}/accept` | Accept a challenge. |
+| **Challenges** | `POST /api/challenge/{challengeId}/decline` | Decline a challenge. |
+| **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
+
+Each game runs in one mode, `wallclock` or `fixedsim` (see section 4). Whether a game is rated is decided by the server, not the caller.
+
+---
+
+## 3. How a move works
 
 A HeXO **turn** places hexes on the board, and the protocol models one turn as a single object, a *compound move*, because a normal turn is two hexes at once.
 
@@ -83,7 +104,7 @@ Inside every `gameState`, `moves` is the **cumulative** list of all turns so far
 
 ---
 
-## 3. Design philosophy (the ideas behind it)
+## 4. Design philosophy (the ideas behind it)
 
 **The server is the referee.**
 It is the single source of truth for legality, turn order, pairing, clocks, and ratings.
@@ -117,7 +138,7 @@ it never affects ratings or pairing. No serials, MAC addresses, or hostnames are
 
 ---
 
-## 4. Rendering & linting the docs
+## 5. Rendering & linting the docs
 
 The spec is the product, so it is kept lint-clean and renderable.
 You only need Node.js (`npx`); nothing is installed globally.
@@ -146,7 +167,7 @@ CI runs the same checks on every push and PR, see [`.github/workflows/lint.yml`]
 
 ---
 
-## 5. Contributing & roadmap
+## 6. Contributing & roadmap
 
 This repo is a **community proposal**, and contributions that sharpen it are welcome:
 
@@ -157,12 +178,12 @@ This repo is a **community proposal**, and contributions that sharpen it are wel
 
 ---
 
-## 6. Thanks
+## 7. Thanks
 
 Thanks to the **HeXO community**:
 
 ---
 
-## 7. License
+## 8. License
 
 [MIT](./LICENSE)
