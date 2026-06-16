@@ -2,9 +2,9 @@ post:
   operationId: createChallenge
   summary: Challenge another account to a game
   description: >-
-    Creates a challenge from the authenticated bot to `username`. The challenged
-    account receives a `challenge` event on its global stream and may accept or
-    decline.
+    Creates a challenge from the authenticated bot to the account named by the
+    `handle` path parameter. The challenged account receives a `challenge` event
+    on its global stream and may accept or decline.
 
 
     **Rated-ness is server-authoritative.** The caller does not request it: the
@@ -27,10 +27,10 @@ post:
   tags:
     - Challenge
   parameters:
-    - name: username
+    - name: handle
       in: path
       required: true
-      description: The account id to challenge (e.g. `sealbot`).
+      description: The target account's permanent handle (its `id`), e.g. `sealbot`.
       schema:
         type: string
       example: sealbot

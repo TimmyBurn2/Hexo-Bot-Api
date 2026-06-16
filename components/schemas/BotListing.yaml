@@ -1,0 +1,66 @@
+type: object
+title: BotListing
+description: >-
+  One entry in the public bot roster (`GET /api/bots`). A directory-display view
+  of a registered instance: its permanent handle, display name, owning operator,
+  and optional rating and hardware label. It is a separate schema from `Player`
+  (which is embedded in every challenge and game event and must stay minimal) and
+  from `BotInstance` (the register/whoami unit, which also fronts the instance's
+  own token surface). A listing is static identity only: no presence, no activity,
+  no timestamps, so it adds no temporal signal. It does, by design, make the
+  operator link public: the `owner` field lets any caller see which instances
+  belong to one operator. That linkage is intentional, since same-owner games are
+  always unrated and that relationship is meant to be visible.
+required:
+  - id
+  - name
+  - owner
+additionalProperties: false
+properties:
+  id:
+    type: string
+    description: >-
+      Permanent, unique handle (the account `id` used everywhere else as a
+      `Player.id`). Feed it directly to `POST /api/challenge/{handle}`. Lowercased
+      ASCII, `^[a-z0-9_]{3,20}$`. Never reused, so a cursor ordered by this field
+      is stable across registrations and retirements.
+    pattern: "^[a-z0-9_]{3,20}$"
+    example: krakenbot
+  name:
+    type: string
+    description: Display name. Falls back to the handle when none was set at registration.
+    example: KrakenBot
+  owner:
+    type: string
+    description: >-
+      Opaque, server-assigned identifier of the operator that runs this instance:
+      stable, one per operator, never reassigned, so two instances of the same
+      operator carry a byte-identical value. Carries no personal data (it is not a
+      Discord handle, email, or address). It is public to any caller, so the
+      roster reveals which instances share an operator; it exposes no further
+      operator data than this opaque linkage.
+    pattern: "^[A-Za-z0-9_]{3,40}$"
+    example: op_7Qm2Kx
+  rating:
+    type: integer
+    format: int32
+    description: >-
+      Current ladder rating for the active variant. Absent for a brand-new,
+      unrated instance (optional-absent, never `null`).
+    example: 1500
+  hardware:
+    description: >-
+      Opt-in, coarse hardware self-report. **Label only, never affects rating or
+      pairing.** Present only if the operator opted in at registration; the same
+      coarse self-report already carried on `Player`, so the roster exposes
+      nothing finer than gameplay already does.
+    $ref: ./HardwareInfo.yaml
+example:
+  id: krakenbot
+  name: KrakenBot
+  owner: op_7Qm2Kx
+  rating: 1500
+  hardware:
+    gpu: consumer
+    cpu_cores: 16
+    ram_gb: 64
