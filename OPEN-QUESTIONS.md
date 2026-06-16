@@ -37,18 +37,24 @@ itself supports a draw by mutual agreement after 50 turns
 (`DRAW_REQUEST_MIN_TURNS`). Confirm bots stay draw-free, or decide to expose the
 draw action.
 
-## 5. Tournament fairness for bulk pairing
+## 5. Tournament fairness for bulk pairing (resolved)
 
-Whether bulk pairing should balance who opens, so each bot plays Player 1 at
-least once across a batch. A fixed minimum-match rule is likely not the right
-mechanism, so the exact approach is unbaked. `firstPlayer` on a single challenge
-is a per-game request, not a batch-level fairness guarantee.
+**Resolved: the contract stops at per-game opener choice; batch opener-fairness
+is server-side.** Per-game `firstPlayer` (on a single challenge) and the explicit
+`p1` per pairing (in a batch) are the only opener controls the contract exposes.
+Balancing who opens across a batch, so each bot plays Player 1 its share, is
+server-side pairing policy, not a contract feature; it is recorded as a server
+expectation in `SERVER-NOTES.md`. Whether opening is actually an advantage is a
+backend measurement, not a contract claim.
 
-## 6. Bulk pairing vs the server's tournament subsystem
+## 6. Bulk pairing vs the server's tournament subsystem (resolved)
 
-The server already has a tournament subsystem (Swiss + bracket). Does the spec's
-`bulk-pairing` duplicate server-owned tournament logic, and should it instead
-expose the existing system rather than carry its own pairing surface?
+**Resolved: `bulk-pairing` is a batch seeder, not a tournament engine, so it does
+not duplicate the server subsystem.** It only materializes an explicit,
+caller-supplied list of pairings; it does not compute pairings, run rounds, or
+track standings, which stay the server's tournament concern (Swiss + bracket).
+The two sit on opposite sides of that boundary, and the boundary is now stated in
+the `bulk-pairing` description.
 
 ## 7. Challenge-cancel endpoint + event (resolved)
 
@@ -82,7 +88,14 @@ Items deferred from the first proposal:
     set, option D below), where every attempt is exchangeable and the Wilson
     lower bound is a clean, calibrated score.
   - **Implementation summary** (original Glicko, glicko.net):
-    - New or unrated bot: rating 1500, RD 350.
+    - New or unrated bot: rating 1000, RD 350. The starting rating matches the
+      HeXO server's player ladder (players start at 1000), not Glickman's
+      conventional 1500: the rated-for-bot-only anchor (option B) pulls bots onto
+      the player scale, so the two must share one zero point and one estimator
+      (the "one scale and one estimator" option-B consequence above). The scale
+      spacing (`q = ln(10)/400`, a 400-point gap = 10:1 odds) and all the RD math
+      below are independent of the zero point and unchanged; only the starting
+      rating differs from the textbook default.
     - Outcomes are win or loss only (bots are draw-free), so `s` is in {1, 0}.
     - A rating period groups its games as simultaneous; the paper recommends
       roughly 5 to 10 games per player per period, which maps naturally to a
@@ -110,9 +123,14 @@ Items deferred from the first proposal:
   - **(resolved) Provisional handling.** A rating is provisional while its RD is
     above a threshold (around 110) and becomes established after enough games
     (roughly 15 to 20), with provisional ratings moving in larger steps. This
-    mirrors common practice (for example Lichess). The only contract-visible
-    sliver this implies is a possible future optional `provisional` flag on the
-    rating; it is not added in this pass.
+    mirrors common practice (for example Lichess). The one contract-visible
+    sliver this implies is an optional, server-derived `provisional` boolean on
+    the rating (`Player`, `BotInstance`, `BotListing`): `true` while RD is above
+    the provisional threshold, omitted or `false` once established;
+    server-authoritative and read-only like `rating`. It is informational only
+    and does **not** gate matchmaking or rated-ness, a provisional bot still
+    rates normally. Gated on the server emitting RD-based provisional status: a
+    ready-to-add field, not added to the contract in this pass.
   - **The anchor question (still open).** A bot round-robin yields only *relative* ratings:
     a closed pool free-floats, its zero point arbitrary and comparable to
     nothing external. Pinning the scale to anything outside the pool needs
@@ -132,9 +150,11 @@ Items deferred from the first proposal:
         does not catch this, since the player is not owner-linked. Candidate
         mitigations: count only games versus established low-RD players, cap
         gain per opponent, rate-limit.
-      - It contradicts the current baseline that player-vs-bot games are unrated
-        exhibitions. Pick one: fully unrated (no anchor), or rated-for-bot-only
-        (accept the asymmetry and its costs).
+      - It revises the earlier baseline that player-vs-bot games are unrated
+        exhibitions. **Resolved: rated-for-bot-only** (the bot's rating updates,
+        the player's does not), accepting the asymmetry and its costs. The
+        asymmetry itself and the farming mitigations still need server-side
+        specification.
     - **C. Calibrated reference bot as anchor.** One declared-strength
       reference bot fixes the zero; the round-robin propagates from it. No
       players, no asymmetry, no farming surface. Costs: partially reopens the
@@ -151,17 +171,34 @@ Items deferred from the first proposal:
       ladders at once (a bridge). Each combination inherits the costs of its
       parts.
   - Holds for any choice here: on its own the single time-control ladder is
-    relative-only. Player cross-play (option B) is the live path that would tie
-    it to an external player scale through direct play; options C and D anchor
-    it without players. None is chosen here.
-  - Dependency: options A, C, and D are decidable now. Option B and any other
-    player-anchoring path are gated on the **Player-vs-bot play** item below
-    (whether players belong in the rated loop at all); settle that first.
+    relative-only. Player cross-play (option B) is now the **selected live anchor
+    path**: with player-vs-bot games rated-for-bot-only (resolved above), a bot's
+    rating updates from its games against established players while the player's
+    rating is held fixed, pulling bots onto the player scale. Options C and D
+    remain available to anchor without players and are not foreclosed.
+  - The gate is lifted, not the whole design. Option B was gated on the
+    **Player-vs-bot play** item below (whether players belong in the rated loop
+    at all); rated-for-bot-only settles that yes-for-the-bot, so options A, C, and
+    D are still decidable now and B is live. Still open within B: the one-sided
+    update asymmetry and the anti-farming mitigations (count only established
+    low-RD players, cap gain per opponent, rate-limit) are unspecified. They are
+    server-side and recorded in `SERVER-NOTES.md`. So the anchor is no longer
+    free-floating in principle, but its full design is not finished.
 - Handle re-layering (stable id vs display handle changes over time).
 - Bot concurrency: the precise meaning of `openForChallenge` when an instance is
   already in one or more games.
-- Player-vs-bot play.
-- Moderation (reporting, bans, abuse handling).
+- **Player-vs-bot play.** How a player reaches a bot from the website (the entry
+  path) is open and mostly server/web policy: from the bot's wire view a player
+  challenge is identical to a bot one (a `Player` in the challenger slot without
+  `title: BOT`), so the contract surface does not change. The one
+  contract-relevant decision inside it, rated-ness, is settled: player-vs-bot
+  games are **rated-for-bot-only** (see the anchor entry above), which selects
+  player cross-play as the live anchor path.
+- **Moderation (parked, not addressed this pass).** Covers report, force-reset,
+  owner ban, and Sybil resistance (per-owner registration caps, account-age
+  gates, rate limits). Pulled forward by the multi-instance pattern, which widens
+  the Sybil surface (one owner, many instances), and loosely gated on identity
+  (handle re-layering) and operator-granting. Not designed here.
 - Engine brand / self-description fields. **Partially resolved:** an opt-in,
   label-only `engineDescription` (short free text, cosmetic) now ships on
   registration and the roster; richer structured brand metadata stays deferred.
