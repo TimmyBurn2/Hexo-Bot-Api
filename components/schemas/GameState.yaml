@@ -25,7 +25,10 @@ properties:
     description: Turns played so far (`moves.length`). The next expected submit `ply` equals this value.
   time:
     type: object
-    description: Remaining clock per side, in **milliseconds**.
+    description: >-
+      Remaining time per side, in **milliseconds**. Semantics follow the active
+      time-control mode: the remaining per-turn budget under `turn`, remaining
+      main time under `match`, and not enforced under `unlimited`.
     additionalProperties: false
     required:
       - p1

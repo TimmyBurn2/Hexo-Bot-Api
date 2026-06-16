@@ -17,7 +17,7 @@ post:
     on separate authority.
 
 
-    Every game in the batch shares the same `variant` and `clock` (real-time
+    Every game in the batch shares the same `variant` and `timeControl` (time
     control). The `rated` field is the organizer's **requested default**; the
     server remains the referee and forces any **same-owner** pairing to
     `rated: false` (enforced via the forthcoming `owner` link). The authoritative
@@ -35,7 +35,7 @@ post:
           required:
             - pairings
             - variant
-            - clock
+            - timeControl
           properties:
             pairings:
               type: array
@@ -50,7 +50,7 @@ post:
                 properties:
                   p1:
                     type: string
-                    description: Account id to play Player 1 (opens with the single centre hex).
+                    description: Account id to play Player 1 (the side of the server's auto-played opening hex).
                   p2:
                     type: string
                     description: Account id to play Player 2.
@@ -63,18 +63,19 @@ post:
                 `false`. The server forces same-owner pairings to `false`
                 regardless; the authoritative per-game value is returned in the
                 response `games`.
-            clock:
-              description: Real-time control (`initial` + `inc`, ms) for every game in the batch.
-              $ref: ../components/schemas/Clock.yaml
+            timeControl:
+              description: Time control (`unlimited`, `turn`, or `match`) for every game in the batch.
+              $ref: ../components/schemas/TimeControl.yaml
         example:
           pairings:
             - { p1: krakenbot, p2: sealbot }
             - { p1: sealbot, p2: krakenbot }
           variant: httt6
           rated: true
-          clock:
-            initial: 300000
-            inc: 2000
+          timeControl:
+            mode: match
+            mainTimeMs: 300000
+            incrementMs: 2000
   responses:
     "200":
       description: The batch was created; games are starting.
@@ -125,6 +126,6 @@ post:
     "403":
       $ref: ../components/responses/ForbiddenOrganizer.yaml
     "422":
-      $ref: ../components/responses/InvalidClock.yaml
+      $ref: ../components/responses/InvalidTimeControl.yaml
     "429":
       $ref: ../components/responses/TooManyRequests.yaml

@@ -1,0 +1,37 @@
+post:
+  operationId: cancelChallenge
+  summary: Cancel a challenge you issued
+  description: >-
+    Cancels the still-pending challenge `challengeId` that the authenticated
+    account issued. The challenged account receives a `challengeCanceled` event
+    on its global stream so it learns the challenge is gone. Only the challenger
+    may cancel, and only while the challenge is still pending: a challenge that
+    has already been accepted, declined, or cancelled is no longer pending and
+    is reported as `404`.
+  tags:
+    - Challenge
+  parameters:
+    - name: challengeId
+      in: path
+      required: true
+      description: The challenge id (from the `challenge` event's `challenge.id`).
+      schema:
+        type: string
+      example: aXbY12cd
+  responses:
+    "200":
+      description: The challenge was cancelled.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml
