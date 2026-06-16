@@ -41,6 +41,52 @@ whether rated-ness should be fully server-decided like single challenges.
 Items deferred from the first proposal:
 
 - Rating internals (formula, provisional handling, deviation).
+  - **The anchor question.** A bot round-robin yields only *relative* ratings:
+    a closed pool free-floats, its zero point arbitrary and comparable to
+    nothing external. Pinning the scale to anything outside the pool needs
+    exactly one anchor. Which anchor is open; the options below, none chosen:
+    - **A. Closed pool, round-robin only.** Simplest. Ratings are internally
+      consistent but externally meaningless: no claim about absolute strength.
+    - **B. Human cross-play as anchor.** A bot's rating updates from its games
+      against humans while the human's rating is unaffected, pulling bots onto
+      the human scale. Consequences:
+      - A one-sided update, where the bot moves and the human does not, is not
+        Elo-conservative. It is defensible only as a one-directional pull
+        toward a frozen, trusted reference, not as symmetric play.
+      - It applies only to the wallclock (Glicko-style) ladder. Humans cannot
+        honor a per-move `simBudget`, so the fixedsim ladder cannot anchor to
+        humans through direct play.
+      - It assumes humans and bots share one scale and one estimator, else
+        equal numbers are not comparable.
+      - Farming and collusion surface: pumping a bot off weak or provisional
+        humans, or a confederate dumping games. The same-owner-unrated rule
+        does not catch this, since the human is not owner-linked. Candidate
+        mitigations: count only games versus established low-RD humans, cap
+        gain per opponent, rate-limit.
+      - It contradicts the current baseline that human-vs-bot games are unrated
+        exhibitions. Pick one: fully unrated (no anchor), or rated-for-bot-only
+        (accept the asymmetry and its costs).
+    - **C. Calibrated reference bot as anchor.** One declared-strength
+      reference bot fixes the zero; the round-robin propagates from it. No
+      humans, no asymmetry, no farming surface. Costs: partially reopens the
+      stance that no engine entity carries trust or rating leverage, and it
+      requires trusting the reference's declared strength.
+    - **D. Fixed external benchmark as anchor.** A frozen position or puzzle
+      set of known difficulty fixes the zero; scores against it are
+      hardware-neutral and need neither humans nor a trusted reference bot.
+      Costs: the benchmark must be built and frozen, and a static set can be
+      overfit, decaying as an anchor as engines train against it.
+    - These can combine: a reference bot or benchmark can fix the zero while
+      occasional human cross-play calibrates it (hybrid), and a ladder with no
+      direct anchor can borrow one transitively through bots rated on two
+      ladders at once (a bridge). Each combination inherits the costs of its
+      parts.
+  - Holds for any choice here: on its own the fixedsim ladder is relative-only.
+    Relating it to the wallclock or human scale needs a separate bridge or a
+    shared external benchmark, neither assumed here.
+  - Dependency: options A, C, and D are decidable now. Option B and any other
+    human-anchoring path are gated on the **Human-vs-bot play** item below
+    (whether humans belong in the rated loop at all); settle that first.
 - Handle re-layering (stable id vs display handle changes over time).
 - Bot concurrency: the precise meaning of `openForChallenge` when an instance is
   already in one or more games.
