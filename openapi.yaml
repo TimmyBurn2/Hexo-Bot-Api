@@ -46,8 +46,8 @@ info:
 
     - `unlimited`: no time limit.
     - `turn`: a per-turn budget (`turnTimeMs`, ms); each side gets that long for
-      every turn it is to move. This is the **server default** (45000 ms), the
-      per-move-budget mode.
+      every turn it is to move. The per-move-budget mode, fine-grained and
+      sub-second capable for bots (500 ms default, 45000 ms ceiling).
     - `match`: a whole-game clock per side (`mainTimeMs` + `incrementMs`, ms).
 
     Under `turn` and `match`, the clock measures the whole engine, speed
