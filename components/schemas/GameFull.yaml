@@ -2,7 +2,9 @@ type: object
 title: GameFull
 description: >-
   First line on the per-game stream. Complete snapshot: players, variant,
-  clock, and current `state` (with cumulative move list).
+  clock, and current `state` (with cumulative move list). The first snapshot
+  already contains the server's auto-played opening as the ply-0 entry, so its
+  `state.ply` is `1` with `p2` to move.
 required:
   - type
   - id
@@ -33,10 +35,10 @@ properties:
       - p2
     properties:
       p1:
-        description: Player 1 (moves first; opens with a single hex at the centre).
+        description: Player 1 (the side of the auto-played opening centre hex).
         $ref: ./Player.yaml
       p2:
-        description: Player 2.
+        description: Player 2 (makes the first submitted turn).
         $ref: ./Player.yaml
   rated:
     type: boolean
@@ -71,8 +73,9 @@ example:
     incrementMs: 2000
   state:
     type: gameState
-    moves: []
-    ply: 0
+    moves:
+      - { p: p1, s: [[0, 0]] }
+    ply: 1
     time:
       p1: 300000
       p2: 300000

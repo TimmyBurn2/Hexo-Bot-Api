@@ -65,8 +65,9 @@ get:
                   incrementMs: 2000
                 state:
                   type: gameState
-                  moves: []
-                  ply: 0
+                  moves:
+                    - { p: p1, s: [[0, 0]] }
+                  ply: 1
                   time:
                     p1: 300000
                     p2: 300000
@@ -80,8 +81,8 @@ get:
                   - { p: p2, s: [[0, 1], [1, 1]] }
                 ply: 2
                 time:
-                  p1: 299000
-                  p2: 298500
+                  p1: 300000
+                  p2: 299500
                 status: started
     "401":
       $ref: ../components/responses/Unauthorized.yaml

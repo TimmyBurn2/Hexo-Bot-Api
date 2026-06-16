@@ -17,7 +17,7 @@ post:
     on separate authority.
 
 
-    Every game in the batch shares the same `variant` and `clock` (real-time
+    Every game in the batch shares the same `variant` and `clock` (time
     control). The `rated` field is the organizer's **requested default**; the
     server remains the referee and forces any **same-owner** pairing to
     `rated: false` (enforced via the forthcoming `owner` link). The authoritative
@@ -50,7 +50,7 @@ post:
                 properties:
                   p1:
                     type: string
-                    description: Account id to play Player 1 (opens with the single centre hex).
+                    description: Account id to play Player 1 (the side of the server's auto-played opening hex).
                   p2:
                     type: string
                     description: Account id to play Player 2.
