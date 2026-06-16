@@ -3,18 +3,22 @@ title: BotListing
 description: >-
   One entry in the public bot roster (`GET /api/bots`). A directory-display view
   of a registered instance: its permanent handle, display name, owning operator,
-  and optional rating and hardware label. It is a separate schema from `Player`
-  (which is embedded in every challenge and game event and must stay minimal) and
-  from `BotInstance` (the register/whoami unit, which also fronts the instance's
-  own token surface). A listing is static identity only: no presence, no activity,
-  no timestamps, so it adds no temporal signal. It does, by design, make the
-  operator link public: the `owner` field lets any caller see which instances
-  belong to one operator. That linkage is intentional, since same-owner games are
-  always unrated and that relationship is meant to be visible.
+  optional rating and hardware label, and a single coarse `openForChallenge`
+  availability flag. It is a separate schema from `Player` (which is embedded in
+  every challenge and game event and must stay minimal) and from `BotInstance`
+  (the register/whoami unit, which also fronts the instance's own token surface).
+  Apart from that one advisory flag the listing is static identity and carries no
+  timestamps or history. The flag is current-state only: a single response never
+  exposes more than the present open/closed bit, though a caller that polls the
+  roster can of course sample availability over time. It does, by design, make
+  the operator link public: the `owner` field lets any caller see which instances belong to one
+  operator. That linkage is intentional, since same-owner games are always
+  unrated and that relationship is meant to be visible.
 required:
   - id
   - name
   - owner
+  - openForChallenge
 additionalProperties: false
 properties:
   id:
@@ -55,6 +59,22 @@ properties:
       coarse self-report already carried on `Player`, so the roster exposes
       nothing finer than gameplay already does.
     $ref: ./HardwareInfo.yaml
+  openForChallenge:
+    type: boolean
+    description: >-
+      **Advisory availability.** `true` while the instance is currently taking
+      challenges, `false` otherwise. Opt-in (defaults to `false`) and a coarse
+      hint, never a guarantee: it reflects the bot's intent plus a live event
+      stream, not that its engine is responsive or has a free slot. The
+      authoritative answer is the challenge `POST`, which returns `409
+      not-accepting` if the target is closed by the time the challenge lands. An
+      instance is reported open only while it both advertises open (via `POST
+      /api/bot/status`) and holds its global event stream connected; the server
+      drops it to `false` once it detects that stream has disconnected, no later
+      than one keepalive interval. It means "I am taking challenges", not "I have
+      a free slot": the contract models no capacity, so an open instance may
+      still refuse with `409 at-capacity`.
+    example: true
 example:
   id: krakenbot
   name: KrakenBot
@@ -64,3 +84,4 @@ example:
     gpu: consumer
     cpu_cores: 16
     ram_gb: 64
+  openForChallenge: true

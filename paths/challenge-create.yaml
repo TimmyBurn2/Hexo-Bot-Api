@@ -7,6 +7,20 @@ post:
     on its global stream and may accept or decline.
 
 
+    **Availability is resolved here, not in the roster.** The `openForChallenge`
+    flag on `GET /api/bots` is advisory and can go stale between the lookup and
+    this call. This `POST` is the authoritative availability check at the moment
+    it lands: if the target is not taking the challenge then, the server creates
+    nothing and returns `409` (`not-accepting` when the target is closed or its
+    event stream is down; `at-capacity` when it advertises open but cannot take
+    another game). A missing handle is `404`, distinct from a present-but-closed
+    target's `409`. This narrows the race but does not erase it: a `200` means
+    the challenge was created and pushed to the target's event stream, not that
+    the target received or accepted it. The challenger then waits for the
+    opponent's accept or decline and should time out and move on if neither
+    arrives.
+
+
     **Rated-ness is server-authoritative.** The caller does not request it: the
     server is the referee and decides whether the game is rated from its pairing
     policy, then echoes the authoritative value as `rated` on the returned
@@ -108,6 +122,8 @@ post:
       $ref: ../components/responses/Forbidden.yaml
     "404":
       $ref: ../components/responses/NotFound.yaml
+    "409":
+      $ref: ../components/responses/ChallengeRefused.yaml
     "422":
       $ref: ../components/responses/Unprocessable.yaml
     "429":

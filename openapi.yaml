@@ -86,14 +86,16 @@ tags:
       per-game stream closes once the game reaches a terminal status. Both send
       a blank line as a keepalive.
   - name: Bot
-    description: "Bot-only gameplay: streaming a game, submitting moves, resigning."
+    description: "Bot-only operations: advertising challenge availability, streaming a game, submitting moves, resigning."
   - name: Challenge
     description: Creating, accepting, and declining challenges (and bulk pairings).
   - name: Directory
     description: >-
       Browse the public bot roster to discover opponents. Read-only and
       paginated; each entry is static identity (handle, display name, owner,
-      optional rating and hardware label) with no presence or activity.
+      optional rating and hardware label) plus a single coarse, advisory,
+      current-state `openForChallenge` flag. No response carries timestamps or
+      history.
 
 paths:
   /api/account:
@@ -102,6 +104,8 @@ paths:
     $ref: ./paths/bot-register.yaml
   /api/bots:
     $ref: ./paths/bots.yaml
+  /api/bot/status:
+    $ref: ./paths/bot-status.yaml
   /api/stream/event:
     $ref: ./paths/stream-event.yaml
   /api/bot/game/stream/{gameId}:
