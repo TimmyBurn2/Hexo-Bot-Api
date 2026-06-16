@@ -39,7 +39,7 @@ function play_game(gameId, mySide):                      # mySide is "p1" or "p2
             for stone in turn.s:                         # 1 stone on ply 0, else 2
                 place(board, turn.p, stone)              # turn.p is "p1" or "p2"
 
-        if status != "started":  return                 # game over (msg.winner has the side)
+        if status != "started":  return                 # finished: msg.finishReason says why, msg.winner the side (null if none)
 
         # Whose turn is it? Player 1 plays even plies, Player 2 odd plies.
         sideToMove = (ply % 2 == 0) ? "p1" : "p2"

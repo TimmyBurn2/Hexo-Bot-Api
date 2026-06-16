@@ -49,8 +49,9 @@ properties:
     type: integer
     format: int32
     description: >-
-      Current ladder rating for the active variant. Absent for a brand-new,
-      unrated instance (optional-absent, never `null`).
+      Current ladder rating for the active variant. Server-authoritative and
+      read-only, never client-set. Absent for a brand-new, unrated instance
+      (optional-absent, never `null`).
     example: 1500
   hardware:
     description: >-

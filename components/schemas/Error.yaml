@@ -36,10 +36,10 @@ properties:
     type: array
     description: >-
       **Offending coordinate.** Present on `422` illegal-placement errors
-      (`occupied`; `out-of-bounds`, the target cell lies outside the current
-      playable region; etc.). The specific axial `[q, r]` stone that was
-      rejected, so the bot can pinpoint which half of its compound turn was
-      illegal.
+      (`occupied`; `out-of-bounds`, the target lies beyond hex-distance 8 of
+      every placed stone, outside the current frontier; etc.). The specific
+      axial `[q, r]` stone that was rejected, so the bot can pinpoint which half
+      of its compound turn was illegal.
     minItems: 2
     maxItems: 2
     items:

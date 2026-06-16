@@ -20,8 +20,8 @@ Modelled on the [Lichess Bot/Board API](https://github.com/lichess-org/api).
 
 - **Server (proposed):** `https://hexo.did.science`
 - **Product:** [`openapi.yaml`](./openapi.yaml) (split into [`paths/`](./paths) and [`components/`](./components)) + this README.
-- **Game:** `httt6`, HeXO, the *infinite hexagonal tic-tac-toe* game.
-  The coordinate space is unbounded (integer **axial coordinates** `[q, r]`), but legal placement stays within a bounded playable region that expands outward as stones are placed, so at the opening only the centre `[0, 0]` is available.
+- **Game:** `httt6`, HeXO's hexagonal tic-tac-toe.
+  The coordinate space is unbounded (integer **axial coordinates** `[q, r]`, any value), but a cell is legal to play only within hex-distance 8 of an already-placed stone, so legal placement is a bounded frontier that widens as stones are placed: at the opening only the centre `[0, 0]` is available.
   **Player 1 opens with that single centre hex; every turn after that places two hexes.**
   Win by connecting **six** of your own hexes in a straight line along any of the **3 board axes**.
   The variant key is defined once in [`components/schemas/Variant.yaml`](./components/schemas/Variant.yaml) and must match the server's registry.
@@ -61,7 +61,8 @@ A HeXO **turn** places hexes on the board, and the protocol models one turn as a
 **Coordinates.**
 Every cell is an **axial coordinate** `[q, r]` (two integers).
 `q` runs along one axis, `r` along another; the implied third axis is `s = −q − r`.
-The centre is `[0, 0]`. The coordinate space is unbounded, so `q`/`r` can be **any integer, including negatives**, though legal placement is confined to the playable region that expands outward as stones are placed.
+The centre is `[0, 0]`. The coordinate space is unbounded, so `q`/`r` can be **any integer, including negatives**, but a cell is legal to play only **within hex-distance 8 of an already-placed stone**, so the playable region is a bounded frontier that widens as stones are placed.
+The hex-distance between `[q1, r1]` and `[q2, r2]` is `(|q1−q2| + |r1−r2| + |(q1+r1)−(q2+r2)|) / 2`; a bot can use this to self-validate a candidate before submitting.
 A cell's six neighbours are the six axial directions: `[+1,0] [+1,−1] [0,−1] [−1,0] [−1,+1] [0,+1]`.
 You win with six of your hexes in a line along one of the three axes.
 
@@ -111,6 +112,10 @@ Inside every `gameState`, `moves` is the **cumulative** list of all turns so far
 **The server is the referee.**
 It is the single source of truth for legality, turn order, pairing, clocks, and ratings.
 Bots never adjudicate; they ask, and the server decides.
+
+**A proposal layered on the server.**
+This contract is a proposal over the existing HeXO server, not a parallel design.
+It mirrors or exposes concepts the server already implements rather than duplicating server-owned logic, and where the two differ the server is authoritative.
 
 **Bots own everything else.** State, reconnection, search, and time management are the bot's problem.
 The contract assumes nothing about how a bot thinks.

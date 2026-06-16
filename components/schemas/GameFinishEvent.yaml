@@ -13,7 +13,9 @@ properties:
     description: Discriminator. Always `gameFinish`.
     const: gameFinish
   game:
-    description: Pointer to the finished game, carrying terminal `status` (and `winner` if decisive).
+    description: >-
+      Pointer to the finished game, carrying `status: finished`, the
+      `finishReason`, and the `winner` when the finish was decisive.
     $ref: ./GameEventInfo.yaml
 example:
   type: gameFinish
@@ -27,5 +29,6 @@ example:
       title: BOT
     variant: httt6
     rated: true
-    status: win
+    status: finished
+    finishReason: six-in-a-row
     winner: p1

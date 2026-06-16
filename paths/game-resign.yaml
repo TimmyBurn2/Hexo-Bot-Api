@@ -1,7 +1,9 @@
 post:
   operationId: resignGame
   summary: Resign a game
-  description: Resigns the game `gameId` on behalf of the authenticated bot. The game ends immediately with the opponent as winner.
+  description: >-
+    Resigns the game `gameId` on behalf of the authenticated bot. The game ends
+    immediately with `finishReason: surrender` and the opponent as `winner`.
   tags:
     - Bot
   parameters:
