@@ -11,10 +11,17 @@ description: >-
   negatives included), but a cell is legal to play only within hex-distance 8
   of an already-placed stone. Legal placement is therefore a bounded frontier
   that widens as stones are placed: at the opening only the centre `[0, 0]` is
-  available, and the region grows outward from each new stone. Player 1 opens
-  with that single centre hex; thereafter each turn places two hexes. **Win by
-  connecting six of your own hexes in a straight line along any of the three
-  board axes.**
+  available, and the region grows outward from each new stone. The server
+  auto-plays the opening single centre hex on Player 1's behalf; every submitted
+  turn places two hexes. **Win by connecting six of your own hexes in a straight
+  line along any of the three board axes.**
+
+
+  The radius-8 frontier is a description of legal placement, not a client-side
+  obligation: the server is the sole authority and rejects an out-of-frontier
+  placement with `422 out-of-bounds`. A bot is responsible for handling that
+  rejection; it may self-validate against the rule before submitting but is not
+  required to.
 
 
   This value **must match the variant key registered on the server**

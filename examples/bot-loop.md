@@ -29,14 +29,16 @@ function play_game(gameId, mySide):                      # mySide is "p1" or "p2
         # Both gameFull and gameState carry the CUMULATIVE move list.
         # Rebuild the board from scratch every time, this is what makes
         # the protocol stateless. A crash + reconnect needs no local memory:
-        # the fresh gameFull replays everything.
+        # the fresh gameFull replays everything. The very first gameFull
+        # already contains the server's auto-played opening (the ply-0 entry),
+        # so even a p1 bot first sees ply 1 with p2 to move.
         moves  = (msg.type == "gameFull") ? msg.state.moves  : msg.moves
         status = (msg.type == "gameFull") ? msg.state.status : msg.status
         ply    = (msg.type == "gameFull") ? msg.state.ply    : msg.ply
 
         board = empty_board()
         for turn in moves:                               # replay, oldest first
-            for stone in turn.s:                         # 1 stone on ply 0, else 2
+            for stone in turn.s:                         # ply-0 opening is 1 (server-placed), else 2
                 place(board, turn.p, stone)              # turn.p is "p1" or "p2"
 
         if status != "started":  return                 # finished: msg.finishReason says why, msg.winner the side (null if none)
@@ -46,10 +48,9 @@ function play_game(gameId, mySide):                      # mySide is "p1" or "p2
         if sideToMove != mySide:  continue               # opponent to move; wait for next line
 
         # ── 3. Search / decide (your engine; this repo says nothing about it)
-        #     The opening turn (ply 0, you are p1) is a SINGLE hex at the centre;
-        #     every later turn is TWO hexes.
-        if ply == 0:  stones = [[0, 0]]                  # forced opening hex
-        else:         stones = choose_two_stones(board, mySide)   # [[q,r],[q,r]]
+        #     Every submitted turn is TWO hexes. The server auto-plays the
+        #     opening centre hex at ply 0, so a bot never submits a single stone.
+        stones = choose_two_stones(board, mySide)        # [[q,r],[q,r]]
 
         # ── 4. Submit with an EXPLICIT ply (compare-and-set / idempotent write)
         submit(gameId, stones, ply)
