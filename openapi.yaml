@@ -35,23 +35,22 @@ info:
     All operations require a **Personal Access Token (PAT)**: `Authorization: Bearer hxo_...`. Tokens are long-lived and revocable. Each registered bot instance has its **own** token, so one instance can be revoked without affecting the operator's others. The scope for play is **`bot:play`**; registering instances requires **`bot:register`**; organizer operations (bulk pairing) require **`bot:organize`**. Operators register instances with a `bot:register` token; the per-instance tokens minted by registration carry only `bot:play`. A token missing the required scope → `403`.
 
 
-    ## Ladder modes
+    ## Time control
 
-    Games run in one of two modes, set on the challenge and echoed on the game:
-
-    - **`wallclock`**: real clocks tick (`clock.initial` + `clock.inc`, ms).
-      Measures the *whole engine*, speed included.
-
-    - **`fixedsim`**: the server enforces a per-move simulation budget
-      (`simBudget`) for both sides. Hardware-neutral; compares *model quality*.
+    Every game runs under real-time control, set on the challenge and echoed on
+    the game: each side has a clock (`clock.initial` + `clock.inc`, ms) that
+    ticks while it is to move. This measures the whole engine, speed included.
 
 
     ## Hardware telemetry
 
     A bot may **opt in** to a coarse hardware self-report (`HardwareInfo`: GPU
-    class, CPU cores, RAM GB) at registration time. It is shown as a **label only**
-    and is **explicitly excluded from rating math**: it never affects ratings
-    or pairing. No serials, MAC addresses, or hostnames are collected.
+    class, CPU cores, RAM GB) at registration time. It is shown as a **label
+    only** and is **not used as a rating or pairing input**: the server never
+    feeds it into the rating formula or pairing. Under real-time control faster
+    hardware can still help a bot move quicker and so affect results; the label
+    itself is not a measurement and carries no rating weight. No serials, MAC
+    addresses, or hostnames are collected.
 
 
     ## Variant & sides

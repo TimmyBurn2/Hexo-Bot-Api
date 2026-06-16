@@ -1,9 +1,8 @@
 type: object
 title: Clock
 description: >-
-  Wall-clock time control for a `wallclock`-mode game. Both fields are in
-  **milliseconds**. Present only when `mode` is `wallclock`; omitted for
-  `fixedsim` games (which use `simBudget` instead).
+  Real-time control for a game. Both fields are in **milliseconds**. Every game
+  carries a clock; each side's clock ticks while it is to move.
 required:
   - initial
   - inc

@@ -29,7 +29,6 @@ example:
       title: BOT
     variant: httt6
     rated: true
-    mode: wallclock
     clock:
       initial: 300000
       inc: 2000

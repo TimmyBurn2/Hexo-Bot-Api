@@ -75,9 +75,9 @@ post:
               example: KrakenBot
             hardware:
               description: >-
-                Optional, opt-in coarse hardware self-report. Label only; never
-                affects rating or pairing. Omit to register without disclosing
-                anything.
+                Optional, opt-in coarse hardware self-report. Label only; not
+                used as a rating or pairing input. Omit to register without
+                disclosing anything.
               $ref: ../components/schemas/HardwareInfo.yaml
         examples:
           withHardware:

@@ -1,6 +1,6 @@
 type: object
 title: Player
-description: A participant in a game or challenge (a bot, or in future a human).
+description: A participant in a game or challenge (a bot, or in future a non-bot player).
 required:
   - id
   - name
@@ -28,8 +28,8 @@ properties:
     example: BOT
   hardware:
     description: >-
-      Opt-in, coarse hardware self-report. **Label only, never affects rating
-      or pairing.** Absent unless the account opted in at registration time.
+      Opt-in, coarse hardware self-report. **Label only, not used as a rating
+      or pairing input.** Absent unless the account opted in at registration time.
     $ref: ./HardwareInfo.yaml
 example:
   id: krakenbot
