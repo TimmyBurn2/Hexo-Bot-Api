@@ -30,7 +30,7 @@ post:
     reason `rated`.
 
 
-    Provide a `clock` (the time control): the game runs under the chosen mode,
+    Provide a `timeControl` (the time control): the game runs under the chosen mode,
     `unlimited`, `turn` (a per-turn budget, the server default), or `match` (a
     main-time-plus-increment clock per side). Under `turn` and `match`, speed is
     part of play.
@@ -53,7 +53,7 @@ post:
           additionalProperties: false
           required:
             - variant
-            - clock
+            - timeControl
           properties:
             variant:
               $ref: ../components/schemas/Variant.yaml
@@ -71,13 +71,13 @@ post:
                 - challengee
                 - random
               default: random
-            clock:
+            timeControl:
               description: Time control for the game (`unlimited`, `turn`, or `match`).
               $ref: ../components/schemas/TimeControl.yaml
         example:
           variant: httt6
           firstPlayer: random
-          clock:
+          timeControl:
             mode: turn
             turnTimeMs: 45000
   responses:
@@ -101,7 +101,7 @@ post:
               title: BOT
             variant: httt6
             rated: true
-            clock:
+            timeControl:
               mode: turn
               turnTimeMs: 45000
             status: created

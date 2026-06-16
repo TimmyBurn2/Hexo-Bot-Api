@@ -15,7 +15,7 @@ self-validation is not made a normative part of the contract.
 
 ## 2. Time-control union (resolved)
 
-**Resolved: union adopted.** The `clock` field is now the server's `TimeControl`
+**Resolved: union adopted.** The `timeControl` field is now the server's `TimeControl`
 union over `mode`: `unlimited`; `turn` (a per-turn cap `turnTimeMs`, the server
 default at 45000 ms); and `match` (`mainTimeMs` + `incrementMs`). The earlier
 single match-style clock (`initial` + `inc`) is replaced, and the

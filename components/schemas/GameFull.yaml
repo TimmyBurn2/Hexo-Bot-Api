@@ -2,7 +2,7 @@ type: object
 title: GameFull
 description: >-
   First line on the per-game stream. Complete snapshot: players, variant,
-  clock, and current `state` (with cumulative move list). The first snapshot
+  time control, and current `state` (with cumulative move list). The first snapshot
   already contains the server's auto-played opening as the ply-0 entry, so its
   `state.ply` is `1` with `p2` to move.
 required:
@@ -11,7 +11,7 @@ required:
   - variant
   - players
   - rated
-  - clock
+  - timeControl
   - state
 additionalProperties: false
 properties:
@@ -45,7 +45,7 @@ properties:
     description: >-
       Whether the result affects ratings. Server-authoritative; the bot reads
       it here (a bulk-paired game has no Challenge object to carry it).
-  clock:
+  timeControl:
     description: Time control for the game (`unlimited`, `turn`, or `match`).
     $ref: ./TimeControl.yaml
   state:
@@ -67,7 +67,7 @@ example:
       rating: 1480
       title: BOT
   rated: true
-  clock:
+  timeControl:
     mode: match
     mainTimeMs: 300000
     incrementMs: 2000

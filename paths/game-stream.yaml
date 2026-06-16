@@ -7,7 +7,7 @@ get:
 
 
     The **first** line is always a `gameFull`, a complete snapshot of the game
-    (players, variant, clock, and the current `state` with the cumulative move
+    (players, variant, time control, and the current `state` with the cumulative move
     list). **Every line thereafter is a `gameState`**, emitted once per ply,
     each carrying the **cumulative** `moves` array (every compound turn so far,
     not a delta).
@@ -59,7 +59,7 @@ get:
                     rating: 1480
                     title: BOT
                 rated: true
-                clock:
+                timeControl:
                   mode: match
                   mainTimeMs: 300000
                   incrementMs: 2000
