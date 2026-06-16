@@ -1,0 +1,11 @@
+description: >-
+  A query parameter was malformed: an unparseable or expired `cursor`, or a
+  filter value (`owner`, `variant`) that failed validation. Fix the parameter and
+  retry; for a stale `cursor`, restart paging from the first page.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: bad-request
+      message: The cursor is malformed or has expired; restart from the first page.
