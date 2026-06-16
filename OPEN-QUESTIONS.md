@@ -66,8 +66,54 @@ whether rated-ness should be fully server-decided like single challenges.
 
 Items deferred from the first proposal:
 
-- Rating internals (formula, provisional handling, deviation).
-  - **The anchor question.** A bot round-robin yields only *relative* ratings:
+- **Rating internals.** The rating model (formula and deviation) and provisional
+  handling are resolved below; the anchor (the scale's zero point) is still open.
+  - **(resolved) Uncertainty model: Glicko rating-deviation (RD).** The original
+    Glicko, not Glicko-2. RD is a per-rating confidence that tightens as a bot
+    plays and widens with inactivity, and it weights opponent strength, which is
+    what the "2/2 versus strong should not outrank 9/10 versus weak" goal needs.
+  - **Glicko-1, not Glicko-2.** Glicko-2 adds a volatility term for erratic
+    performance; that is partly redundant here, since version epochs already
+    model a bot's strength step-changes. Glicko-1 is simpler and sufficient.
+  - **Wilson score is reserved, not the ladder model.** A Wilson score interval
+    scores a raw win rate: it ignores opponent strength and assumes a single
+    fixed win probability, so it breaks the opponent-weighting the ladder needs.
+    Reserve Wilson only for a fixed-benchmark anchor (a frozen puzzle or position
+    set, option D below), where every attempt is exchangeable and the Wilson
+    lower bound is a clean, calibrated score.
+  - **Implementation summary** (original Glicko, glicko.net):
+    - New or unrated bot: rating 1500, RD 350.
+    - Outcomes are win or loss only (bots are draw-free), so `s` is in {1, 0}.
+    - A rating period groups its games as simultaneous; the paper recommends
+      roughly 5 to 10 games per player per period, which maps naturally to a
+      round-robin batch.
+    - Per-period RD inflation for inactivity:
+      `RD = min(sqrt(RD_old^2 + c^2 * t), 350)`, `t` in rating periods. Choose
+      `c` by deciding how many idle periods should return a typical RD to the
+      350 maximum; the paper's worked example gives `c ~= 63.2`.
+    - Update step, with `q = ln(10)/400 = 0.0057565`:
+      - `g(RD) = 1 / sqrt(1 + 3 q^2 RD^2 / pi^2)`
+      - `E = 1 / (1 + 10^(-g(RD_j) (r - r_j) / 400))`
+      - `d^2 = (q^2 * sum_j g(RD_j)^2 E (1 - E))^-1`
+      - `r' = r + (q / (1/RD^2 + 1/d^2)) * sum_j g(RD_j) (s_j - E)`
+      - `RD' = sqrt((1/RD^2 + 1/d^2)^-1)`
+    - The 95% interval is `r +/- 1.96 RD`.
+    - Floor RD at about 30 so a very active bot's rating can still move.
+    - Glicko's update is intrinsically asymmetric (an opponent's change depends
+      on both RDs), which suits the player-anchor path (option B): a bot's rating
+      can update from games versus established players while the player's rating
+      is held fixed, pulling the bot toward the player scale. The option-B
+      caveats below (count only established low-RD players, cap gain per
+      opponent) stay as the anti-farming note.
+    - On a version performance-shift, raise the bot's RD (reopen uncertainty)
+      rather than hard-resetting; this reuses the version-epoch mechanism.
+  - **(resolved) Provisional handling.** A rating is provisional while its RD is
+    above a threshold (around 110) and becomes established after enough games
+    (roughly 15 to 20), with provisional ratings moving in larger steps. This
+    mirrors common practice (for example Lichess). The only contract-visible
+    sliver this implies is a possible future optional `provisional` flag on the
+    rating; it is not added in this pass.
+  - **The anchor question (still open).** A bot round-robin yields only *relative* ratings:
     a closed pool free-floats, its zero point arbitrary and comparable to
     nothing external. Pinning the scale to anything outside the pool needs
     exactly one anchor. Which anchor is open; the options below, none chosen:
