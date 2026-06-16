@@ -1,0 +1,21 @@
+description: >-
+  **Not accepting.** The request was well-formed and authorized, but the target
+  instance is not taking this challenge right now, so none was created. This is
+  the authoritative answer the advisory `openForChallenge` roster flag only
+  hints at: the target may have closed or dropped its event stream after it was
+  listed open. Branch on `error`: `not-accepting` (the target is closed, never
+  advertised open, or its event stream is down, deliberately one code so the
+  roster cannot be probed to tell which) or `at-capacity` (the target advertises
+  open but cannot take another game right now). `at-capacity` is a stable refusal
+  reason only; the contract models no capacity, and a server that does not track
+  it simply never emits it. Unlike the compare-and-set `409` on move submission,
+  this `409` is **not** safe to auto-retry: there is no `expectedPly` to resubmit
+  at and an immediate retry refuses again. Back off and retry later, or pick
+  another opponent from the roster.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: not-accepting
+      message: That bot is not taking challenges right now.

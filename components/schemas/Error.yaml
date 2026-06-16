@@ -13,7 +13,8 @@ properties:
     description: >-
       Stable, machine-readable error code. Known values include:
       `bad-request` (400), `unauthorized` (401), `forbidden` /
-      `missing-scope` (403), `not-found` (404), `not-your-turn` (409),
+      `missing-scope` (403), `not-found` (404), `not-your-turn` /
+      `not-accepting` / `at-capacity` (409),
       `occupied` / `wrong-stone-count` / `out-of-bounds` / `illegal-move`
       (422), `rate-limited` (429).
     example: not-your-turn

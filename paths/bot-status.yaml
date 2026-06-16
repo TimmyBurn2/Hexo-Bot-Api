@@ -1,0 +1,86 @@
+post:
+  operationId: setBotStatus
+  summary: Advertise whether this bot is taking challenges
+  description: >-
+    Sets the authenticated instance's advertised availability: whether it is
+    currently taking challenges. This is the opt-in signal surfaced as
+    `openForChallenge` on the bot roster (`GET /api/bots`) and used by the
+    `openForChallenge` roster filter. Requires `bot:play`. The call is
+    idempotent: posting the same value again is a no-op that returns the current
+    resolved status.
+
+
+    **Advertised intent plus live presence.** The advertised value set here is
+    only half of the reported status. An instance is reported open only while it
+    **both** advertises open here **and** holds at least one global event stream
+    (`GET /api/stream/event`) connected, because that stream is where it would
+    receive the resulting `gameStart`. Once the server detects that the last such
+    stream has disconnected it drops the instance to not-open regardless of the
+    last advertised value; detection is bounded by the stream keepalive interval,
+    not instantaneous, so a vanished bot can still read as open until the next
+    failed keepalive write. A server restart drops every stream and resets every
+    instance to not-open. Order does not matter: advertise before or after
+    opening the stream. After a reconnect the bot re-asserts by posting here
+    again, and **must** read the response's `openForChallenge` (not the `200`
+    status) to learn whether it is actually open, since posting `true` while no
+    event stream is connected returns `false`.
+
+
+    **Advisory only.** This flag never reserves a game, guarantees acceptance, or
+    attests that the engine is responsive. It is a discovery hint; the
+    authoritative answer is the challenge `POST`, which returns `409
+    not-accepting` when the target is closed by the time the challenge lands. The
+    contract models no capacity: open means "I am taking challenges", not "I have
+    a free slot". The roster is ordered by handle, never by availability, so
+    advertising open does not improve placement, and a server may withdraw the
+    advertised flag of an instance that repeatedly refuses challenges.
+  tags:
+    - Bot
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - openForChallenge
+          properties:
+            openForChallenge:
+              type: boolean
+              description: >-
+                Advertise taking challenges (`true`) or not (`false`). Reported
+                open only while a global event stream is connected; cleared once
+                the server detects that stream has gone.
+              example: true
+        example:
+          openForChallenge: true
+  responses:
+    "200":
+      description: The advertised status was recorded; the body carries the resolved live status.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - openForChallenge
+            properties:
+              openForChallenge:
+                type: boolean
+                description: >-
+                  Resolved live status after this call: the advertised value
+                  ANDed with whether the global event stream is currently
+                  connected. `false` here despite posting `true` means the event
+                  stream is not connected.
+                example: true
+          example:
+            openForChallenge: true
+    "400":
+      $ref: ../components/responses/BadRequest.yaml
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

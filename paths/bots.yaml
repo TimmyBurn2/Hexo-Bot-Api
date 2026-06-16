@@ -4,9 +4,11 @@ get:
   description: >-
     Returns a page of the public bot roster so a caller can discover opponents.
     Read-only and callable by any valid token regardless of scope. Each entry is
-    a `BotListing`: static identity only (handle, display name, owner, optional
-    rating and hardware label), with no presence or activity, so the roster
-    cannot be used to time-correlate an operator.
+    a `BotListing`: static identity (handle, display name, owner, optional rating
+    and hardware label) plus a single coarse `openForChallenge` flag. No response
+    carries timestamps or history; the flag is current-state only, so a single
+    page never exposes more than the present open/closed bit per entry, though a
+    caller that polls can sample availability over time.
 
 
     **Ordering and paging.** Results are ordered by `id` (the handle), which is
@@ -18,11 +20,14 @@ get:
     mid-walk: no entry is silently skipped or repeated. No total count is exposed.
 
 
-    **Filters.** Narrow the roster by `variant` (instances serving that variant)
-    and by `owner` (instances run by one operator). A rating-range filter and a
-    presence/accepting filter are deliberately absent here. `owner` matches the
-    opaque, PII-free operator id already shown on each listing, so filtering by it
-    reveals nothing the per-entry `owner` field does not.
+    **Filters.** Narrow the roster by `variant` (instances serving that variant),
+    by `owner` (instances run by one operator), and by `openForChallenge` (only
+    instances currently taking challenges). The `openForChallenge` filter is
+    advisory: it reflects each instance's current flag at query time, which may
+    go stale before a challenge lands, so the challenge `POST` remains the
+    authoritative check. A rating-range filter is deliberately absent. `owner`
+    matches the opaque, PII-free operator id already shown on each listing, so
+    filtering by it reveals nothing the per-entry `owner` field does not.
   tags:
     - Directory
   parameters:
@@ -43,6 +48,18 @@ get:
         type: string
         pattern: "^[A-Za-z0-9_]{3,40}$"
       example: op_7Qm2Kx
+    - name: openForChallenge
+      in: query
+      required: false
+      description: >-
+        Restrict by current availability. `true` returns only instances reported
+        as taking challenges; `false` returns only those not taking challenges;
+        omit to return both. Advisory: the flag is a coarse hint that can go
+        stale before a challenge lands, so a `true` match does not guarantee the
+        challenge will be accepted.
+      schema:
+        type: boolean
+      example: true
     - name: limit
       in: query
       required: false
@@ -98,13 +115,16 @@ get:
                   gpu: consumer
                   cpu_cores: 16
                   ram_gb: 64
+                openForChallenge: true
               - id: nimbusbot
                 name: NimbusBot
                 owner: op_3Hn8Lp
+                openForChallenge: false
               - id: sealbot
                 name: SealBot
                 owner: op_3Hn8Lp
                 rating: 1480
+                openForChallenge: true
             cursor: c_3e8b1a47c0d92f6510aa7b2c
     "400":
       $ref: ../components/responses/BadRequest.yaml
