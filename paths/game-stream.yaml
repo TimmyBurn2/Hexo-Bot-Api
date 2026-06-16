@@ -17,9 +17,8 @@ get:
 
 
     **Keepalive:** a **blank line** (`\n`) is emitted periodically while idle;
-    clients must skip blank lines. **The stream closes** once the game reaches a
-    terminal `status` (`resign`, `win`, `aborted`), unlike the global
-    event stream, this one ends.
+    clients must skip blank lines. **The stream closes** once the game's
+    `status` reaches `finished`, unlike the global event stream, this one ends.
 
 
     Discriminate each line on its `type` field (`gameFull` | `gameState`).

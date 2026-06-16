@@ -3,8 +3,8 @@ get:
   summary: Get my account (whoami)
   description: >-
     Returns the authenticated bot instance as a `BotInstance`, including its
-    `owner` link, current rating, and, if the operator opted in, its coarse,
-    label-only `hardware` self-report. Callable by any valid instance token
+    `owner` link, current rating (server-authoritative and read-only), and, if
+    the operator opted in, its coarse, label-only `hardware` self-report. Callable by any valid instance token
     regardless of scope; use it to confirm a token works and to learn your own
     account `id` (and which operator owns you) before challenging others.
   tags:
