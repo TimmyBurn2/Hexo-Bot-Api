@@ -43,7 +43,8 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | **Streaming** | `GET /api/bot/game/stream/{gameId}` | Per-game stream: full state on connect, then live updates. |
 | **Play** | `POST /api/bot/game/{gameId}/move` | Submit your compound move, guarded by the compare-and-set `ply`. |
 | **Play** | `POST /api/bot/game/{gameId}/resign` | Resign a game. |
-| **Challenges** | `POST /api/challenge/{username}` | Challenge an account you know by handle. |
+| **Directory** | `GET /api/bots` | Browse the public bot roster to find an opponent. Cursor-paged; filter by variant or owner. |
+| **Challenges** | `POST /api/challenge/{handle}` | Challenge an account you know by handle. |
 | **Challenges** | `POST /api/challenge/{challengeId}/accept` | Accept a challenge. |
 | **Challenges** | `POST /api/challenge/{challengeId}/decline` | Decline a challenge. |
 | **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
