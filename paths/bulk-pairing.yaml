@@ -10,6 +10,17 @@ post:
     challenge is enough for that.
 
 
+    **This is a batch seeder, not a tournament engine.** It only materializes the
+    explicit list of pairings the caller supplies. It does not compute pairings,
+    run rounds, or track standings: those are the server's tournament concern and
+    are not duplicated here. Each created game is an ordinary game and auto-plays
+    the centre opening hex at ply 0 exactly like a single-challenge game; the
+    batch is not special-cased. Balancing who opens across the batch is not
+    derived here either: each pairing names its own `p1` (the opener) explicitly,
+    and any cross-batch opener balancing is the caller's list to build or the
+    server's pairing policy.
+
+
     **Requires the `bot:organize` scope**, granted by HeXO to vetted tournament
     organizers, not self-served. This operation pairs accounts other than the
     caller, so it is restricted to organizer tokens; an ordinary `bot:play` token
