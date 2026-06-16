@@ -79,7 +79,7 @@ post:
           firstPlayer: random
           timeControl:
             mode: turn
-            turnTimeMs: 45000
+            turnTimeMs: 500
   responses:
     "200":
       description: The challenge was created.
@@ -103,7 +103,7 @@ post:
             rated: true
             timeControl:
               mode: turn
-              turnTimeMs: 45000
+              turnTimeMs: 500
             status: created
     "401":
       $ref: ../components/responses/Unauthorized.yaml

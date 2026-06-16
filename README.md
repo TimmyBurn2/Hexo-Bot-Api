@@ -132,8 +132,9 @@ Reconnect and receive a fresh `gameFull`, replay and continue. (See [`examples/b
 Nothing depends on any particular bot's internals. **KrakenBot** and **SealBot** in the examples are illustrative only.
 
 **One ladder, one time control per game.** Every game carries a time control set
-on the challenge: `unlimited`, `turn` (a per-turn budget `turnTimeMs`, the server
-default at 45000 ms), or `match` (`mainTimeMs` plus `incrementMs` per side).
+on the challenge: `unlimited`, `turn` (a per-turn budget `turnTimeMs`, fine-grained
+and sub-second capable for bots: 500 ms default, 45000 ms ceiling), or `match`
+(`mainTimeMs` plus `incrementMs` per side).
 Under `turn` or `match`, ratings measure the whole engine, speed included.
 
 **Hardware telemetry is a label.**
