@@ -53,6 +53,15 @@ properties:
       read-only, never client-set. Absent for a brand-new, unrated instance
       (optional-absent, never `null`).
     example: 1500
+  engineDescription:
+    type: string
+    description: >-
+      Opt-in, cosmetic self-report: a short free-text label describing the
+      engine, shown on the roster to keep a multi-instance fleet legible.
+      **Label only, not used as a rating or pairing input.** Present only if the
+      operator set it at registration.
+    maxLength: 256
+    example: MCTS, 2M playouts/move
   hardware:
     description: >-
       Opt-in, coarse hardware self-report. **Label only, not used as a rating or
@@ -81,6 +90,7 @@ example:
   name: KrakenBot
   owner: op_7Qm2Kx
   rating: 1500
+  engineDescription: MCTS, 2M playouts/move
   hardware:
     gpu: consumer
     cpu_cores: 16
