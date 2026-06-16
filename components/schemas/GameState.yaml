@@ -5,6 +5,7 @@ required:
   - type
   - moves
   - ply
+  - time
   - status
 additionalProperties: false
 properties:
@@ -24,9 +25,7 @@ properties:
     description: Turns played so far (`moves.length`). The next expected submit `ply` equals this value.
   time:
     type: object
-    description: >-
-      Remaining clock per side, in **milliseconds** (`wallclock` mode only;
-      omitted entirely for `fixedsim`).
+    description: Remaining clock per side, in **milliseconds**.
     additionalProperties: false
     required:
       - p1

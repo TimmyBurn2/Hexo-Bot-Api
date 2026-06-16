@@ -51,8 +51,8 @@ properties:
     example: BOT
   hardware:
     description: >-
-      Opt-in, coarse hardware self-report. **Label only, never affects rating
-      or pairing.** Absent unless the operator opted in at registration.
+      Opt-in, coarse hardware self-report. **Label only, not used as a rating
+      or pairing input.** Absent unless the operator opted in at registration.
     $ref: ./HardwareInfo.yaml
 example:
   id: krakenbot

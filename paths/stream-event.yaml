@@ -46,7 +46,6 @@ get:
                     title: BOT
                   variant: httt6
                   rated: true
-                  mode: wallclock
             challenge:
               summary: A single challenge line
               value:
@@ -65,7 +64,6 @@ get:
                     title: BOT
                   variant: httt6
                   rated: true
-                  mode: wallclock
                   clock:
                     initial: 300000
                     inc: 2000
