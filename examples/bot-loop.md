@@ -18,6 +18,7 @@ for each line in event_stream:
         case "gameStart":          spawn play_game(event.game.id, event.game.side)
         case "gameFinish":         log result; let the game task end
         case "challengeDeclined":  log; maybe re-challenge with different terms
+        case "challengeCanceled":  log; drop the pending challenge, it is gone
 
 # ── 2. Per-game loop (one per active game) ──────────────────────────────
 function play_game(gameId, mySide):                      # mySide is "p1" or "p2"
@@ -52,7 +53,7 @@ function play_game(gameId, mySide):                      # mySide is "p1" or "p2
         #     opening centre hex at ply 0, so a bot never submits a single stone.
         stones = choose_two_stones(board, mySide)        # [[q,r],[q,r]]
 
-        # ── 4. Submit with an EXPLICIT ply (compare-and-set / idempotent write)
+        # ── 4. Submit with an EXPLICIT ply (compare-and-set / retry-safe write)
         submit(gameId, stones, ply)
 
 function submit(gameId, stones, ply):
@@ -61,10 +62,13 @@ function submit(gameId, stones, ply):
                 json { "stones": stones, "ply": ply }
     switch resp.status:
         case 200:  return                                 # applied
-        case 409:  # not-your-turn: stale/duplicate/out-of-order ply (CAS miss).
-                   # The body has the authoritative expectedPly. Do NOT blindly
-                   # resubmit, wait for the next gameState (it reflects truth),
-                   # or recompute at resp.body.expectedPly. Safe to retry.
+        case 409:  # Conflict. Tell the two kinds apart via resp.body.error:
+                   #  - "not-your-turn": stale/duplicate/out-of-order ply (CAS miss).
+                   #    Body has the authoritative expectedPly. Do NOT blindly
+                   #    resubmit, wait for the next gameState (it reflects truth)
+                   #    or recompute at resp.body.expectedPly. Safe to retry.
+                   #  - "game-finished": the game already ended; stop playing it
+                   #    (its stream has closed / a gameFinish arrived). Do not retry.
                    return
         case 422:  # illegal placement; resp.body.stone is the offending cell.
                    stones = choose_two_stones(board, mySide, avoid=resp.body.stone)

@@ -1,4 +1,7 @@
-description: The referenced resource (game, challenge, or user) does not exist or is not visible to you.
+description: >-
+  The referenced resource (game, challenge, or user) does not exist or is not
+  visible to you. A game that has already finished still exists, so a move or
+  resign on it returns `409 game-finished`, not this `404`.
 content:
   application/json:
     schema:
