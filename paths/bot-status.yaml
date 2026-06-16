@@ -58,6 +58,16 @@ post:
   responses:
     "200":
       description: The advertised status was recorded; the body carries the resolved live status.
+      headers:
+        Cache-Control:
+          description: >-
+            Always `no-store`. The resolved `openForChallenge` is current-state
+            only, so an intermediary must not serve a cached presence value
+            beyond this response.
+          schema:
+            type: string
+            const: no-store
+          example: no-store
       content:
         application/json:
           schema:

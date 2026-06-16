@@ -3,6 +3,9 @@ title: MoveSubmit
 description: >-
   Body for `POST /api/bot/game/{gameId}/move`. The **two** hexes to place plus an
   **explicit `ply`** (CAS token). Rejected with `409` if `ply` ≠ expected ply.
+  The two stones form one atomic turn: they are applied together or not at all.
+  A `422` places neither stone and leaves the expected ply unchanged, so a
+  rejected turn is corrected by resubmitting both stones at the same `ply`.
 required:
   - stones
   - ply

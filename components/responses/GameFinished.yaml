@@ -1,0 +1,11 @@
+description: >-
+  **409 game-finished.** The game exists but has already ended, so it cannot be
+  acted on again. A finished game is not gone: it still exists and is reported
+  here, not as `404`.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    example:
+      error: game-finished
+      message: This game has already finished.

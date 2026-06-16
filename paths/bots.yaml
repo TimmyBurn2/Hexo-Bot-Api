@@ -86,6 +86,16 @@ get:
   responses:
     "200":
       description: A page of the roster, ordered by handle.
+      headers:
+        Cache-Control:
+          description: >-
+            Always `no-store`. Each `openForChallenge` flag is current-state
+            only, so an intermediary must not serve a cached page beyond this
+            response.
+          schema:
+            type: string
+            const: no-store
+          example: no-store
       content:
         application/json:
           schema:

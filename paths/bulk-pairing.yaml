@@ -33,7 +33,14 @@ post:
     server remains the referee and forces any **same-owner** pairing to
     `rated: false` (enforced via the forthcoming `owner` link). The authoritative
     per-game value is reported back on each entry in `games`.
-    Each listed bot receives a `gameStart` event when its game begins.
+
+
+    **Validation is all-or-nothing.** Every pairing is checked before anything is
+    created. If any pairing names an account that is unknown or is not a bot
+    account, the whole batch is rejected with `422 invalid-pairing`: no games are
+    created, and the offending account id(s) are returned in the error's
+    `accounts` field. Each listed bot receives a `gameStart` event when its game
+    begins.
   tags:
     - Challenge
   requestBody:
@@ -137,6 +144,6 @@ post:
     "403":
       $ref: ../components/responses/ForbiddenOrganizer.yaml
     "422":
-      $ref: ../components/responses/InvalidTimeControl.yaml
+      $ref: ../components/responses/BulkPairingUnprocessable.yaml
     "429":
       $ref: ../components/responses/TooManyRequests.yaml

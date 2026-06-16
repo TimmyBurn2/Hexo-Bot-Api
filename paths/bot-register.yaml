@@ -11,7 +11,9 @@ post:
     **Operator authority is a distinct scope.** This call requires the
     `bot:register` scope, granted by HeXO to a Discord-authenticated operator
     (not self-served, mirroring how `bot:organize` is granted). A `bot:play`
-    instance token cannot register instances and is rejected with `403`. The
+    instance token cannot register instances and is rejected with `403`. An
+    operator whose per-owner instance (fleet) cap is already reached is likewise
+    rejected, with `403 owner-instance-limit`, whose body echoes the cap. The
     minted token carries `bot:play` only, so a registered instance can never
     mint siblings or escalate to operator actions.
 

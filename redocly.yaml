@@ -32,6 +32,14 @@ rules:
   no-invalid-media-type-examples: error
   no-invalid-schema-examples: error
 
+  # Some schemas use `if`/`then` conditionals (e.g. "a finished game must carry
+  # a result") whose `then` legitimately requires properties declared on the
+  # parent schema, not inside the `then` itself. This rule inspects each
+  # subschema in isolation and cannot resolve those parent-defined properties,
+  # so it mis-flags valid conditionals. The example validators above still
+  # reject a genuinely undefined property, so we silence the false positive.
+  no-required-schema-properties-undefined: off
+
   # Tags used by operations must be declared (with descriptions) at the root.
   operation-tag-defined: error
   tag-description: error
