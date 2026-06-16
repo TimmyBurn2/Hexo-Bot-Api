@@ -10,7 +10,7 @@ required:
   - destUser
   - variant
   - rated
-  - mode
+  - clock
   - status
 additionalProperties: false
 properties:
@@ -34,21 +34,9 @@ properties:
       server sets this from its pairing policy; the challenger cannot request it.
       Same-owner games are always `false`.
     example: true
-  mode:
-    type: string
-    description: Ladder mode for the resulting game.
-    enum:
-      - wallclock
-      - fixedsim
   clock:
-    description: Requested wall-clock control. Present only for `wallclock` mode.
+    description: Requested real-time control (`initial` + `inc`, ms) for the game.
     $ref: ./Clock.yaml
-  simBudget:
-    type: integer
-    format: int32
-    minimum: 1
-    description: Requested per-move simulation budget. Present only for `fixedsim` mode.
-    example: 100000
   status:
     type: string
     description: Lifecycle state of the challenge.
@@ -71,7 +59,6 @@ example:
     title: BOT
   variant: httt6
   rated: true
-  mode: wallclock
   clock:
     initial: 300000
     inc: 2000

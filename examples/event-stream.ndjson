@@ -1,4 +1,4 @@
-{"type":"challenge","challenge":{"id":"aXbY12cd","challenger":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"destUser":{"id":"sealbot","name":"SealBot","rating":1480,"title":"BOT"},"variant":"httt6","rated":true,"mode":"wallclock","clock":{"initial":300000,"inc":2000},"status":"created"}}
+{"type":"challenge","challenge":{"id":"aXbY12cd","challenger":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"destUser":{"id":"sealbot","name":"SealBot","rating":1480,"title":"BOT"},"variant":"httt6","rated":true,"clock":{"initial":300000,"inc":2000},"status":"created"}}
 
-{"type":"gameStart","game":{"id":"J9kP2qLm","side":"p2","opponent":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"variant":"httt6","mode":"wallclock"}}
-{"type":"gameFinish","game":{"id":"J9kP2qLm","side":"p2","opponent":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"variant":"httt6","mode":"wallclock","status":"win","winner":"p1"}}
+{"type":"gameStart","game":{"id":"J9kP2qLm","side":"p2","opponent":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"variant":"httt6","rated":true}}
+{"type":"gameFinish","game":{"id":"J9kP2qLm","side":"p2","opponent":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"variant":"httt6","rated":true,"status":"win","winner":"p1"}}

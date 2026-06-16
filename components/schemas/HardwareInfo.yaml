@@ -1,6 +1,6 @@
 type: object
 title: HardwareInfo
-description: Opt-in coarse hardware self-report. Shown as a **label only**, excluded from rating math. All fields optional.
+description: Opt-in coarse hardware self-report. Shown as a **label only**, not used as a rating or pairing input. All fields optional.
 additionalProperties: false
 properties:
   gpu:

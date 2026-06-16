@@ -7,10 +7,10 @@ get:
 
 
     The **first** line is always a `gameFull`, a complete snapshot of the game
-    (players, variant, mode, clock or sim budget, and the current `state` with
-    the cumulative move list). **Every line thereafter is a `gameState`**, emitted
-    once per ply, each carrying the **cumulative** `moves` array (every compound
-    turn so far, not a delta).
+    (players, variant, clock, and the current `state` with the cumulative move
+    list). **Every line thereafter is a `gameState`**, emitted once per ply,
+    each carrying the **cumulative** `moves` array (every compound turn so far,
+    not a delta).
 
 
     **Stateless:** replay `moves` to rebuild the board. A crashed bot reconnects, receives the fresh `gameFull`, and resumes with zero local memory.
@@ -60,7 +60,6 @@ get:
                     rating: 1480
                     title: BOT
                 rated: true
-                mode: wallclock
                 clock:
                   initial: 300000
                   inc: 2000
