@@ -36,7 +36,6 @@ post:
           required:
             - pairings
             - variant
-            - rated
             - mode
           properties:
             pairings:
@@ -136,6 +135,6 @@ post:
     "403":
       $ref: ../components/responses/ForbiddenOrganizer.yaml
     "422":
-      $ref: ../components/responses/Unprocessable.yaml
+      $ref: ../components/responses/InvalidModeParams.yaml
     "429":
       $ref: ../components/responses/TooManyRequests.yaml

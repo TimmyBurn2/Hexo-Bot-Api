@@ -7,7 +7,7 @@
 > Names, shapes, and paths may change before a `1.0.0` release.
 > Treat this as a request-for-comment, not a finalized contract.
 
-The **bot protocol contract** for [HeXO](https://hexo.did.science) — the [OpenAPI 3.1](./openapi.yaml) spec a bot speaks to play on `https://hexo.did.science`.
+The **bot protocol contract** for [HeXO](https://hexo.did.science), the [OpenAPI 3.1](./openapi.yaml) spec a bot speaks to play on `https://hexo.did.science`.
 
 **Just the contract:** spec + this README.
 No server, no bot; those are separate programs that agree only on `openapi.yaml`.
@@ -21,8 +21,8 @@ Modelled on the [Lichess Bot/Board API](https://github.com/lichess-org/api).
 - **Server (proposed):** `https://hexo.did.science`
 - **Product:** [`openapi.yaml`](./openapi.yaml) (split into [`paths/`](./paths) and [`components/`](./components)) + this README.
 - **Game:** `httt6`, HeXO, the *infinite hexagonal tic-tac-toe* game.
-  Played on an unbounded hex grid with integer **axial coordinates** `[q, r]`.
-  **Player 1 opens with a single hex at the centre; every turn after that places two hexes.**
+  The coordinate space is unbounded (integer **axial coordinates** `[q, r]`), but legal placement stays within a bounded playable region that expands outward as stones are placed, so at the opening only the centre `[0, 0]` is available.
+  **Player 1 opens with that single centre hex; every turn after that places two hexes.**
   Win by connecting **six** of your own hexes in a straight line along any of the **3 board axes**.
   The variant key is defined once in [`components/schemas/Variant.yaml`](./components/schemas/Variant.yaml) and must match the server's registry.
 - **Sides:** the two players are identified by **play order, `p1` and `p2`** (not colours; the game UI renders colours, the protocol does not).
@@ -61,7 +61,7 @@ A HeXO **turn** places hexes on the board, and the protocol models one turn as a
 **Coordinates.**
 Every cell is an **axial coordinate** `[q, r]` (two integers).
 `q` runs along one axis, `r` along another; the implied third axis is `s = −q − r`.
-The centre is `[0, 0]`, and because the board is infinite, `q`/`r` can be **any integer, including negatives**.
+The centre is `[0, 0]`. The coordinate space is unbounded, so `q`/`r` can be **any integer, including negatives**, though legal placement is confined to the playable region that expands outward as stones are placed.
 A cell's six neighbours are the six axial directions: `[+1,0] [+1,−1] [0,−1] [−1,0] [−1,+1] [0,+1]`.
 You win with six of your hexes in a line along one of the three axes.
 
