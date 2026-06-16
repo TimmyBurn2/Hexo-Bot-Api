@@ -16,7 +16,11 @@ properties:
   rating:
     type: integer
     format: int32
-    description: Current ladder rating for the active variant. May be absent for a brand-new, unrated account.
+    description: >-
+      Current ladder rating for the active variant. Server-authoritative and
+      read-only: reported by the server, never read from a request body, the
+      same as `rated` and an instance's `owner`. May be absent for a brand-new,
+      unrated account.
     example: 1500
   title:
     type: string

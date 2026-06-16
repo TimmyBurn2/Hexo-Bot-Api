@@ -56,11 +56,26 @@ post:
           properties:
             variant:
               $ref: ../components/schemas/Variant.yaml
+            firstPlayer:
+              type: string
+              description: >-
+                Which account opens the game as Player 1 (the single centre
+                hex). A request, not a side-identity guarantee: the server
+                assigns sides authoritatively, and the result shows up in the
+                started game's player-to-side mapping. `challenger` is the
+                caller, `challengee` the target handle, `random` lets the server
+                choose. Defaults to `random`.
+              enum:
+                - challenger
+                - challengee
+                - random
+              default: random
             clock:
               description: Real-time control (`initial` + `inc`, ms) for the game.
               $ref: ../components/schemas/Clock.yaml
         example:
           variant: httt6
+          firstPlayer: random
           clock:
             initial: 300000
             inc: 2000

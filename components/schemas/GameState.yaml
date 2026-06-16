@@ -43,15 +43,34 @@ properties:
         description: Player 2's remaining time in milliseconds.
   status:
     type: string
-    description: Current game status. `started` while in progress; a terminal value once the game ends.
+    description: >-
+      Coarse lifecycle flag. `started` while the game is in progress,
+      `finished` once it has ended. The reason and result of a finish live in
+      `finishReason` and `winner`.
     enum:
       - started
-      - resign
-      - win
-      - aborted
+      - finished
+  finishReason:
+    type: string
+    description: >-
+      Why the game ended. Present only when `status` is `finished`. Bots are
+      draw-free, so the server's `draw-agreement` reason never appears on this
+      surface.
+    enum:
+      - surrender
+      - timeout
+      - disconnect
+      - terminated
+      - six-in-a-row
   winner:
-    description: The winning side. Present only on a decisive terminal `status` (`win`, `resign`).
-    $ref: ./Side.yaml
+    description: >-
+      The winning side, present once `status` is `finished`: the line maker on
+      `six-in-a-row`, the opponent on `surrender`, `timeout`, or `disconnect`.
+      `null` on `terminated`, which ends the game with no winner. Absent while
+      the game is still `started`.
+    oneOf:
+      - $ref: ./Side.yaml
+      - type: "null"
 example:
   type: gameState
   moves:

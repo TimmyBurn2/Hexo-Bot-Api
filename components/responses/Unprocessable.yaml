@@ -1,8 +1,9 @@
 description: >-
   The request was well-formed and it *was* your turn, but the move is illegal:
-  a target is `occupied`, `out-of-bounds` (outside the current playable region),
-  or otherwise rejected by the rules. The response carries the offending `stone`
-  so the bot can pinpoint which half of its compound turn failed.
+  a target is `occupied`, `out-of-bounds` (beyond hex-distance 8 of every placed
+  stone, outside the current frontier), or otherwise rejected by the rules. The
+  response carries the offending `stone` so the bot can pinpoint which half of
+  its compound turn failed.
 content:
   application/json:
     schema:

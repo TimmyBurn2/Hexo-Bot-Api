@@ -32,14 +32,31 @@ properties:
       bulk-paired bot know its game's rated-ness without a Challenge object.
   status:
     type: string
-    description: Terminal status. Present on `gameFinish`; omitted on `gameStart`.
+    description: >-
+      Coarse lifecycle flag. Present on `gameFinish`, where it is always
+      `finished`; omitted on `gameStart`, where the game is just beginning.
     enum:
-      - resign
-      - win
-      - aborted
+      - started
+      - finished
+  finishReason:
+    type: string
+    description: >-
+      Why the game ended. Present on `gameFinish`. Bots are draw-free, so the
+      server's `draw-agreement` reason never appears on this surface.
+    enum:
+      - surrender
+      - timeout
+      - disconnect
+      - terminated
+      - six-in-a-row
   winner:
-    description: The winning side. Present on a decisive `gameFinish`.
-    $ref: ./Side.yaml
+    description: >-
+      The winning side on a decisive `gameFinish`: the line maker on
+      `six-in-a-row`, the opponent on `surrender`, `timeout`, or `disconnect`.
+      `null` on `terminated`, which finishes the game with no winner.
+    oneOf:
+      - $ref: ./Side.yaml
+      - type: "null"
 example:
   id: J9kP2qLm
   side: p1
