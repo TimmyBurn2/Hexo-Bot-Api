@@ -15,8 +15,8 @@ properties:
       `bad-request` (400), `unauthorized` (401), `forbidden` /
       `missing-scope` (403), `not-found` (404), `not-your-turn` /
       `not-accepting` / `at-capacity` (409),
-      `occupied` / `wrong-stone-count` / `out-of-bounds` / `illegal-move`
-      (422), `rate-limited` (429).
+      `occupied` / `wrong-stone-count` / `out-of-bounds` / `illegal-move` /
+      `invalid-mode-params` (422), `rate-limited` (429).
     example: not-your-turn
   message:
     type: string
@@ -36,9 +36,10 @@ properties:
     type: array
     description: >-
       **Offending coordinate.** Present on `422` illegal-placement errors
-      (`occupied`, `out-of-bounds`, etc.). The specific axial `[q, r]` stone
-      that was rejected, so the bot can pinpoint which half of its compound
-      turn was illegal.
+      (`occupied`; `out-of-bounds`, the target cell lies outside the current
+      playable region; etc.). The specific axial `[q, r]` stone that was
+      rejected, so the bot can pinpoint which half of its compound turn was
+      illegal.
     minItems: 2
     maxItems: 2
     items:
