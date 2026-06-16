@@ -1,0 +1,114 @@
+get:
+  operationId: listBots
+  summary: Browse the bot roster
+  description: >-
+    Returns a page of the public bot roster so a caller can discover opponents.
+    Read-only and callable by any valid token regardless of scope. Each entry is
+    a `BotListing`: static identity only (handle, display name, owner, optional
+    rating and hardware label), with no presence or activity, so the roster
+    cannot be used to time-correlate an operator.
+
+
+    **Ordering and paging.** Results are ordered by `id` (the handle), which is
+    unique and permanent, giving a single stable total order. Paging is by opaque
+    `cursor`: the server returns a `cursor` when more results exist, and the
+    caller passes it back verbatim to fetch the next page. The cursor is a server
+    token; do not construct or parse it. Because the sort key is immutable and
+    never reused, paging is stable across instances being registered or retired
+    mid-walk: no entry is silently skipped or repeated. No total count is exposed.
+
+
+    **Filters.** Narrow the roster by `variant` (instances serving that variant)
+    and by `owner` (instances run by one operator). A rating-range filter and a
+    presence/accepting filter are deliberately absent here. `owner` matches the
+    opaque, PII-free operator id already shown on each listing, so filtering by it
+    reveals nothing the per-entry `owner` field does not.
+  tags:
+    - Directory
+  parameters:
+    - name: variant
+      in: query
+      required: false
+      description: Restrict to instances serving this variant (single-source constant).
+      schema:
+        $ref: ../components/schemas/Variant.yaml
+      example: httt6
+    - name: owner
+      in: query
+      required: false
+      description: >-
+        Restrict to instances run by this operator. Matches the opaque,
+        server-assigned `owner` id shown on each listing.
+      schema:
+        type: string
+        pattern: "^[A-Za-z0-9_]{3,40}$"
+      example: op_7Qm2Kx
+    - name: limit
+      in: query
+      required: false
+      description: >-
+        Maximum entries to return in this page. Clamped to the server maximum; the
+        next page is reached with `cursor`.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 50
+      example: 50
+    - name: cursor
+      in: query
+      required: false
+      description: >-
+        Opaque continuation token from a previous response's `cursor`. Pass it
+        back verbatim to fetch the next page; omit it for the first page. Server
+        token, not to be constructed or parsed by the caller.
+      schema:
+        type: string
+      example: c_5d2a9f00b7e14c3a8166e0d4
+  responses:
+    "200":
+      description: A page of the roster, ordered by handle.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - bots
+            properties:
+              bots:
+                type: array
+                description: The instances on this page, ordered by `id` (handle). May be empty.
+                items:
+                  $ref: ../components/schemas/BotListing.yaml
+              cursor:
+                type: string
+                description: >-
+                  Continuation token for the next page. Present only when more
+                  results exist; absent on the last page. Pass it back as the
+                  `cursor` query parameter.
+          example:
+            bots:
+              - id: krakenbot
+                name: KrakenBot
+                owner: op_7Qm2Kx
+                rating: 1500
+                hardware:
+                  gpu: consumer
+                  cpu_cores: 16
+                  ram_gb: 64
+              - id: nimbusbot
+                name: NimbusBot
+                owner: op_3Hn8Lp
+              - id: sealbot
+                name: SealBot
+                owner: op_3Hn8Lp
+                rating: 1480
+            cursor: c_3e8b1a47c0d92f6510aa7b2c
+    "400":
+      $ref: ../components/responses/BadRequest.yaml
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

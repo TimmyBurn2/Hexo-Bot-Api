@@ -3,7 +3,7 @@ title: Challenge
 description: >-
   A challenge between two accounts. Appears inside `challenge` and
   `challengeDeclined` events on the global stream, and is the resource created
-  by `POST /api/challenge/{username}`.
+  by `POST /api/challenge/{handle}`.
 required:
   - id
   - challenger
