@@ -10,7 +10,7 @@ required:
   - destUser
   - variant
   - rated
-  - clock
+  - timeControl
   - status
 additionalProperties: false
 properties:
@@ -34,9 +34,9 @@ properties:
       server sets this from its pairing policy; the challenger cannot request it.
       Same-owner games are always `false`.
     example: true
-  clock:
-    description: Requested real-time control (`initial` + `inc`, ms) for the game.
-    $ref: ./Clock.yaml
+  timeControl:
+    description: Requested time control for the game (`unlimited`, `turn`, or `match`).
+    $ref: ./TimeControl.yaml
   status:
     type: string
     description: Lifecycle state of the challenge.
@@ -59,7 +59,8 @@ example:
     title: BOT
   variant: httt6
   rated: true
-  clock:
-    initial: 300000
-    inc: 2000
+  timeControl:
+    mode: match
+    mainTimeMs: 300000
+    incrementMs: 2000
   status: created

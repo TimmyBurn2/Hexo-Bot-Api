@@ -1,6 +1,9 @@
 type: object
-title: ChallengeDeclinedEvent
-description: A challenge you issued was declined. Member of the global event stream union.
+title: ChallengeCanceledEvent
+description: >-
+  A challenge issued to you was cancelled by the challenger before you acted on
+  it. Delivered to the challenged account so it learns the pending challenge is
+  gone. Member of the global event stream union.
 required:
   - type
   - challenge
@@ -8,13 +11,13 @@ additionalProperties: false
 properties:
   type:
     type: string
-    description: Discriminator. Always `challengeDeclined`.
-    const: challengeDeclined
+    description: Discriminator. Always `challengeCanceled`.
+    const: challengeCanceled
   challenge:
-    description: The declined challenge (its `status` will be `declined`).
+    description: The cancelled challenge (its `status` will be `canceled`).
     $ref: ./Challenge.yaml
 example:
-  type: challengeDeclined
+  type: challengeCanceled
   challenge:
     id: aXbY12cd
     challenger:
@@ -33,4 +36,4 @@ example:
       mode: match
       mainTimeMs: 300000
       incrementMs: 2000
-    status: declined
+    status: canceled

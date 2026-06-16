@@ -1,7 +1,7 @@
 type: object
 title: MoveSubmit
 description: >-
-  Body for `POST /api/bot/game/{gameId}/move`. Hex(es) to place plus an
+  Body for `POST /api/bot/game/{gameId}/move`. The **two** hexes to place plus an
   **explicit `ply`** (CAS token). Rejected with `409` if `ply` ≠ expected ply.
 required:
   - stones
@@ -11,9 +11,11 @@ properties:
   stones:
     type: array
     description: >-
-      Hex(es) to place, in order. Each is an axial coordinate `[q, r]`.
-      **1** stone on ply 0 (opening), **2** on all other turns. Side is implied by turn order.
-    minItems: 1
+      The **two** hexes to place this turn, in order. Each is an axial
+      coordinate `[q, r]`. A submitted turn is always two stones: the server
+      auto-plays the single-hex opening, so a bot never submits it. Side is
+      implied by turn order.
+    minItems: 2
     maxItems: 2
     items:
       type: array
@@ -25,8 +27,11 @@ properties:
   ply:
     type: integer
     format: int32
-    minimum: 0
-    description: Zero-based turn index to fill. Must equal the server's next expected ply. Stale/duplicate → `409` with `expectedPly`.
+    minimum: 1
+    description: >-
+      Zero-based turn index to fill. Always `>= 1`, because the server
+      auto-plays the ply-0 opening and a bot never submits it. Must equal the
+      server's next expected ply. Stale/duplicate → `409` with `expectedPly`.
 example:
   stones:
     - [3, 0]

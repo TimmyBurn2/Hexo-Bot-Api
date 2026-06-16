@@ -22,7 +22,7 @@ Modelled on the [Lichess Bot/Board API](https://github.com/lichess-org/api).
 - **Product:** [`openapi.yaml`](./openapi.yaml) (split into [`paths/`](./paths) and [`components/`](./components)) + this README.
 - **Game:** `httt6`, HeXO's hexagonal tic-tac-toe.
   The coordinate space is unbounded (integer **axial coordinates** `[q, r]`, any value), but a cell is legal to play only within hex-distance 8 of an already-placed stone, so legal placement is a bounded frontier that widens as stones are placed: at the opening only the centre `[0, 0]` is available.
-  **Player 1 opens with that single centre hex; every turn after that places two hexes.**
+  **The server auto-plays the opening single centre hex on Player 1's behalf; every turn after that places two hexes.**
   Win by connecting **six** of your own hexes in a straight line along any of the **3 board axes**.
   The variant key is defined once in [`components/schemas/Variant.yaml`](./components/schemas/Variant.yaml) and must match the server's registry.
 - **Sides:** the two players are identified by **play order, `p1` and `p2`** (not colours; the game UI renders colours, the protocol does not).
@@ -48,9 +48,10 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | **Challenges** | `POST /api/challenge/{handle}` | Challenge an account you know by handle. The authoritative availability check: `409` if the target is not accepting. |
 | **Challenges** | `POST /api/challenge/{challengeId}/accept` | Accept a challenge. |
 | **Challenges** | `POST /api/challenge/{challengeId}/decline` | Decline a challenge. |
+| **Challenges** | `POST /api/challenge/{challengeId}/cancel` | Cancel a challenge you issued (still pending). |
 | **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
 
-Every game runs under real-time control (a clock per side; see section 4). Whether a game is rated is decided by the server, not the caller.
+Every game carries a time control (`unlimited`, `turn`, or `match`; see section 4). Whether a game is rated is decided by the server, not the caller.
 
 ---
 
@@ -62,7 +63,7 @@ A HeXO **turn** places hexes on the board, and the protocol models one turn as a
 Every cell is an **axial coordinate** `[q, r]` (two integers).
 `q` runs along one axis, `r` along another; the implied third axis is `s = −q − r`.
 The centre is `[0, 0]`. The coordinate space is unbounded, so `q`/`r` can be **any integer, including negatives**, but a cell is legal to play only **within hex-distance 8 of an already-placed stone**, so the playable region is a bounded frontier that widens as stones are placed.
-The hex-distance between `[q1, r1]` and `[q2, r2]` is `(|q1−q2| + |r1−r2| + |(q1+r1)−(q2+r2)|) / 2`; a bot can use this to self-validate a candidate before submitting.
+The hex-distance between `[q1, r1]` and `[q2, r2]` is `(|q1−q2| + |r1−r2| + |(q1+r1)−(q2+r2)|) / 2`; a bot can use this to self-validate a candidate before submitting. Pre-validation is optional: the server is the sole authority and rejects an out-of-frontier placement with `422 out-of-bounds`, which the bot must handle.
 A cell's six neighbours are the six axial directions: `[+1,0] [+1,−1] [0,−1] [−1,0] [−1,+1] [0,+1]`.
 You win with six of your hexes in a line along one of the three axes.
 
@@ -74,19 +75,21 @@ You win with six of your hexes in a line along one of the three axes.
 | 1 | `p2` | 2 |
 | 2+ | alternating | 2 each |
 
+Ply 0 is **auto-played by the server** on `p1`'s behalf; a bot never submits it. The first turn a bot submits is ply 1 (`p2`), and every submitted turn places two hexes.
+
 **Down-stream: what the server sends you.**
 Inside every `gameState`, `moves` is the **cumulative** list of all turns so far:
 
 ```json
 "moves": [
-  { "p": "p1", "s": [[0,0]] },          // ply 0: opening single hex at centre
+  { "p": "p1", "s": [[0,0]] },          // ply 0: server-placed opening single hex at centre
   { "p": "p2", "s": [[0,1],[1,1]] },    // ply 1: two hexes
   { "p": "p1", "s": [[1,0],[2,0]] }     // ply 2: two hexes
 ]
 ```
 
 - **`p`**: the side that made the turn (`p1` or `p2`).
-- **`s`**: the hex(es) placed that turn, each an `[q, r]` axial coordinate (length 1 only on ply 0, otherwise 2).
+- **`s`**: the hex(es) placed that turn, each an `[q, r]` axial coordinate (length 1 only on the server-placed ply-0 opening, otherwise 2).
 - **Position in the array = the ply** (0-based).
   The list **grows by one entry each turn**, turn 5's `moves` contains turns 0-4 plus turn 5.
   That is what makes the protocol stateless:
@@ -98,7 +101,7 @@ Inside every `gameState`, `moves` is the **cumulative** list of all turns so far
 { "stones": [[3,0],[4,0]], "ply": 4 }
 ```
 
-- **`stones`**: the hex(es) you're placing (1 on the opening, else 2).
+- **`stones`**: the two hexes you're placing. A submitted turn is always two hexes; the server auto-plays the opening, so you never send a single stone.
 - **`ply`**: which turn index you're filling. It must equal the server's next expected ply:
   this is a **compare-and-set token** that makes retries safe.
   A stale/duplicate `ply` → `409 { expectedPly }`;
@@ -128,17 +131,18 @@ Reconnect and receive a fresh `gameFull`, replay and continue. (See [`examples/b
 **Bot-agnostic.**
 Nothing depends on any particular bot's internals. **KrakenBot** and **SealBot** in the examples are illustrative only.
 
-**One ladder, real-time control.** Every game runs on a clock: each side has
-`clock.initial` plus `clock.inc` (ms), and its clock ticks while it is to move.
-Ratings measure the whole engine, speed included.
+**One ladder, one time control per game.** Every game carries a time control set
+on the challenge: `unlimited`, `turn` (a per-turn budget `turnTimeMs`, the server
+default at 45000 ms), or `match` (`mainTimeMs` plus `incrementMs` per side).
+Under `turn` or `match`, ratings measure the whole engine, speed included.
 
 **Hardware telemetry is a label.**
 A bot may *opt in* to a coarse self-report (`HardwareInfo`:
 GPU class, CPU cores, RAM GB) at registration time.
 It is shown as a **label only** and is **not used as a rating or pairing input**:
 the server never feeds it into the rating formula or pairing.
-Under real-time control faster hardware can still affect results through move
-speed; the label itself carries no rating weight.
+Under a timed control (`turn` or `match`) faster hardware can still affect
+results through move speed; the label itself carries no rating weight.
 No serials, MAC addresses, or hostnames are collected.
 
 ---

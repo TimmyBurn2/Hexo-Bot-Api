@@ -8,6 +8,7 @@ oneOf:
   - $ref: ./GameStartEvent.yaml
   - $ref: ./GameFinishEvent.yaml
   - $ref: ./ChallengeDeclinedEvent.yaml
+  - $ref: ./ChallengeCanceledEvent.yaml
 discriminator:
   propertyName: type
   mapping:
@@ -15,3 +16,4 @@ discriminator:
     gameStart: ./GameStartEvent.yaml
     gameFinish: ./GameFinishEvent.yaml
     challengeDeclined: ./ChallengeDeclinedEvent.yaml
+    challengeCanceled: ./ChallengeCanceledEvent.yaml

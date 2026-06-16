@@ -5,10 +5,12 @@ description: >-
   `gameState`. A turn places hexes for one side:
 
 
-  - **Player 1's opening turn (ply 0)** places a **single** hex, at the centre
-    `[0, 0]`.
+  - **The opening turn (ply 0)** is a **single** hex at the centre `[0, 0]`,
+    placed automatically by the server on Player 1's behalf, not submitted by a
+    bot. It still appears here as historical board state.
 
-  - **Every turn after that** places **two** hexes.
+  - **Every turn after that** places **two** hexes, submitted by the side to
+    move.
 
   Position in `moves` is the (zero-based) ply, not repeated on the object.
 required:
@@ -23,8 +25,8 @@ properties:
     type: array
     description: >-
       The hex(es) placed this turn, in placement order. Each hex is an integer
-      **axial coordinate** `[q, r]`. Length is **1** only for Player 1's opening
-      turn; otherwise **2**.
+      **axial coordinate** `[q, r]`. Length is **1** only for the auto-played
+      ply-0 opening; otherwise **2**.
     minItems: 1
     maxItems: 2
     items:

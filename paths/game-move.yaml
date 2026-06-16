@@ -18,9 +18,9 @@ post:
       so the bot can resynchronise and resubmit deterministically.
 
     - **`422`**: it was your turn but the move is illegal: a cell is
-      `occupied`, the wrong number of stones was sent (`wrong-stone-count`, 1 is
-      only valid on the ply-0 opening, otherwise 2), or the placement is
-      otherwise rejected. The body carries the offending `stone` when applicable.
+      `occupied`, the wrong number of stones was sent (`wrong-stone-count`: a
+      submitted turn requires exactly 2 stones), or the placement is otherwise
+      rejected. The body carries the offending `stone` when applicable.
   tags:
     - Bot
   parameters:
