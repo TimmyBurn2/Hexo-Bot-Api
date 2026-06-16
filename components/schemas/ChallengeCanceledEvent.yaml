@@ -32,7 +32,7 @@ example:
       title: BOT
     variant: httt6
     rated: true
-    clock:
+    timeControl:
       mode: match
       mainTimeMs: 300000
       incrementMs: 2000

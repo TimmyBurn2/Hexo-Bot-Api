@@ -17,7 +17,7 @@ post:
     on separate authority.
 
 
-    Every game in the batch shares the same `variant` and `clock` (time
+    Every game in the batch shares the same `variant` and `timeControl` (time
     control). The `rated` field is the organizer's **requested default**; the
     server remains the referee and forces any **same-owner** pairing to
     `rated: false` (enforced via the forthcoming `owner` link). The authoritative
@@ -35,7 +35,7 @@ post:
           required:
             - pairings
             - variant
-            - clock
+            - timeControl
           properties:
             pairings:
               type: array
@@ -63,7 +63,7 @@ post:
                 `false`. The server forces same-owner pairings to `false`
                 regardless; the authoritative per-game value is returned in the
                 response `games`.
-            clock:
+            timeControl:
               description: Time control (`unlimited`, `turn`, or `match`) for every game in the batch.
               $ref: ../components/schemas/TimeControl.yaml
         example:
@@ -72,7 +72,7 @@ post:
             - { p1: sealbot, p2: krakenbot }
           variant: httt6
           rated: true
-          clock:
+          timeControl:
             mode: match
             mainTimeMs: 300000
             incrementMs: 2000

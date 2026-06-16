@@ -1,4 +1,4 @@
-{"type":"challenge","challenge":{"id":"aXbY12cd","challenger":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"destUser":{"id":"sealbot","name":"SealBot","rating":1480,"title":"BOT"},"variant":"httt6","rated":true,"clock":{"mode":"match","mainTimeMs":300000,"incrementMs":2000},"status":"created"}}
+{"type":"challenge","challenge":{"id":"aXbY12cd","challenger":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"destUser":{"id":"sealbot","name":"SealBot","rating":1480,"title":"BOT"},"variant":"httt6","rated":true,"timeControl":{"mode":"match","mainTimeMs":300000,"incrementMs":2000},"status":"created"}}
 
 {"type":"gameStart","game":{"id":"J9kP2qLm","side":"p2","opponent":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"variant":"httt6","rated":true}}
 {"type":"gameFinish","game":{"id":"J9kP2qLm","side":"p2","opponent":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"variant":"httt6","rated":true,"status":"finished","finishReason":"six-in-a-row","winner":"p1"}}

@@ -1,5 +1,5 @@
 description: >-
-  The request body was well-formed but its `clock` is not a usable time control:
+  The request body was well-formed but its `timeControl` is not a usable time control:
   for example a `turn` mode with a zero `turnTimeMs`, or values outside the range
   the server allows. Supply a valid time control and retry.
 content:
