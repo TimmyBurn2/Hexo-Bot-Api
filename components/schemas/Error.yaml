@@ -16,7 +16,7 @@ properties:
       `missing-scope` (403), `not-found` (404), `not-your-turn` /
       `not-accepting` / `at-capacity` (409),
       `occupied` / `wrong-stone-count` / `out-of-bounds` / `illegal-move` /
-      `invalid-clock` (422), `rate-limited` (429).
+      `invalid-time-control` (422), `rate-limited` (429).
     example: not-your-turn
   message:
     type: string

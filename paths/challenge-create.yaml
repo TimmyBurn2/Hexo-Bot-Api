@@ -30,9 +30,10 @@ post:
     reason `rated`.
 
 
-    Provide a `clock` (`initial` + `inc`, ms): the game runs under real-time
-    control, with each side's clock ticking while it is to move. Speed is part
-    of play.
+    Provide a `clock` (the time control): the game runs under the chosen mode,
+    `unlimited`, `turn` (a per-turn budget, the server default), or `match` (a
+    main-time-plus-increment clock per side). Under `turn` and `match`, speed is
+    part of play.
   tags:
     - Challenge
   parameters:
@@ -71,14 +72,14 @@ post:
                 - random
               default: random
             clock:
-              description: Real-time control (`initial` + `inc`, ms) for the game.
-              $ref: ../components/schemas/Clock.yaml
+              description: Time control for the game (`unlimited`, `turn`, or `match`).
+              $ref: ../components/schemas/TimeControl.yaml
         example:
           variant: httt6
           firstPlayer: random
           clock:
-            initial: 300000
-            inc: 2000
+            mode: turn
+            turnTimeMs: 45000
   responses:
     "200":
       description: The challenge was created.
@@ -101,8 +102,8 @@ post:
             variant: httt6
             rated: true
             clock:
-              initial: 300000
-              inc: 2000
+              mode: turn
+              turnTimeMs: 45000
             status: created
     "401":
       $ref: ../components/responses/Unauthorized.yaml
@@ -113,6 +114,6 @@ post:
     "409":
       $ref: ../components/responses/ChallengeRefused.yaml
     "422":
-      $ref: ../components/responses/InvalidClock.yaml
+      $ref: ../components/responses/InvalidTimeControl.yaml
     "429":
       $ref: ../components/responses/TooManyRequests.yaml

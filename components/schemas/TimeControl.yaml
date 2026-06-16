@@ -1,0 +1,73 @@
+title: TimeControl
+description: >-
+  The game's time control, a union over `mode`. Set on the challenge and echoed
+  on the game. All durations are in **milliseconds**.
+
+
+  - `unlimited`: no time limit on either side.
+
+  - `turn`: a per-turn budget `turnTimeMs`; each side gets that long for every
+    turn it is to move. This is the **server default** (`turnTimeMs` defaults to
+    45000 ms), the per-move-budget mode, and is not expressible as a single
+    main-time-plus-increment clock.
+
+  - `match`: a whole-game clock per side, `mainTimeMs` plus an `incrementMs`
+    added to a side's clock after each of its turns.
+
+
+  Exactly one branch applies, selected by `mode`.
+oneOf:
+  - type: object
+    title: UnlimitedTimeControl
+    description: No time limit on either side.
+    additionalProperties: false
+    required:
+      - mode
+    properties:
+      mode:
+        type: string
+        const: unlimited
+        description: Selects the unlimited (no time limit) control.
+  - type: object
+    title: TurnTimeControl
+    description: Per-turn budget; each side gets `turnTimeMs` for every turn it is to move.
+    additionalProperties: false
+    required:
+      - mode
+      - turnTimeMs
+    properties:
+      mode:
+        type: string
+        const: turn
+        description: Selects the per-turn-budget control.
+      turnTimeMs:
+        type: integer
+        format: int64
+        minimum: 0
+        description: Per-turn budget in milliseconds. Server default is 45000.
+  - type: object
+    title: MatchTimeControl
+    description: Whole-game clock per side, with an increment after each turn.
+    additionalProperties: false
+    required:
+      - mode
+      - mainTimeMs
+      - incrementMs
+    properties:
+      mode:
+        type: string
+        const: match
+        description: Selects the main-time-plus-increment control.
+      mainTimeMs:
+        type: integer
+        format: int64
+        minimum: 0
+        description: Main time per side, in milliseconds.
+      incrementMs:
+        type: integer
+        format: int64
+        minimum: 0
+        description: Increment added to a side's clock after each of its turns, in milliseconds.
+example:
+  mode: turn
+  turnTimeMs: 45000

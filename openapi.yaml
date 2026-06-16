@@ -41,9 +41,17 @@ info:
 
     ## Time control
 
-    Every game runs under real-time control, set on the challenge and echoed on
-    the game: each side has a clock (`clock.initial` + `clock.inc`, ms) that
-    ticks while it is to move. This measures the whole engine, speed included.
+    Every game carries a time control, set on the challenge and echoed on the
+    game. It is a union over `mode`:
+
+    - `unlimited`: no time limit.
+    - `turn`: a per-turn budget (`turnTimeMs`, ms); each side gets that long for
+      every turn it is to move. This is the **server default** (45000 ms), the
+      per-move-budget mode.
+    - `match`: a whole-game clock per side (`mainTimeMs` + `incrementMs`, ms).
+
+    Under `turn` and `match`, the clock measures the whole engine, speed
+    included.
 
 
     ## Hardware telemetry
@@ -51,10 +59,10 @@ info:
     A bot may **opt in** to a coarse hardware self-report (`HardwareInfo`: GPU
     class, CPU cores, RAM GB) at registration time. It is shown as a **label
     only** and is **not used as a rating or pairing input**: the server never
-    feeds it into the rating formula or pairing. Under real-time control faster
-    hardware can still help a bot move quicker and so affect results; the label
-    itself is not a measurement and carries no rating weight. No serials, MAC
-    addresses, or hostnames are collected.
+    feeds it into the rating formula or pairing. Under a timed control (`turn` or
+    `match`) faster hardware can still help a bot move quicker and so affect
+    results; the label itself is not a measurement and carries no rating weight.
+    No serials, MAC addresses, or hostnames are collected.
 
 
     ## Variant & sides

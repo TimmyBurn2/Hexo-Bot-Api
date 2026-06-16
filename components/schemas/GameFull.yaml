@@ -44,8 +44,8 @@ properties:
       Whether the result affects ratings. Server-authoritative; the bot reads
       it here (a bulk-paired game has no Challenge object to carry it).
   clock:
-    description: Real-time control (`initial` + `inc`, ms) for the game.
-    $ref: ./Clock.yaml
+    description: Time control for the game (`unlimited`, `turn`, or `match`).
+    $ref: ./TimeControl.yaml
   state:
     description: The current game state (cumulative moves, clocks, status).
     $ref: ./GameState.yaml
@@ -66,8 +66,9 @@ example:
       title: BOT
   rated: true
   clock:
-    initial: 300000
-    inc: 2000
+    mode: match
+    mainTimeMs: 300000
+    incrementMs: 2000
   state:
     type: gameState
     moves: []

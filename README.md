@@ -50,7 +50,7 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | **Challenges** | `POST /api/challenge/{challengeId}/decline` | Decline a challenge. |
 | **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
 
-Every game runs under real-time control (a clock per side; see section 4). Whether a game is rated is decided by the server, not the caller.
+Every game carries a time control (`unlimited`, `turn`, or `match`; see section 4). Whether a game is rated is decided by the server, not the caller.
 
 ---
 
@@ -128,17 +128,18 @@ Reconnect and receive a fresh `gameFull`, replay and continue. (See [`examples/b
 **Bot-agnostic.**
 Nothing depends on any particular bot's internals. **KrakenBot** and **SealBot** in the examples are illustrative only.
 
-**One ladder, real-time control.** Every game runs on a clock: each side has
-`clock.initial` plus `clock.inc` (ms), and its clock ticks while it is to move.
-Ratings measure the whole engine, speed included.
+**One ladder, one time control per game.** Every game carries a time control set
+on the challenge: `unlimited`, `turn` (a per-turn budget `turnTimeMs`, the server
+default at 45000 ms), or `match` (`mainTimeMs` plus `incrementMs` per side).
+Under `turn` or `match`, ratings measure the whole engine, speed included.
 
 **Hardware telemetry is a label.**
 A bot may *opt in* to a coarse self-report (`HardwareInfo`:
 GPU class, CPU cores, RAM GB) at registration time.
 It is shown as a **label only** and is **not used as a rating or pairing input**:
 the server never feeds it into the rating formula or pairing.
-Under real-time control faster hardware can still affect results through move
-speed; the label itself carries no rating weight.
+Under a timed control (`turn` or `match`) faster hardware can still affect
+results through move speed; the label itself carries no rating weight.
 No serials, MAC addresses, or hostnames are collected.
 
 ---
