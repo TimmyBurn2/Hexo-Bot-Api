@@ -2,14 +2,14 @@ type: object
 title: GameFull
 description: >-
   First line on the per-game stream. Complete snapshot: players, variant,
-  mode, time/sim budget, and current `state` (with cumulative move list).
+  clock, and current `state` (with cumulative move list).
 required:
   - type
   - id
   - variant
   - players
   - rated
-  - mode
+  - clock
   - state
 additionalProperties: false
 properties:
@@ -43,23 +43,9 @@ properties:
     description: >-
       Whether the result affects ratings. Server-authoritative; the bot reads
       it here (a bulk-paired game has no Challenge object to carry it).
-  mode:
-    type: string
-    description: >-
-      Ladder mode. `wallclock`: real clocks tick, `clock` present.
-      `fixedsim`: server-enforced per-move sim budget, `simBudget` present.
-    enum:
-      - wallclock
-      - fixedsim
   clock:
-    description: Wall-clock time control. Present only when `mode` is `wallclock`.
+    description: Real-time control (`initial` + `inc`, ms) for the game.
     $ref: ./Clock.yaml
-  simBudget:
-    type: integer
-    format: int32
-    minimum: 1
-    description: Per-move simulation budget the server enforces for both sides. Present only when `mode` is `fixedsim`.
-    example: 100000
   state:
     description: The current game state (cumulative moves, clocks, status).
     $ref: ./GameState.yaml
@@ -79,7 +65,6 @@ example:
       rating: 1480
       title: BOT
   rated: true
-  mode: wallclock
   clock:
     initial: 300000
     inc: 2000

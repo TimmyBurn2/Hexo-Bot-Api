@@ -54,8 +54,8 @@ properties:
     example: 1500
   hardware:
     description: >-
-      Opt-in, coarse hardware self-report. **Label only, never affects rating or
-      pairing.** Present only if the operator opted in at registration; the same
+      Opt-in, coarse hardware self-report. **Label only, not used as a rating or
+      pairing input.** Present only if the operator opted in at registration; the same
       coarse self-report already carried on `Player`, so the roster exposes
       nothing finer than gameplay already does.
     $ref: ./HardwareInfo.yaml

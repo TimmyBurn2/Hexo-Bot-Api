@@ -20,10 +20,10 @@ Tension: the wire is stateless, bots rebuild the board from the cumulative move
 list. Without the rule, a bot cannot self-validate placement and must rely on
 the server to reject out-of-region moves.
 
-## 2. Timeout / flag-fall terminal status (wallclock)
+## 2. Timeout / flag-fall terminal status
 
-Wallclock games have real clocks, but no terminal status models a flag-fall /
-timeout loss. Decide whether to add one (and its `winner` semantics).
+Games run on real clocks, but no terminal status models a flag-fall / timeout
+loss. Decide whether to add one (and its `winner` semantics).
 
 ## 3. Challenge-cancel endpoint + event
 
@@ -47,50 +47,48 @@ Items deferred from the first proposal:
     exactly one anchor. Which anchor is open; the options below, none chosen:
     - **A. Closed pool, round-robin only.** Simplest. Ratings are internally
       consistent but externally meaningless: no claim about absolute strength.
-    - **B. Human cross-play as anchor.** A bot's rating updates from its games
-      against humans while the human's rating is unaffected, pulling bots onto
-      the human scale. Consequences:
-      - A one-sided update, where the bot moves and the human does not, is not
+    - **B. Player cross-play as anchor.** A bot's rating updates from its games
+      against players while the player's rating is unaffected, pulling bots onto
+      the player scale. Consequences:
+      - A one-sided update, where the bot moves and the player does not, is not
         Elo-conservative. It is defensible only as a one-directional pull
         toward a frozen, trusted reference, not as symmetric play.
-      - It applies only to the wallclock (Glicko-style) ladder. Humans cannot
-        honor a per-move `simBudget`, so the fixedsim ladder cannot anchor to
-        humans through direct play.
-      - It assumes humans and bots share one scale and one estimator, else
+      - It assumes players and bots share one scale and one estimator, else
         equal numbers are not comparable.
       - Farming and collusion surface: pumping a bot off weak or provisional
-        humans, or a confederate dumping games. The same-owner-unrated rule
-        does not catch this, since the human is not owner-linked. Candidate
-        mitigations: count only games versus established low-RD humans, cap
+        players, or a confederate dumping games. The same-owner-unrated rule
+        does not catch this, since the player is not owner-linked. Candidate
+        mitigations: count only games versus established low-RD players, cap
         gain per opponent, rate-limit.
-      - It contradicts the current baseline that human-vs-bot games are unrated
+      - It contradicts the current baseline that player-vs-bot games are unrated
         exhibitions. Pick one: fully unrated (no anchor), or rated-for-bot-only
         (accept the asymmetry and its costs).
     - **C. Calibrated reference bot as anchor.** One declared-strength
       reference bot fixes the zero; the round-robin propagates from it. No
-      humans, no asymmetry, no farming surface. Costs: partially reopens the
+      players, no asymmetry, no farming surface. Costs: partially reopens the
       stance that no engine entity carries trust or rating leverage, and it
       requires trusting the reference's declared strength.
     - **D. Fixed external benchmark as anchor.** A frozen position or puzzle
-      set of known difficulty fixes the zero; scores against it are
-      hardware-neutral and need neither humans nor a trusted reference bot.
-      Costs: the benchmark must be built and frozen, and a static set can be
-      overfit, decaying as an anchor as engines train against it.
+      set of known difficulty fixes the zero; scoring against it needs neither
+      players nor a trusted reference bot. Costs: the benchmark must be built
+      and frozen, and a static set can be overfit, decaying as an anchor as
+      engines train against it.
     - These can combine: a reference bot or benchmark can fix the zero while
-      occasional human cross-play calibrates it (hybrid), and a ladder with no
+      occasional player cross-play calibrates it (hybrid), and a ladder with no
       direct anchor can borrow one transitively through bots rated on two
       ladders at once (a bridge). Each combination inherits the costs of its
       parts.
-  - Holds for any choice here: on its own the fixedsim ladder is relative-only.
-    Relating it to the wallclock or human scale needs a separate bridge or a
-    shared external benchmark, neither assumed here.
+  - Holds for any choice here: on its own the single time-control ladder is
+    relative-only. Player cross-play (option B) is the live path that would tie
+    it to an external player scale through direct play; options C and D anchor
+    it without players. None is chosen here.
   - Dependency: options A, C, and D are decidable now. Option B and any other
-    human-anchoring path are gated on the **Human-vs-bot play** item below
-    (whether humans belong in the rated loop at all); settle that first.
+    player-anchoring path are gated on the **Player-vs-bot play** item below
+    (whether players belong in the rated loop at all); settle that first.
 - Handle re-layering (stable id vs display handle changes over time).
 - Bot concurrency: the precise meaning of `openForChallenge` when an instance is
   already in one or more games.
-- Human-vs-bot play.
+- Player-vs-bot play.
 - Moderation (reporting, bans, abuse handling).
 - Engine brand / self-description fields.
 - Operator-granting of scopes (how `bot:organize` is issued).

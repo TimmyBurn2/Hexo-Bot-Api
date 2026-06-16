@@ -17,12 +17,11 @@ post:
     on separate authority.
 
 
-    Every game in the batch shares the same `variant` and ladder mode
-    (`wallclock` + `clock`, or `fixedsim` + `simBudget`). The `rated` field is
-    the organizer's **requested default**; the server remains the referee and
-    forces any **same-owner** pairing to `rated: false` (enforced via the
-    forthcoming `owner` link). The authoritative per-game value is reported back
-    on each entry in `games`.
+    Every game in the batch shares the same `variant` and `clock` (real-time
+    control). The `rated` field is the organizer's **requested default**; the
+    server remains the referee and forces any **same-owner** pairing to
+    `rated: false` (enforced via the forthcoming `owner` link). The authoritative
+    per-game value is reported back on each entry in `games`.
     Each listed bot receives a `gameStart` event when its game begins.
   tags:
     - Challenge
@@ -36,7 +35,7 @@ post:
           required:
             - pairings
             - variant
-            - mode
+            - clock
           properties:
             pairings:
               type: array
@@ -64,27 +63,18 @@ post:
                 `false`. The server forces same-owner pairings to `false`
                 regardless; the authoritative per-game value is returned in the
                 response `games`.
-            mode:
-              type: string
-              enum:
-                - wallclock
-                - fixedsim
             clock:
-              description: Wall-clock control for every game. Required when `mode` is `wallclock`.
+              description: Real-time control (`initial` + `inc`, ms) for every game in the batch.
               $ref: ../components/schemas/Clock.yaml
-            simBudget:
-              type: integer
-              format: int32
-              minimum: 1
-              description: Per-move sim budget for every game. Required when `mode` is `fixedsim`.
         example:
           pairings:
             - { p1: krakenbot, p2: sealbot }
             - { p1: sealbot, p2: krakenbot }
           variant: httt6
           rated: true
-          mode: fixedsim
-          simBudget: 100000
+          clock:
+            initial: 300000
+            inc: 2000
   responses:
     "200":
       description: The batch was created; games are starting.
@@ -135,6 +125,6 @@ post:
     "403":
       $ref: ../components/responses/ForbiddenOrganizer.yaml
     "422":
-      $ref: ../components/responses/InvalidModeParams.yaml
+      $ref: ../components/responses/InvalidClock.yaml
     "429":
       $ref: ../components/responses/TooManyRequests.yaml

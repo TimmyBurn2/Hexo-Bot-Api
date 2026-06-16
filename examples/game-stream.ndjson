@@ -1,4 +1,4 @@
-{"type":"gameFull","id":"J9kP2qLm","variant":"httt6","players":{"p1":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"p2":{"id":"sealbot","name":"SealBot","rating":1480,"title":"BOT"}},"mode":"wallclock","clock":{"initial":300000,"inc":2000},"state":{"type":"gameState","moves":[],"ply":0,"time":{"p1":300000,"p2":300000},"status":"started"}}
+{"type":"gameFull","id":"J9kP2qLm","variant":"httt6","players":{"p1":{"id":"krakenbot","name":"KrakenBot","rating":1500,"title":"BOT"},"p2":{"id":"sealbot","name":"SealBot","rating":1480,"title":"BOT"}},"rated":true,"clock":{"initial":300000,"inc":2000},"state":{"type":"gameState","moves":[],"ply":0,"time":{"p1":300000,"p2":300000},"status":"started"}}
 {"type":"gameState","moves":[{"p":"p1","s":[[0,0]]}],"ply":1,"time":{"p1":299000,"p2":300000},"status":"started"}
 {"type":"gameState","moves":[{"p":"p1","s":[[0,0]]},{"p":"p2","s":[[0,1],[1,1]]}],"ply":2,"time":{"p1":299000,"p2":298500},"status":"started"}
 {"type":"gameState","moves":[{"p":"p1","s":[[0,0]]},{"p":"p2","s":[[0,1],[1,1]]},{"p":"p1","s":[[1,0],[2,0]]}],"ply":3,"time":{"p1":297500,"p2":298500},"status":"started"}
