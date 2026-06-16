@@ -27,15 +27,8 @@ properties:
     format: int32
     minimum: 0
     description: Zero-based turn index to fill. Must equal the server's next expected ply. Stale/duplicate → `409` with `expectedPly`.
-  offerDraw:
-    type: boolean
-    default: false
-    description: >-
-      If `true`, attach a draw offer to this move. The opponent may accept on
-      their turn. Optional.
 example:
   stones:
     - [3, 0]
     - [4, 0]
   ply: 4
-  offerDraw: false

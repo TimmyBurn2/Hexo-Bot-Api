@@ -10,7 +10,7 @@ description: >-
 
   - **Every turn after that** places **two** hexes.
 
-  Position in `moves` is the (zero-based) ply — not repeated on the object.
+  Position in `moves` is the (zero-based) ply, not repeated on the object.
 required:
   - p
   - s

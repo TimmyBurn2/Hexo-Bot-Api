@@ -125,6 +125,6 @@ post:
     "409":
       $ref: ../components/responses/ChallengeRefused.yaml
     "422":
-      $ref: ../components/responses/Unprocessable.yaml
+      $ref: ../components/responses/InvalidModeParams.yaml
     "429":
       $ref: ../components/responses/TooManyRequests.yaml

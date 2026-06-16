@@ -42,7 +42,6 @@ post:
             - [2, -1]
             - [2, 0]
           ply: 4
-          offerDraw: false
   responses:
     "200":
       description: The compound turn was applied.
