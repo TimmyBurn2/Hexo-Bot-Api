@@ -1,6 +1,6 @@
 type: object
 title: GameState
-description: Per-ply event on the per-game stream, after the initial `gameFull`. Carries the cumulative `moves` list — replay it to rebuild the board.
+description: Per-ply event on the per-game stream, after the initial `gameFull`. Carries the cumulative `moves` list. Replay it to rebuild the board.
 required:
   - type
   - moves
@@ -49,7 +49,6 @@ properties:
       - started
       - resign
       - win
-      - draw
       - aborted
   winner:
     description: The winning side. Present only on a decisive terminal `status` (`win`, `resign`).

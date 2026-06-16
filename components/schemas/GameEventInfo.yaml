@@ -41,10 +41,8 @@ properties:
     type: string
     description: Terminal status. Present on `gameFinish`; omitted on `gameStart`.
     enum:
-      - started
       - resign
       - win
-      - draw
       - aborted
   winner:
     description: The winning side. Present on a decisive `gameFinish`.

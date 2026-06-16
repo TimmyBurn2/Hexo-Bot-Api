@@ -7,10 +7,12 @@ description: >-
 
 
   The current (and only) variant is `httt6`, HeXO, the *infinite hexagonal
-  tic-tac-toe* game: played on an unbounded hex grid with integer axial
-  coordinates. Player 1 opens with a single hex at the centre; thereafter each
-  turn places two hexes. **Win by connecting six of your own hexes in a straight
-  line along any of the three board axes.**
+  tic-tac-toe* game. The coordinate space is unbounded (integer axial
+  coordinates, any value), but legal placement is confined to a bounded playable
+  region that expands outward as stones are placed, so at the opening only the
+  centre `[0, 0]` is available. Player 1 opens with that single centre hex;
+  thereafter each turn places two hexes. **Win by connecting six of your own
+  hexes in a straight line along any of the three board axes.**
 
 
   This value **must match the variant key registered on the server**
