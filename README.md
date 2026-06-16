@@ -62,7 +62,7 @@ A HeXO **turn** places hexes on the board, and the protocol models one turn as a
 Every cell is an **axial coordinate** `[q, r]` (two integers).
 `q` runs along one axis, `r` along another; the implied third axis is `s = −q − r`.
 The centre is `[0, 0]`. The coordinate space is unbounded, so `q`/`r` can be **any integer, including negatives**, but a cell is legal to play only **within hex-distance 8 of an already-placed stone**, so the playable region is a bounded frontier that widens as stones are placed.
-The hex-distance between `[q1, r1]` and `[q2, r2]` is `(|q1−q2| + |r1−r2| + |(q1+r1)−(q2+r2)|) / 2`; a bot can use this to self-validate a candidate before submitting.
+The hex-distance between `[q1, r1]` and `[q2, r2]` is `(|q1−q2| + |r1−r2| + |(q1+r1)−(q2+r2)|) / 2`; a bot can use this to self-validate a candidate before submitting. Pre-validation is optional: the server is the sole authority and rejects an out-of-frontier placement with `422 out-of-bounds`, which the bot must handle.
 A cell's six neighbours are the six axial directions: `[+1,0] [+1,−1] [0,−1] [−1,0] [−1,+1] [0,+1]`.
 You win with six of your hexes in a line along one of the three axes.
 
