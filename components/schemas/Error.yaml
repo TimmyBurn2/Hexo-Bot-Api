@@ -13,10 +13,10 @@ properties:
     description: >-
       Stable, machine-readable error code. Known values include:
       `bad-request` (400), `unauthorized` (401), `forbidden` /
-      `missing-scope` (403), `not-found` (404), `not-your-turn` /
-      `not-accepting` / `at-capacity` (409),
+      `missing-scope` / `owner-instance-limit` (403), `not-found` (404),
+      `not-your-turn` / `not-accepting` / `at-capacity` / `game-finished` (409),
       `occupied` / `wrong-stone-count` / `out-of-bounds` / `illegal-move` /
-      `invalid-time-control` (422), `rate-limited` (429).
+      `invalid-time-control` / `invalid-pairing` (422), `rate-limited` (429).
     example: not-your-turn
   message:
     type: string
@@ -45,6 +45,27 @@ properties:
     items:
       type: integer
     example: [2, -1]
+  accounts:
+    type: array
+    description: >-
+      **Offending account id(s).** Present on `422 invalid-pairing` from bulk
+      pairing: the account ids that are unknown or are not bot accounts, so the
+      organizer can pinpoint which pairings to fix. Batch validation is
+      all-or-nothing, so no game is created when this is returned.
+    items:
+      type: string
+    example:
+      - ghostbot
+      - not_a_bot
+  limit:
+    type: integer
+    format: int32
+    minimum: 0
+    description: >-
+      **Cap that was reached.** Present on `403 owner-instance-limit`: the
+      per-owner instance cap the operator has hit, echoed so a fleet manager can
+      react. The cap value is server-set and may change.
+    example: 25
 example:
   error: not-your-turn
   message: It is not your turn; resubmit at the expected ply.

@@ -36,7 +36,6 @@ properties:
       Coarse lifecycle flag. Present on `gameFinish`, where it is always
       `finished`; omitted on `gameStart`, where the game is just beginning.
     enum:
-      - started
       - finished
   finishReason:
     type: string
@@ -53,10 +52,35 @@ properties:
     description: >-
       The winning side on a decisive `gameFinish`: the line maker on
       `six-in-a-row`, the opponent on `surrender`, `timeout`, or `disconnect`.
-      `null` on `terminated`, which finishes the game with no winner.
+      `null` on `terminated`, which finishes the game with no winner, and may be
+      `null` on `disconnect` when no side survives to be awarded the win.
     oneOf:
       - $ref: ./Side.yaml
       - type: "null"
+allOf:
+  # gameFinish (status finished) always carries a result; gameStart omits
+  # status and carries neither finishReason nor winner.
+  - if:
+      required:
+        - status
+      properties:
+        status:
+          const: finished
+    then:
+      required:
+        - finishReason
+        - winner
+  - if:
+      not:
+        required:
+          - status
+    then:
+      not:
+        anyOf:
+          - required:
+              - finishReason
+          - required:
+              - winner
 example:
   id: J9kP2qLm
   side: p1

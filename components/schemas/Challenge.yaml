@@ -39,10 +39,13 @@ properties:
     $ref: ./TimeControl.yaml
   status:
     type: string
-    description: Lifecycle state of the challenge.
+    description: >-
+      Lifecycle state of the challenge. `created` is the pending state;
+      `created -> {declined | canceled}` is terminal. Acceptance is not a status
+      here: an accepted challenge yields a `gameStart` event rather than an
+      `accepted` Challenge, so that value never appears on this surface.
     enum:
       - created
-      - accepted
       - declined
       - canceled
 example:
