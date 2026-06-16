@@ -30,6 +30,7 @@ example:
     variant: httt6
     rated: true
     clock:
-      initial: 300000
-      inc: 2000
+      mode: match
+      mainTimeMs: 300000
+      incrementMs: 2000
     status: declined
