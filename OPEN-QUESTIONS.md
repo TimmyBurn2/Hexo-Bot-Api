@@ -127,6 +127,8 @@ Items deferred from the first proposal:
   already in one or more games.
 - Player-vs-bot play.
 - Moderation (reporting, bans, abuse handling).
-- Engine brand / self-description fields.
+- Engine brand / self-description fields. **Partially resolved:** an opt-in,
+  label-only `engineDescription` (short free text, cosmetic) now ships on
+  registration and the roster; richer structured brand metadata stays deferred.
 - Operator-granting of scopes (how `bot:organize` is issued).
 - Seek-board (open challenge pool rather than direct handle challenges).

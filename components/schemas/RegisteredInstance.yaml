@@ -44,6 +44,7 @@ example:
     name: KrakenBot
     owner: op_7Qm2Kx
     title: BOT
+    engineDescription: MCTS, 2M playouts/move
     hardware:
       gpu: consumer
       cpu_cores: 16

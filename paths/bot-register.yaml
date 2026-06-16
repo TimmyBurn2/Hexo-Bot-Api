@@ -73,6 +73,15 @@ post:
               description: Optional display name. Defaults to the handle when omitted.
               maxLength: 64
               example: KrakenBot
+            engineDescription:
+              type: string
+              description: >-
+                Optional, opt-in cosmetic label: a short free-text self-report of
+                the engine (e.g. its technique or version), shown on the roster to
+                keep a multi-instance fleet legible. Label only, never a rating or
+                pairing input. Omit to disclose nothing.
+              maxLength: 256
+              example: MCTS, 2M playouts/move
             hardware:
               description: >-
                 Optional, opt-in coarse hardware self-report. Label only; not
@@ -85,6 +94,7 @@ post:
             value:
               handle: krakenbot
               name: KrakenBot
+              engineDescription: MCTS, 2M playouts/move
               hardware:
                 gpu: consumer
                 cpu_cores: 16
@@ -106,6 +116,7 @@ post:
               name: KrakenBot
               owner: op_7Qm2Kx
               title: BOT
+              engineDescription: MCTS, 2M playouts/move
               hardware:
                 gpu: consumer
                 cpu_cores: 16
