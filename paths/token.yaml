@@ -1,0 +1,26 @@
+delete:
+  operationId: revokeToken
+  summary: Revoke my own token
+  description: >-
+    Revokes the token presented on this request, letting an instance drop its own
+    credential (for example before discarding a short-lived worker). Requires
+    `bot:play`. A token can revoke only itself: this never touches a sibling
+    instance or the operator's `bot:register` credential. It is a credential
+    action, not a lifecycle one, so it does not tombstone the instance or free its
+    handle; an operator retires an instance with `POST /api/bot/{handle}/retire`.
+    After a successful call the token no longer authenticates.
+  tags:
+    - Account
+  responses:
+    "200":
+      description: The token was revoked and no longer authenticates.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

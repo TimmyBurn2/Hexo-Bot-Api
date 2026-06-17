@@ -116,8 +116,12 @@ tags:
 paths:
   /api/account:
     $ref: ./paths/account.yaml
+  /api/token:
+    $ref: ./paths/token.yaml
   /api/bot/register:
     $ref: ./paths/bot-register.yaml
+  /api/bot/{handle}/retire:
+    $ref: ./paths/bot-retire.yaml
   /api/bots:
     $ref: ./paths/bots.yaml
   /api/bot/status:
