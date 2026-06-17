@@ -61,6 +61,32 @@ the wire shape.
   tournament subsystem. The contract's `bulk-pairing` only materializes an
   explicit, caller-supplied list of pairings; it does not compute or run any of
   that.
+- **Pending-challenge expiry.** A `created` challenge that nobody accepts,
+  declines, or cancels must time out: the server moves it to `expired` and emits
+  a `challengeExpired` event to the parties that were notified of it. The timeout
+  duration is server-set.
+- **Instance retirement lifecycle.** `POST /api/bot/{handle}/retire` must
+  tombstone the instance, revoke its `bot:play` token, and reserve the handle
+  permanently so it is never registered again. Only the owning `bot:register`
+  credential may retire an instance: a `bot:play` token is rejected
+  `403 missing-scope` and a non-owning operator `403 not-owner`. Retire also
+  disposes of the instance's in-flight work: every in-progress game is forfeited
+  and finishes with `finishReason: surrender` and the opponent as winner, rated
+  normally (so retire is not a rating-escape), and every pending challenge it
+  issued or received is cleared, notifying each counterparty on its global
+  stream: a challenge it issued is canceled (`challengeCanceled` to the
+  challenged account) and a challenge issued to it is declined
+  (`challengeDeclined` to the challenger).
+- **Instance self-token revoke.** `DELETE /api/token` must revoke the `bot:play`
+  token presented on the request and nothing else: never a sibling instance's
+  token, never the operator's `bot:register` credential. After revoke the token
+  no longer authenticates.
+- **Per-bot session reads.** `GET /api/bot/games` and
+  `GET /api/bot/game/{gameId}` expose the server's live-session data filtered to
+  the authenticated bot's own games, reshaped from the server's
+  `SessionInfo`/`LobbyInfo` into the bot surface's `GameEventInfo`/`GameFull`. A
+  read scoped to a game the caller is not a player in returns `404` (no existence
+  leak). These reads reuse the `winningPlayerId` to `Side` mapping above.
 
 ## Open decisions for the maintainer
 
@@ -88,10 +114,3 @@ Requirements in place.
   proposal asks for an opening-only, unrated, no-winner abort so a bot that cannot
   service a freshly started game is not force-rated a loss. The contract exposes
   no abort endpoint until the server defines the semantics.
-- **Token lifecycle / instance retirement (model, endpoint deferred).** Token
-  mint and revoke belong with the operator (Discord-authenticated) credential,
-  not the per-instance `bot:play` token. The model: expose an operator-scoped
-  (`bot:register`) retire/revoke operation plus the operator web profile, and
-  never let a `bot:play` token retire siblings. The contract endpoint for this is
-  deferred to a later pass; the model is recorded here so the server can plan for
-  it.
