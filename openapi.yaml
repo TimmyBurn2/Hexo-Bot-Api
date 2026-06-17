@@ -134,6 +134,8 @@ paths:
     $ref: ./paths/game-move.yaml
   /api/bot/game/{gameId}/resign:
     $ref: ./paths/game-resign.yaml
+  /api/challenges:
+    $ref: ./paths/challenges.yaml
   /api/challenge/{handle}:
     $ref: ./paths/challenge-create.yaml
   /api/challenge/{challengeId}/accept:
