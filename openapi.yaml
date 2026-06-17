@@ -28,7 +28,7 @@ info:
 
     ## Shape (modelled on the Lichess Bot/Board API)
 
-    - **Two NDJSON streams.** A global event stream (`GET /api/stream/event`) and a per-game stream (`GET /api/bot/game/stream/{gameId}`). Long-lived `application/x-ndjson` GETs; one JSON object per line, blank line as keepalive.
+    - **Two NDJSON streams.** A global event stream (`GET /api/stream/event`) and a per-game stream (`GET /api/bot/game/stream/{gameId}`). Long-lived `application/x-ndjson` GETs; one JSON object per line, with a blank-line keepalive at least every 15 seconds. The global stream carries the challenge lifecycle (`challenge`, `challengeDeclined`, `challengeCanceled`, `challengeExpired`) plus `gameStart`/`gameFinish`; the per-game stream carries `gameFull`, `gameState`, and an observe-only `opponentGone`. Opening a new global event stream closes any previous one for the same token.
 
     - **Moves POST up, state streams down.** Moves are submitted with a separate
       `POST`; the resulting state arrives on the per-game stream.
@@ -98,9 +98,10 @@ tags:
     description: Account identity and bot instance registration.
   - name: Stream
     description: >-
-      Long-lived NDJSON streams. The global event stream never closes; the
+      Long-lived NDJSON streams. The global event stream never closes (and
+      opening a new one closes any previous stream for the same token); the
       per-game stream closes once the game's `status` reaches `finished`. Both
-      send a blank line as a keepalive.
+      send a blank-line keepalive at least every 15 seconds.
   - name: Bot
     description: "Bot-only operations: advertising challenge availability, streaming a game, submitting moves, resigning."
   - name: Challenge
@@ -142,6 +143,8 @@ paths:
     $ref: ./paths/challenges.yaml
   /api/challenge/{handle}:
     $ref: ./paths/challenge-create.yaml
+  /api/challenge/{challengeId}/show:
+    $ref: ./paths/challenge-get.yaml
   /api/challenge/{challengeId}/accept:
     $ref: ./paths/challenge-accept.yaml
   /api/challenge/{challengeId}/decline:
