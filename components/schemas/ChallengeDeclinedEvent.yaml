@@ -34,3 +34,4 @@ example:
       mainTimeMs: 300000
       incrementMs: 2000
     status: declined
+    declineReason: timeControl

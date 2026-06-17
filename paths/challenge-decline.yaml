@@ -3,8 +3,9 @@ post:
   summary: Decline an incoming challenge
   description: >-
     Declines the challenge `challengeId`. The challenger receives a
-    `challengeDeclined` event. An optional `reason` lets the challenger's bot
-    decide whether to re-challenge with different terms.
+    `challengeDeclined` event carrying the declined `Challenge`. An optional
+    `reason` rides back on that challenge as `declineReason`, letting the
+    challenger's bot decide whether to re-challenge with different terms.
 
 
     Only a still-pending challenge can be declined. A challenge that has already
@@ -31,19 +32,10 @@ post:
           additionalProperties: false
           properties:
             reason:
-              type: string
               description: Why the challenge was declined. Defaults to `generic`.
               default: generic
-              enum:
-                - generic
-                - later
-                - tooFast
-                - tooSlow
-                - timeControl
-                - rated
-                - casual
-                - noBot
-                - onlyBot
+              allOf:
+                - $ref: ../components/schemas/DeclineReason.yaml
         example:
           reason: timeControl
   responses:
