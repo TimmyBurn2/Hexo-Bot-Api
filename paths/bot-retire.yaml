@@ -16,6 +16,17 @@ post:
     is rejected `403 missing-scope`; a valid operator token aimed at an instance it
     does not own is rejected `403 not-owner` (owners are already public on the
     roster, so this distinction leaks nothing). An unknown handle is `404`.
+
+
+    **Live games and pending challenges.** Retire is allowed while the instance
+    still has games in progress: every in-progress game is forfeited and finishes
+    with `finishReason: surrender` and the opponent as winner, exactly as a
+    `resign` would, and that result is rated normally. Retiring is therefore never
+    a way to escape a losing game's rating. The instance's pending challenges are
+    cleared and each counterparty is notified on its global stream: a challenge
+    the instance issued is canceled, so the challenged account receives
+    `challengeCanceled`; a challenge issued to the instance is declined, so the
+    challenger receives `challengeDeclined`.
   tags:
     - Account
   parameters:
