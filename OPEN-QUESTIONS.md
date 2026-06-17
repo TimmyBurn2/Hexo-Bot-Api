@@ -16,9 +16,11 @@ self-validation is not made a normative part of the contract.
 ## 2. Time-control union (resolved)
 
 **Resolved: union adopted.** The `timeControl` field is now the server's `TimeControl`
-union over `mode`: `unlimited`; `turn` (a per-turn cap `turnTimeMs`, the server
-default at 45000 ms); and `match` (`mainTimeMs` + `incrementMs`). The earlier
-single match-style clock (`initial` + `inc`) is replaced, and the
+union over `mode`: `unlimited`; `turn` (a per-turn cap `turnTimeMs`; the server's
+current default value is 45000 ms with a 5000 ms player floor, and this proposal
+sets a bot default of 500 ms with a 45000 ms ceiling, asking the server to accept
+sub-second `turnTimeMs` for bot games); and `match` (`mainTimeMs` + `incrementMs`).
+The earlier single match-style clock (`initial` + `inc`) is replaced, and the
 clock-validation 422 is renamed `invalid-time-control`.
 
 ## 3. Opening auto-play (resolved)
@@ -72,9 +74,16 @@ whether rated-ness should be fully server-decided like single challenges.
 
 Items deferred from the first proposal:
 
-- **Rating internals.** The rating model (formula and deviation) and provisional
-  handling are resolved below; the anchor (the scale's zero point) is still open.
-  - **(resolved) Uncertainty model: Glicko rating-deviation (RD).** The original
+- **Rating internals.** The server **currently runs plain Elo** (K=30 while
+  `gameCount` < 10, else 15; rating floor 100; start 1000; no rating-deviation).
+  This proposal **requests the server adopt the Glicko rating-deviation model**
+  for the bot ladder, with the existing Elo system as an explicit fallback if the
+  maintainer declines. The model (formula and deviation) and provisional handling
+  are specified below as the proposed Glicko design; the anchor (the scale's zero
+  point) is still open. The choice itself is a server decision recorded in
+  `SERVER-NOTES.md`; the contract ships no rating-model field (no Glicko, RD, or
+  provisional) either way, so this is a server change, not a wire change.
+  - **(proposed) Uncertainty model: Glicko rating-deviation (RD).** The original
     Glicko, not Glicko-2. RD is a per-rating confidence that tightens as a bot
     plays and widens with inactivity, and it weights opponent strength, which is
     what the "2/2 versus strong should not outrank 9/10 versus weak" goal needs.
@@ -87,7 +96,7 @@ Items deferred from the first proposal:
     Reserve Wilson only for a fixed-benchmark anchor (a frozen puzzle or position
     set, option D below), where every attempt is exchangeable and the Wilson
     lower bound is a clean, calibrated score.
-  - **Implementation summary** (original Glicko, glicko.net):
+  - **Proposed implementation summary** (original Glicko, glicko.net):
     - New or unrated bot: rating 1000, RD 350. The starting rating matches the
       HeXO server's player ladder (players start at 1000), not Glickman's
       conventional 1500: the rated-for-bot-only anchor (option B) pulls bots onto
@@ -120,11 +129,15 @@ Items deferred from the first proposal:
       opponent) stay as the anti-farming note.
     - On a version performance-shift, raise the bot's RD (reopen uncertainty)
       rather than hard-resetting; this reuses the version-epoch mechanism.
-  - **(resolved) Provisional handling.** A rating is provisional while its RD is
-    above a threshold (around 110) and becomes established after enough games
-    (roughly 15 to 20), with provisional ratings moving in larger steps. This
-    mirrors common practice (for example Lichess). The one contract-visible
-    sliver this implies is an optional, server-derived `provisional` boolean on
+  - **(proposed) Provisional handling.** The convention follows the rating-model
+    choice. Under the Glicko proposal, a rating is provisional while its RD is
+    above a threshold (around 110, a Glicko-2 convention borrowed onto Glicko-1
+    and flagged to re-tune) and becomes established after enough games (roughly 15
+    to 20), with provisional ratings moving in larger steps. This mirrors common
+    practice (for example Lichess). Under the Elo fallback there is no RD, so
+    provisional follows the server's existing `gameCount` < 10 K-swap (larger
+    steps in the first 10 games). The one contract-visible sliver the Glicko
+    proposal implies is an optional, server-derived `provisional` boolean on
     the rating (`Player`, `BotInstance`, `BotListing`): `true` while RD is above
     the provisional threshold, omitted or `false` once established;
     server-authoritative and read-only like `rating`. It is informational only
