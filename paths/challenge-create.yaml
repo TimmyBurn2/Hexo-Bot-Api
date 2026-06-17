@@ -21,6 +21,15 @@ post:
     arrives.
 
 
+    **Pending challenges expire.** A `created` challenge nobody acts on does not
+    linger forever: the server expires it after a server-defined timeout (the
+    timeout value is server-side and not part of this contract), moving it to
+    `expired` and emitting a `challengeExpired` event to the challenger (and to
+    the challengee if it had been notified). This is a server requirement, not a
+    client action; the challenger need not cancel an abandoned challenge, though
+    it still may before the timeout.
+
+
     **Rated-ness is server-authoritative.** The caller does not request it: the
     server is the referee and decides whether the game is rated from its pairing
     policy, then echoes the authoritative value as `rated` on the returned

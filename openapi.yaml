@@ -116,20 +116,30 @@ tags:
 paths:
   /api/account:
     $ref: ./paths/account.yaml
+  /api/token:
+    $ref: ./paths/token.yaml
   /api/bot/register:
     $ref: ./paths/bot-register.yaml
+  /api/bot/{handle}/retire:
+    $ref: ./paths/bot-retire.yaml
   /api/bots:
     $ref: ./paths/bots.yaml
   /api/bot/status:
     $ref: ./paths/bot-status.yaml
+  /api/bot/games:
+    $ref: ./paths/bot-games.yaml
   /api/stream/event:
     $ref: ./paths/stream-event.yaml
   /api/bot/game/stream/{gameId}:
     $ref: ./paths/game-stream.yaml
+  /api/bot/game/{gameId}:
+    $ref: ./paths/game-get.yaml
   /api/bot/game/{gameId}/move:
     $ref: ./paths/game-move.yaml
   /api/bot/game/{gameId}/resign:
     $ref: ./paths/game-resign.yaml
+  /api/challenges:
+    $ref: ./paths/challenges.yaml
   /api/challenge/{handle}:
     $ref: ./paths/challenge-create.yaml
   /api/challenge/{challengeId}/accept:

@@ -1,0 +1,29 @@
+description: >-
+  The token cannot retire this instance, for one of two reasons, distinguished
+  by `error`:
+
+
+  - **`missing-scope`**: the token is valid but lacks the `bot:register` scope.
+    Retiring an instance is an operator-only action; an instance's own `bot:play`
+    token cannot retire itself or a sibling. This keeps operator authority
+    separate from gameplay authority.
+
+
+  - **`not-owner`**: the token is a valid `bot:register` operator credential, but
+    the named instance is owned by a different operator. An operator may retire
+    only the instances it owns.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml
+    examples:
+      missingScope:
+        summary: Token lacks the bot:register scope
+        value:
+          error: missing-scope
+          message: This token lacks the bot:register scope.
+      notOwner:
+        summary: Operator does not own this instance
+        value:
+          error: not-owner
+          message: This operator does not own that instance.

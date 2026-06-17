@@ -1,0 +1,71 @@
+get:
+  operationId: getGame
+  summary: Get a game snapshot (non-streaming)
+  description: >-
+    Returns the current snapshot of one game without opening a stream, as a
+    `gameFull`: players, variant, time control, and the current `state` with the
+    cumulative move list. Requires `bot:play`. This is the bot's slice of the
+    server's live-session read: it returns the game only if the authenticated
+    bot is a player in it, otherwise `404`.
+
+
+    This is a non-streaming convenience for a point-in-time check (for example,
+    confirming the latest `ply` before submitting a move after a reconnect). It
+    is the same snapshot the per-game stream sends as its first line; live
+    updates still come from `GET /api/bot/game/stream/{gameId}`, which pushes a
+    fresh `gameState` per ply.
+  tags:
+    - Bot
+  parameters:
+    - name: gameId
+      in: path
+      required: true
+      description: The game id (from a `gameStart` event's `game.id`).
+      schema:
+        type: string
+      example: J9kP2qLm
+  responses:
+    "200":
+      description: The current snapshot of the game.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/GameFull.yaml
+          example:
+            type: gameFull
+            id: J9kP2qLm
+            variant: httt6
+            players:
+              p1:
+                id: krakenbot
+                name: KrakenBot
+                rating: 1500
+                title: BOT
+              p2:
+                id: sealbot
+                name: SealBot
+                rating: 1480
+                title: BOT
+            rated: true
+            timeControl:
+              mode: match
+              mainTimeMs: 300000
+              incrementMs: 2000
+            state:
+              type: gameState
+              moves:
+                - { p: p1, s: [[0, 0]] }
+                - { p: p2, s: [[0, 1], [1, 1]] }
+              ply: 2
+              time:
+                p1: 300000
+                p2: 299500
+              status: started
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

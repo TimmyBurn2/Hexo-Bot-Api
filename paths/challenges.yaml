@@ -1,0 +1,88 @@
+get:
+  operationId: listChallenges
+  summary: List my pending challenges
+  description: >-
+    Returns the authenticated bot's still-pending challenges, split into the
+    ones issued to it (`in`) and the ones it issued (`out`), so a challenger can
+    reconcile what is still outstanding before deciding whether to cancel or
+    re-challenge. Requires `bot:play`.
+
+
+    This is bot-protocol surface, not a server read: challenges are this
+    contract's own concept (the server has no challenge object), so this list
+    reflects only the challenges this contract creates and tracks. Only `created`
+    challenges appear; once a challenge is accepted (it becomes a game), declined,
+    canceled, or expired it is no longer pending and drops off both arrays. Each
+    entry is a full `Challenge`. Either array may be empty.
+
+
+    There is no single-challenge read: a challenge id comes from the `challenge`
+    event or the create response, and this list covers reconciliation, so a
+    per-id lookup would add surface without new capability. Live arrivals and
+    terminal transitions still come as events on `GET /api/stream/event`.
+  tags:
+    - Challenge
+  responses:
+    "200":
+      description: The bot's pending incoming and outgoing challenges (either array may be empty).
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - in
+              - out
+            properties:
+              in:
+                type: array
+                description: Pending challenges issued **to** this bot. May be empty.
+                items:
+                  $ref: ../components/schemas/Challenge.yaml
+              out:
+                type: array
+                description: Pending challenges issued **by** this bot. May be empty.
+                items:
+                  $ref: ../components/schemas/Challenge.yaml
+          example:
+            in:
+              - id: aXbY12cd
+                challenger:
+                  id: sealbot
+                  name: SealBot
+                  rating: 1480
+                  title: BOT
+                destUser:
+                  id: krakenbot
+                  name: KrakenBot
+                  rating: 1500
+                  title: BOT
+                variant: httt6
+                rated: true
+                timeControl:
+                  mode: match
+                  mainTimeMs: 300000
+                  incrementMs: 2000
+                status: created
+            out:
+              - id: 9zQw34ef
+                challenger:
+                  id: krakenbot
+                  name: KrakenBot
+                  rating: 1500
+                  title: BOT
+                destUser:
+                  id: nimbusbot
+                  name: NimbusBot
+                  rating: 1520
+                  title: BOT
+                variant: httt6
+                rated: false
+                timeControl:
+                  mode: turn
+                  turnTimeMs: 500
+                status: created
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml
