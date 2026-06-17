@@ -13,7 +13,8 @@ properties:
     description: >-
       Stable, machine-readable error code. Known values include:
       `bad-request` (400), `unauthorized` (401), `forbidden` /
-      `missing-scope` / `owner-instance-limit` (403), `not-found` (404),
+      `missing-scope` / `owner-instance-limit` / `not-owner` (403),
+      `not-found` (404),
       `not-your-turn` / `not-accepting` / `at-capacity` / `game-finished` (409),
       `occupied` / `wrong-stone-count` / `out-of-bounds` / `illegal-move` /
       `invalid-time-control` / `invalid-pairing` (422), `rate-limited` (429).
