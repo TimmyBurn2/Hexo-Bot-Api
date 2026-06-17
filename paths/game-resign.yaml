@@ -4,8 +4,10 @@ post:
   description: >-
     Resigns the game `gameId` on behalf of the authenticated bot. The game ends
     immediately with `finishReason: surrender` and the opponent as `winner`. A
-    resign targeting a game that has already ended returns `409 game-finished`; a
-    finished game still exists, so it is never reported as `404`.
+    resign targeting a recently finished game returns `409 game-finished` while
+    the server retains it; once it is reaped the resign may instead return `404`,
+    so the bot reconciles the terminal result from the `gameFinish` event rather
+    than this status code.
   tags:
     - Bot
   parameters:

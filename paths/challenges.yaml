@@ -16,9 +16,9 @@ get:
     entry is a full `Challenge`. Either array may be empty.
 
 
-    There is no single-challenge read: a challenge id comes from the `challenge`
-    event or the create response, and this list covers reconciliation, so a
-    per-id lookup would add surface without new capability. Live arrivals and
+    This list is the bulk view of what is still pending; to read one challenge
+    by id, including one that just went terminal (`declined`, `canceled`, or
+    `expired`), use `GET /api/challenge/{challengeId}/show`. Live arrivals and
     terminal transitions still come as events on `GET /api/stream/event`.
   tags:
     - Challenge

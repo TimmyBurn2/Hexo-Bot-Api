@@ -1,0 +1,39 @@
+type: object
+title: OpponentGoneEvent
+description: >-
+  Observe-only line on the **per-game stream**: the opponent's connection dropped
+  mid-game and the server has armed its auto-forfeit timer. There is **no client
+  action**: the bot cannot and need not claim the win. If the opponent does not
+  reconnect before `finishesInSeconds` elapses, the server auto-forfeits the game
+  to the surviving side and a `gameFinish` (with `finishReason: disconnect`)
+  follows; if the opponent reconnects in time, play simply resumes on the next
+  `gameState`. Member of the per-game stream union, discriminated on `type`.
+required:
+  - type
+  - gone
+  - finishesInSeconds
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `opponentGone` for this event.
+    const: opponentGone
+  gone:
+    type: boolean
+    description: >-
+      Always `true`: the opponent is currently gone. The event is emitted only on
+      a departure, never to announce a return; a return is observed implicitly
+      when the next `gameState` arrives.
+    const: true
+  finishesInSeconds:
+    type: integer
+    format: int32
+    minimum: 0
+    description: >-
+      Seconds remaining until the server auto-forfeits the game to the surviving
+      side if the opponent does not reconnect. This is a countdown to the
+      automatic forfeit, not to a deadline the bot must act on.
+example:
+  type: opponentGone
+  gone: true
+  finishesInSeconds: 30

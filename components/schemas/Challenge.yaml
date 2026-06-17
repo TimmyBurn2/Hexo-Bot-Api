@@ -52,6 +52,15 @@ properties:
       - declined
       - canceled
       - expired
+  declineReason:
+    description: >-
+      Why the challenge was declined, present only when `status` is `declined`
+      (the reason the decliner gave, defaulting to `generic`); absent for any
+      other status. This is how a declined challenge's reason reaches the
+      challenger, riding the embedded challenge on the `challengeDeclined` event.
+      Server-set and read-only.
+    allOf:
+      - $ref: ./DeclineReason.yaml
 example:
   id: aXbY12cd
   challenger:

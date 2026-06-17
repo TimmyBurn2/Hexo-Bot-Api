@@ -14,14 +14,18 @@ get:
     `gameFinish`, `challengeDeclined`, `challengeCanceled`, `challengeExpired`).
 
 
-    **Keepalive:** while idle, the server emits a **blank line** (just `\n`)
-    periodically so clients and proxies don't time the socket out. Clients
-    **must** skip blank lines rather than attempt to parse them.
+    **Keepalive:** while idle, the server emits a **blank line** (just `\n`) **at
+    least every 15 seconds** so clients and proxies don't time the socket out,
+    and so a client can set a read timeout at a small multiple of that interval
+    to tell an idle-but-alive stream from a dead socket. Clients **must** skip
+    blank lines rather than attempt to parse them.
 
 
-    Typically only one event stream per token should be open at a time. Read
-    the stream line by line; on `gameStart`, open the per-game stream at
-    `game.id` (see `/api/bot/game/stream/{gameId}`).
+    **One stream per token:** opening a new global event stream **closes any
+    previous one for the same token**, so a bot reconnecting after a half-open
+    drop need not tear down the stale connection first. Read the stream line by
+    line; on `gameStart`, open the per-game stream at `game.id` (see
+    `/api/bot/game/stream/{gameId}`).
   tags:
     - Stream
   responses:
