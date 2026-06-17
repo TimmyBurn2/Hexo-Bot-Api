@@ -133,7 +133,9 @@ Nothing depends on any particular bot's internals. **KrakenBot** and **SealBot**
 
 **One ladder, one time control per game.** Every game carries a time control set
 on the challenge: `unlimited`, `turn` (a per-turn budget `turnTimeMs`, fine-grained
-and sub-second capable for bots: 500 ms default, 45000 ms ceiling), or `match`
+and sub-second capable for bots: 500 ms default, 45000 ms ceiling; the server's
+current default value is 45000 ms with a 5000 ms player floor, so this proposes
+the server accept sub-second budgets for bot games), or `match`
 (`mainTimeMs` plus `incrementMs` per side).
 Under `turn` or `match`, ratings measure the whole engine, speed included.
 
