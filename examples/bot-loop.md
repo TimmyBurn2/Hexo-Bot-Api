@@ -28,6 +28,13 @@ function play_game(gameId, mySide):                      # mySide is "p1" or "p2
         if line is blank:  continue                      # keepalive, skip it
         msg = parse_json(line)
 
+        # opponentGone is observe-only: the opponent dropped and the server is
+        # counting down (msg.finishesInSeconds) to an automatic forfeit. Take no
+        # action, there is nothing to claim. If they reconnect, the next
+        # gameState resumes play; if not, a gameFinish ("disconnect") follows.
+        # It carries no moves, so skip the board rebuild below.
+        if msg.type == "opponentGone":  continue
+
         # Both gameFull and gameState carry the CUMULATIVE move list.
         # Rebuild the board from scratch every time, this is what makes
         # the protocol stateless. A crash + reconnect needs no local memory:
