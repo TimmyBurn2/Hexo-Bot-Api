@@ -25,8 +25,11 @@ post:
       two ways. `not-your-turn` is a stale, duplicate, or out-of-order `ply`
       (CAS miss): no move was applied, and the body carries the authoritative
       `expectedPly` so the bot can resynchronise and resubmit deterministically.
-      `game-finished` means the game exists but has already ended, so no further
-      move is accepted; a finished game is reported here, never as `404`.
+      `game-finished` means the game has already ended, so no further move is
+      accepted; a recently finished game is reported here while the server
+      retains it, but once it is reaped a late move may instead return `404`, so
+      the bot reconciles the terminal result from the `gameFinish` event rather
+      than this status code.
 
     - **`422`**: it was your turn but the move is illegal: a cell is
       `occupied`, the wrong number of stones was sent (`wrong-stone-count`: a

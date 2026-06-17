@@ -1,7 +1,9 @@
 description: >-
-  **409 game-finished.** The game exists but has already ended, so it cannot be
-  acted on again. A finished game is not gone: it still exists and is reported
-  here, not as `404`.
+  **409 game-finished.** The game has already ended, so it cannot be acted on
+  again. A recently finished game is reported here while the server still retains
+  it; once it is reaped a late resign may instead return `404`. Either way,
+  reconcile the terminal result from the `gameFinish` event on the global stream,
+  not from this status code.
 content:
   application/json:
     schema:
