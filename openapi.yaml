@@ -122,6 +122,8 @@ paths:
     $ref: ./paths/bots.yaml
   /api/bot/status:
     $ref: ./paths/bot-status.yaml
+  /api/bot/games:
+    $ref: ./paths/bot-games.yaml
   /api/stream/event:
     $ref: ./paths/stream-event.yaml
   /api/bot/game/stream/{gameId}:
