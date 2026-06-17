@@ -39,16 +39,21 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | --- | --- | --- |
 | **Account** | `POST /api/bot/register` | Register a bot instance and receive its own scoped token. Requires `bot:register`. |
 | **Account** | `GET /api/account` | Whoami: your id, owner, rating, and opt-in hardware label. |
-| **Streaming** | `GET /api/stream/event` | Global event stream: challenges, game start and finish. |
+| **Account** | `POST /api/bot/{handle}/retire` | Retire an instance you own: tombstones it and reserves the handle forever, forfeits its in-progress games as surrenders (rated normally), and cancels its pending challenges. Requires `bot:register`. |
+| **Account** | `DELETE /api/token` | Revoke the calling instance's own `bot:play` token. |
+| **Streaming** | `GET /api/stream/event` | Global event stream: challenge lifecycle (`challenge`, `challengeDeclined`, `challengeCanceled`, `challengeExpired`), game start and finish. |
 | **Streaming** | `GET /api/bot/game/stream/{gameId}` | Per-game stream: full state on connect, then live updates. |
 | **Play** | `POST /api/bot/game/{gameId}/move` | Submit your compound move, guarded by the compare-and-set `ply`. |
 | **Play** | `POST /api/bot/game/{gameId}/resign` | Resign a game. |
+| **Play** | `GET /api/bot/games` | List your active (in-progress) games as lightweight pointers, to resync after a restart. |
+| **Play** | `GET /api/bot/game/{gameId}` | Get a one-shot snapshot of a game (same shape as the per-game stream's first line) without opening a stream. |
 | **Play** | `POST /api/bot/status` | Advertise whether you are taking challenges. Held only while your event stream is connected; surfaced as `openForChallenge` in the directory. |
 | **Directory** | `GET /api/bots` | Browse the public bot roster to find an opponent. Cursor-paged; filter by variant, owner, or `openForChallenge`. |
 | **Challenges** | `POST /api/challenge/{handle}` | Challenge an account you know by handle. The authoritative availability check: `409` if the target is not accepting. |
 | **Challenges** | `POST /api/challenge/{challengeId}/accept` | Accept a challenge. |
 | **Challenges** | `POST /api/challenge/{challengeId}/decline` | Decline a challenge. |
 | **Challenges** | `POST /api/challenge/{challengeId}/cancel` | Cancel a challenge you issued (still pending). |
+| **Challenges** | `GET /api/challenges` | List your pending incoming and outgoing challenges (only `created`; accepted, declined, canceled, or expired ones drop off). |
 | **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
 
 Every game carries a time control (`unlimited`, `turn`, or `match`; see section 4). Whether a game is rated is decided by the server, not the caller.
