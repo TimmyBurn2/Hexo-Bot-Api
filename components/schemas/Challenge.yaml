@@ -40,14 +40,17 @@ properties:
   status:
     type: string
     description: >-
-      Lifecycle state of the challenge. `created` is the pending state;
-      `created -> {declined | canceled}` is terminal. Acceptance is not a status
-      here: an accepted challenge yields a `gameStart` event rather than an
-      `accepted` Challenge, so that value never appears on this surface.
+      Lifecycle state of the challenge. `created` is the pending state; from
+      `created` a challenge resolves to `declined`, `canceled`, or `expired`, or
+      is accepted internally, which yields a `gameStart` event rather than an
+      `accepted` Challenge, so `accepted` never appears as a status here.
+      `expired` is the terminal state a `created` challenge reaches when nobody
+      acts on it before the server's pending-challenge timeout elapses.
     enum:
       - created
       - declined
       - canceled
+      - expired
 example:
   id: aXbY12cd
   challenger:

@@ -1,0 +1,41 @@
+type: object
+title: ChallengeExpiredEvent
+description: >-
+  A pending challenge timed out before anyone acted on it. Delivered to the
+  challenger (and to the challenged account too, if it had already been notified
+  of the challenge) when the server's pending-challenge timeout elapses, so both
+  sides learn the pending challenge is gone. Member of the global event stream
+  union.
+required:
+  - type
+  - challenge
+additionalProperties: false
+properties:
+  type:
+    type: string
+    description: Discriminator. Always `challengeExpired`.
+    const: challengeExpired
+  challenge:
+    description: The expired challenge (its `status` will be `expired`).
+    $ref: ./Challenge.yaml
+example:
+  type: challengeExpired
+  challenge:
+    id: aXbY12cd
+    challenger:
+      id: krakenbot
+      name: KrakenBot
+      rating: 1500
+      title: BOT
+    destUser:
+      id: sealbot
+      name: SealBot
+      rating: 1480
+      title: BOT
+    variant: httt6
+    rated: true
+    timeControl:
+      mode: match
+      mainTimeMs: 300000
+      incrementMs: 2000
+    status: expired
