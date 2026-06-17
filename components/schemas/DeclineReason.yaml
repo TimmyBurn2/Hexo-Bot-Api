@@ -1,0 +1,19 @@
+type: string
+title: DeclineReason
+description: >-
+  Why a challenge was declined. The decliner picks one on
+  `POST /api/challenge/{challengeId}/decline`; the server rides it back to the
+  challenger on the `challengeDeclined` event (carried on the declined
+  `Challenge`) so the challenger's bot can decide whether to re-challenge with
+  different terms. Defaults to `generic`.
+enum:
+  - generic
+  - later
+  - tooFast
+  - tooSlow
+  - timeControl
+  - rated
+  - casual
+  - noBot
+  - onlyBot
+example: timeControl
