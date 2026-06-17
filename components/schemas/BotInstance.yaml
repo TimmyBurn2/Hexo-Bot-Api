@@ -66,12 +66,28 @@ properties:
       Opt-in, coarse hardware self-report. **Label only, not used as a rating
       or pairing input.** Absent unless the operator opted in at registration.
     $ref: ./HardwareInfo.yaml
+  scopes:
+    type: array
+    description: >-
+      Scopes carried by this instance's token. A registered instance plays
+      games, so its token carries `bot:play`; an instance token never carries
+      `bot:register` or `bot:organize`. Server-derived and read-only. Lets a
+      bridge handed a token out of band confirm `bot:play` is present before it
+      tries to play.
+    items:
+      type: string
+      enum:
+        - bot:play
+    example:
+      - bot:play
 example:
   id: krakenbot
   name: KrakenBot
   owner: op_7Qm2Kx
   rating: 1500
   title: BOT
+  scopes:
+    - bot:play
   engineDescription: MCTS, 2M playouts/move
   hardware:
     gpu: consumer
