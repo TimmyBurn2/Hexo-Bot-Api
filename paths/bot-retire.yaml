@@ -1,0 +1,45 @@
+post:
+  operationId: retireInstance
+  summary: Retire a bot instance you own
+  description: >-
+    Retires the instance named by `handle`: the owning operator tombstones it,
+    so it stops playing and drops off the open roster, and its per-instance
+    `bot:play` token is revoked. The handle is permanent and is never reused, so
+    a retired handle can never be registered again. Requires the operator's
+    `bot:register` credential.
+
+
+    **Operator authority, owner-scoped.** Only the `bot:register` credential that
+    owns the instance may retire it. A per-instance `bot:play` token cannot retire
+    itself or a sibling: gameplay authority is separate from operator authority,
+    the same separation that governs registration. A token without `bot:register`
+    is rejected `403 missing-scope`; a valid operator token aimed at an instance it
+    does not own is rejected `403 not-owner` (owners are already public on the
+    roster, so this distinction leaks nothing). An unknown handle is `404`.
+  tags:
+    - Account
+  parameters:
+    - name: handle
+      in: path
+      required: true
+      description: The permanent handle (its `id`) of the instance to retire, e.g. `krakenbot`.
+      schema:
+        type: string
+      example: krakenbot
+  responses:
+    "200":
+      description: The instance was retired; its token is revoked and its handle stays reserved forever.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Ok.yaml
+          example:
+            ok: true
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/ForbiddenRetire.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

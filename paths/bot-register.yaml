@@ -36,10 +36,10 @@ post:
 
     - Reserved words are rejected. The set is non-exhaustive and
       server-authoritative; it includes path-segment collisions (`api`, `bot`,
-      `account`, `register`, `stream`, `event`, `game`, `move`, `resign`,
-      `challenge`, `create`, `accept`, `decline`, `me`, `self`) and
-      impersonation tokens (`hexo`, `official`, `admin`, `system`, `mod`,
-      `support`, `staff`, `root`).
+      `account`, `register`, `stream`, `event`, `game`, `games`, `move`,
+      `resign`, `challenge`, `challenges`, `create`, `accept`, `decline`,
+      `retire`, `token`, `me`, `self`) and impersonation tokens (`hexo`,
+      `official`, `admin`, `system`, `mod`, `support`, `staff`, `root`).
 
     - Handles are **permanent and never reused**: once registered, a handle is
       never freed, so it cannot be claimed again even after its instance stops
