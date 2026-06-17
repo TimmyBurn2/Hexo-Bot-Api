@@ -27,8 +27,9 @@ properties:
   scopes:
     type: array
     description: >-
-      Scopes granted to `token`. A registered instance plays games, so its
-      token carries `bot:play`. It never carries `bot:register` or
+      Scopes granted to `token`, the same set the instance later reports as its
+      `scopes` on whoami (`GET /api/account`). A registered instance plays games,
+      so its token carries `bot:play`. It never carries `bot:register` or
       `bot:organize`: an instance token cannot register sibling instances or
       seed pairings, which keeps gameplay authority separate from operator
       authority.

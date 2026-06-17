@@ -1,0 +1,69 @@
+get:
+  operationId: getChallenge
+  summary: Get one challenge by id
+  description: >-
+    Returns a single `Challenge` by id with its current `status`, so a bot can
+    check one challenge without waiting on the event stream. Requires `bot:play`.
+
+
+    Its purpose is disambiguation: a bare `404` from accept, decline, or cancel
+    cannot tell "no such challenge" apart from "this challenge just went terminal
+    a moment ago". While the server still holds the challenge, this read returns
+    it with its current `status`, pending (`created`) or terminal (`declined`,
+    `canceled`, or `expired`, with `declineReason` set on a decline), resolving
+    that ambiguity. Acceptance is not a status: an accepted challenge becomes a
+    game and is no longer returned here, so reconcile it from the `gameStart`
+    event.
+
+
+    A terminal challenge is retained only briefly; like a reaped finished game it
+    then returns `404`, indistinguishable from an unknown id, so reconcile a
+    missed terminal transition from the `challengeDeclined`, `challengeCanceled`,
+    or `challengeExpired` event rather than this read. A bot may read only a
+    challenge it is party to (its challenger or the challenged account); any
+    other id returns `404`, with no existence leak.
+  tags:
+    - Challenge
+  parameters:
+    - name: challengeId
+      in: path
+      required: true
+      description: The challenge id (from a `challenge` event or the create response).
+      schema:
+        type: string
+      example: aXbY12cd
+  responses:
+    "200":
+      description: The challenge, including its current (possibly terminal) status.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Challenge.yaml
+          example:
+            id: aXbY12cd
+            challenger:
+              id: krakenbot
+              name: KrakenBot
+              rating: 1500
+              title: BOT
+            destUser:
+              id: sealbot
+              name: SealBot
+              rating: 1480
+              title: BOT
+            variant: httt6
+            rated: true
+            timeControl:
+              mode: match
+              mainTimeMs: 300000
+              incrementMs: 2000
+            status: declined
+            declineReason: timeControl
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml

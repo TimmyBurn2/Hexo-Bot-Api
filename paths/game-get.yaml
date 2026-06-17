@@ -6,7 +6,10 @@ get:
     `gameFull`: players, variant, time control, and the current `state` with the
     cumulative move list. Requires `bot:play`. This is the bot's slice of the
     server's live-session read: it returns the game only if the authenticated
-    bot is a player in it, otherwise `404`.
+    bot is a player in it, otherwise `404`. A recently finished game still
+    answers with a `200` snapshot while the server retains it; once it is reaped
+    this read returns `404`, so reconcile the terminal result from the
+    `gameFinish` event rather than this read.
 
 
     This is a non-streaming convenience for a point-in-time check (for example,

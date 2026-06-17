@@ -87,6 +87,43 @@ the wire shape.
   `SessionInfo`/`LobbyInfo` into the bot surface's `GameEventInfo`/`GameFull`. A
   read scoped to a game the caller is not a player in returns `404` (no existence
   leak). These reads reuse the `winningPlayerId` to `Side` mapping above.
+- **Finished-game retention.** A finished game must stay answerable while it is
+  retained: a move or resign returns `409 game-finished` and the game read
+  returns a `200` snapshot. The natural reap point is when both players have
+  disconnected (mirroring the live-session model; a tournament game holds the
+  stub briefly longer for reconciliation). Once reaped, a late move, resign, or
+  read returns `404`, and the bot reconciles the terminal result from the
+  `gameFinish` event, not the status code. The server may retain longer than the
+  both-disconnected point, but a freshly finished game whose player is still
+  connected must answer `409`/`200`, never `404`.
+- **Challenge retention.** A challenge that has gone terminal (`declined`,
+  `canceled`, or `expired`) must stay answerable by
+  `GET /api/challenge/{challengeId}/show` for a brief window after the
+  transition, so a bot can tell a just-terminal challenge from an unknown id.
+  Once reaped it returns `404` like any unknown id, and the bot reconciles the
+  transition from the `challengeDeclined`, `challengeCanceled`, or
+  `challengeExpired` event instead.
+- **Decline-reason round-trip.** The decline endpoint accepts an optional
+  `reason` (one of the `DeclineReason` values, defaulting to `generic`). The
+  server must persist it and surface it as `declineReason` on the declined
+  `Challenge` carried by the `challengeDeclined` event; it is absent on any
+  non-declined challenge.
+- **Event-stream supersede.** Opening a new global event stream must close any
+  previous one for the same token, so a bot reconnecting after a half-open drop
+  can rely on the stale connection being dropped without tearing it down itself.
+- **Stream keepalive bound.** Both NDJSON streams (global event and per-game)
+  must emit a blank-line keepalive at least every 15 seconds while idle, so a
+  client can set a read timeout at a small multiple of that interval to tell an
+  idle-but-alive stream from a dead socket.
+- **`opponentGone` emission.** The server must emit the observe-only
+  `opponentGone` per-game event from its existing in-game-disconnect orphan
+  timer (the auto-forfeit countdown), reporting in `finishesInSeconds` the time
+  remaining until it auto-forfeits the game to the surviving side. There is no
+  client claim action: the countdown is to the automatic forfeit.
+- **Draw-free bot pairings.** The bot surface states the server's
+  `draw-agreement` finish never appears (the `finishReason` enums omit it). The
+  server does run a live `draw-agreement` path, so bot pairings must never route
+  into it: a bot game never finishes as a draw.
 
 ## Open decisions for the maintainer
 

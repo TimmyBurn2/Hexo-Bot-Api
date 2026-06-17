@@ -16,12 +16,22 @@ get:
     **Stateless:** replay `moves` to rebuild the board. A crashed bot reconnects, receives the fresh `gameFull`, and resumes with zero local memory.
 
 
-    **Keepalive:** a **blank line** (`\n`) is emitted periodically while idle;
-    clients must skip blank lines. **The stream closes** once the game's
-    `status` reaches `finished`, unlike the global event stream, this one ends.
+    **Keepalive:** a **blank line** (`\n`) is emitted **at least every 15
+    seconds** while idle, so a client can set a read timeout at a small multiple
+    of that interval; clients must skip blank lines. **The stream closes** once
+    the game's `status` reaches `finished`, unlike the global event stream, this
+    one ends.
 
 
-    Discriminate each line on its `type` field (`gameFull` | `gameState`).
+    **Opponent gone:** if the opponent disconnects mid-game, an observe-only
+    `opponentGone` line announces it and counts down to the server's automatic
+    forfeit. The bot takes no action: if the opponent reconnects in time, play
+    resumes on the next `gameState`; otherwise the game auto-forfeits to the
+    surviving side and finishes.
+
+
+    Discriminate each line on its `type` field
+    (`gameFull` | `gameState` | `opponentGone`).
   tags:
     - Bot
     - Stream
@@ -35,7 +45,7 @@ get:
       example: J9kP2qLm
   responses:
     "200":
-      description: "An NDJSON stream: one `gameFull`, then one `gameState` per ply, until the game ends."
+      description: "An NDJSON stream: one `gameFull`, then one `gameState` per ply (plus an observe-only `opponentGone` if the opponent disconnects), until the game ends."
       content:
         application/x-ndjson:
           schema:
@@ -84,6 +94,12 @@ get:
                   p1: 300000
                   p2: 299500
                 status: started
+            opponentGone:
+              summary: Observe-only line, opponent disconnected, auto-forfeit countdown running
+              value:
+                type: opponentGone
+                gone: true
+                finishesInSeconds: 30
     "401":
       $ref: ../components/responses/Unauthorized.yaml
     "403":
