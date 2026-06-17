@@ -4,11 +4,15 @@ delete:
   description: >-
     Revokes the token presented on this request, letting an instance drop its own
     credential (for example before discarding a short-lived worker). Requires
-    `bot:play`. A token can revoke only itself: this never touches a sibling
-    instance or the operator's `bot:register` credential. It is a credential
-    action, not a lifecycle one, so it does not tombstone the instance or free its
-    handle; an operator retires an instance with `POST /api/bot/{handle}/retire`.
-    After a successful call the token no longer authenticates.
+    `bot:play`: this is an instance self-revoke, so the caller presents its own
+    `bot:play` token and that same token is the one revoked. A token can revoke
+    only itself, never a sibling instance's token; a token without `bot:play`
+    (such as an operator's `bot:register` credential) is rejected
+    `403 missing-scope`, and this endpoint never touches the operator's
+    `bot:register` credential. It is a credential action, not a lifecycle one, so
+    it does not tombstone the instance or free its handle; an operator retires an
+    instance with `POST /api/bot/{handle}/retire`. After a successful call the
+    token no longer authenticates.
   tags:
     - Account
   responses:
@@ -22,5 +26,7 @@ delete:
             ok: true
     "401":
       $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/Forbidden.yaml
     "429":
       $ref: ../components/responses/TooManyRequests.yaml
