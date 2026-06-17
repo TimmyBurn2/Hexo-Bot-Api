@@ -128,6 +128,8 @@ paths:
     $ref: ./paths/stream-event.yaml
   /api/bot/game/stream/{gameId}:
     $ref: ./paths/game-stream.yaml
+  /api/bot/game/{gameId}:
+    $ref: ./paths/game-get.yaml
   /api/bot/game/{gameId}/move:
     $ref: ./paths/game-move.yaml
   /api/bot/game/{gameId}/resign:
