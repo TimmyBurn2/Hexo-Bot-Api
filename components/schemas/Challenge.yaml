@@ -1,9 +1,10 @@
 type: object
 title: Challenge
 description: >-
-  A challenge between two accounts. Appears inside `challenge` and
-  `challengeDeclined` events on the global stream, and is the resource created
-  by `POST /api/challenge/{handle}`.
+  A challenge between two accounts. Appears inside the challenge lifecycle events
+  on the global stream (`challenge`, `challengeDeclined`, `challengeCanceled`,
+  and `challengeExpired`), and is the resource created by
+  `POST /api/challenge/{handle}`.
 required:
   - id
   - challenger

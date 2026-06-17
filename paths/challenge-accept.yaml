@@ -10,9 +10,10 @@ post:
 
 
     Only a still-pending challenge can be accepted. A challenge that has already
-    been accepted, declined, or canceled is no longer pending and is reported as
-    `404`; the bot reconciles such a terminal state from the `challengeDeclined`
-    or `challengeCanceled` event on its global stream rather than from this call.
+    been accepted, declined, canceled, or expired is no longer pending and is
+    reported as `404`; for a state it did not cause, the bot reconciles from the
+    `challengeCanceled` or `challengeExpired` event on its global stream rather
+    than from this call.
   tags:
     - Challenge
   parameters:
