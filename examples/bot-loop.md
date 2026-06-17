@@ -19,6 +19,7 @@ for each line in event_stream:
         case "gameFinish":         log result; let the game task end
         case "challengeDeclined":  log; maybe re-challenge with different terms
         case "challengeCanceled":  log; drop the pending challenge, it is gone
+        case "challengeExpired":   log; drop the pending challenge, it timed out
 
 # ── 2. Per-game loop (one per active game) ──────────────────────────────
 function play_game(gameId, mySide):                      # mySide is "p1" or "p2"

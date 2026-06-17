@@ -9,6 +9,7 @@ oneOf:
   - $ref: ./GameFinishEvent.yaml
   - $ref: ./ChallengeDeclinedEvent.yaml
   - $ref: ./ChallengeCanceledEvent.yaml
+  - $ref: ./ChallengeExpiredEvent.yaml
 discriminator:
   propertyName: type
   mapping:
@@ -17,3 +18,4 @@ discriminator:
     gameFinish: ./GameFinishEvent.yaml
     challengeDeclined: ./ChallengeDeclinedEvent.yaml
     challengeCanceled: ./ChallengeCanceledEvent.yaml
+    challengeExpired: ./ChallengeExpiredEvent.yaml
