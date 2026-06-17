@@ -1,0 +1,67 @@
+get:
+  operationId: listMyGames
+  summary: List my active games
+  description: >-
+    Returns the authenticated bot's active (in-progress) games as lightweight
+    pointers, so the bot can resync after a cold start or crash without scraping
+    the global event stream for past `gameStart` lines. Requires `bot:play`.
+
+
+    This exposes the bot's own slice of the server's live-session list: it
+    reports only the games this instance is currently a player in, never another
+    bot's games. Each entry is the same lightweight `GameEventInfo` pointer the
+    `gameStart` event carries (id, side, opponent, variant, rated), so a bot
+    reopens the per-game stream with `id` and resumes play. Because every game
+    here is in progress, entries omit `status` exactly as a `gameStart` line
+    does; a finished game drops off this list. The array is empty when the bot
+    has no active games.
+
+
+    Live updates still arrive on the streams; this is a point-in-time read for
+    reconciliation, not a substitute for `GET /api/stream/event` or the per-game
+    stream.
+  tags:
+    - Bot
+  responses:
+    "200":
+      description: The bot's active games (may be empty).
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - games
+            properties:
+              games:
+                type: array
+                description: >-
+                  The bot's in-progress games as lightweight pointers. Each is a
+                  `GameEventInfo` in the `gameStart` shape (status omitted). May
+                  be empty.
+                items:
+                  $ref: ../components/schemas/GameEventInfo.yaml
+          example:
+            games:
+              - id: J9kP2qLm
+                side: p1
+                opponent:
+                  id: sealbot
+                  name: SealBot
+                  rating: 1480
+                  title: BOT
+                variant: httt6
+                rated: true
+              - id: 7bN4rTagain
+                side: p2
+                opponent:
+                  id: nimbusbot
+                  name: NimbusBot
+                  rating: 1520
+                  title: BOT
+                variant: httt6
+                rated: false
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml
