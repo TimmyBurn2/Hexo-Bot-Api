@@ -12,9 +12,11 @@ description: >-
     treating the `409` as a failure.
 
 
-  - **`game-finished`**: the game exists but has already ended, so no further
-    move is accepted. A finished game still exists and is reported here, not as
-    `404`.
+  - **`game-finished`**: the game has already ended, so no further move is
+    accepted. A recently finished game is reported here while the server still
+    retains it; once it is reaped (after both players disconnect) a late move may
+    instead return `404`. Either way, reconcile the terminal result from the
+    `gameFinish` event on the global stream, not from this status code.
 content:
   application/json:
     schema:
