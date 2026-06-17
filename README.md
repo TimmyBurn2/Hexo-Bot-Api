@@ -38,11 +38,11 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | Area | Operation | What it does |
 | --- | --- | --- |
 | **Account** | `POST /api/bot/register` | Register a bot instance and receive its own scoped token. Requires `bot:register`. |
-| **Account** | `GET /api/account` | Whoami: your id, owner, rating, and opt-in hardware label. |
+| **Account** | `GET /api/account` | Whoami: your id, owner, rating, granted scopes, and opt-in hardware label. |
 | **Account** | `POST /api/bot/{handle}/retire` | Retire an instance you own: tombstones it and reserves the handle forever, forfeits its in-progress games as surrenders (rated normally), and cancels its pending challenges. Requires `bot:register`. |
 | **Account** | `DELETE /api/token` | Revoke the calling instance's own `bot:play` token. |
 | **Streaming** | `GET /api/stream/event` | Global event stream: challenge lifecycle (`challenge`, `challengeDeclined`, `challengeCanceled`, `challengeExpired`), game start and finish. |
-| **Streaming** | `GET /api/bot/game/stream/{gameId}` | Per-game stream: full state on connect, then live updates. |
+| **Streaming** | `GET /api/bot/game/stream/{gameId}` | Per-game stream: full state on connect, then live updates, plus an observe-only `opponentGone` if the opponent disconnects. |
 | **Play** | `POST /api/bot/game/{gameId}/move` | Submit your compound move, guarded by the compare-and-set `ply`. |
 | **Play** | `POST /api/bot/game/{gameId}/resign` | Resign a game. |
 | **Play** | `GET /api/bot/games` | List your active (in-progress) games as lightweight pointers, to resync after a restart. |
@@ -54,6 +54,7 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | **Challenges** | `POST /api/challenge/{challengeId}/decline` | Decline a challenge. |
 | **Challenges** | `POST /api/challenge/{challengeId}/cancel` | Cancel a challenge you issued (still pending). |
 | **Challenges** | `GET /api/challenges` | List your pending incoming and outgoing challenges (only `created`; accepted, declined, canceled, or expired ones drop off). |
+| **Challenges** | `GET /api/challenge/{challengeId}/show` | Read one challenge by id, including its terminal status (tells "bad id" apart from "just went terminal", with `declineReason` on a decline). |
 | **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
 
 Every game carries a time control (`unlimited`, `turn`, or `match`; see section 4). Whether a game is rated is decided by the server, not the caller.
@@ -113,6 +114,10 @@ Inside every `gameState`, `moves` is the **cumulative** list of all turns so far
   an illegal placement → `422 { stone }`.
   You **don't** send your side; the server knows whose turn it is from the ply.
 
+**A finished game.**
+A move or resign on a game that just ended returns `409 game-finished` while the server still retains it; once the game is reaped, a late move, resign, or snapshot read returns `404` instead.
+Either way, reconcile the outcome from the `gameFinish` event, not from the call's status code.
+
 ---
 
 ## 4. Design philosophy (the ideas behind it)
@@ -132,6 +137,7 @@ The contract assumes nothing about how a bot thinks.
 Both streams send the **cumulative** move list, not deltas. A bot replays it to rebuild the board -> zero required local state.
 A crash mid-game won't cause a problem.
 Reconnect and receive a fresh `gameFull`, replay and continue. (See [`examples/bot-loop.md`](./examples/bot-loop.md).)
+Both streams also send a blank-line keepalive **at least every 15 seconds**, so a client can set a read timeout at a small multiple of that to spot a dead socket; and opening a new global event stream **closes any previous one for the same token**, so a reconnecting bot need not tear down the stale connection first.
 
 **Bot-agnostic.**
 Nothing depends on any particular bot's internals. **KrakenBot** and **SealBot** in the examples are illustrative only.
