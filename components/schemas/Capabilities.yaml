@@ -1,0 +1,253 @@
+type: object
+title: Capabilities
+description: >-
+  What an instance can do, declared once by the operator at registration and
+  thereafter **server-authoritative and read-only**: the server stores the
+  declaration, treats it as the source of truth, and echoes it unchanged on
+  whoami and on the roster. A caller never sets it again after registration.
+
+
+  The `meta`, `stateless`, `basic_websocket`, and `matchmaking` blocks mirror
+  the htttx engine protocol's own capability document: each block is present
+  only when the instance supports that mode, and the nested flags advertise
+  optional behaviours within it. These blocks are ingested as declared; unknown
+  fields within them (including `x-`-prefixed extensions and any future htttx
+  additions) are tolerated so that real htttx Capabilities documents pass
+  through without rejection. Gameplay itself (move exchange, answer-matching)
+  runs over the engine protocol, not this API; these blocks tell the ladder
+  which engine modes the instance speaks.
+
+
+  The `ladder` block is **play-spec-owned**: it is not defined in the engine
+  protocol and carries the play-layer opt-in flags (which pairing modes this
+  instance enters). Presence of the `ladder` block marks the instance as
+  ladder-eligible; absence means it is reachable by direct challenge only.
+
+
+  Capabilities are a **label and an eligibility marker only**, never a rating
+  or pairing-strength input: the server never feeds any field here into the
+  rating formula or into who is matched against whom by strength.
+properties:
+  meta:
+    type: object
+    description: >-
+      Human-facing self-description, not a capability. Shown on the roster to
+      keep a multi-instance fleet legible. Label only. Additional fields beyond
+      those listed here are tolerated; the htttx protocol leaves `meta` open
+      for extension.
+    properties:
+      name:
+        type: string
+        description: Human-readable engine name.
+        maxLength: 128
+        example: KrakenEngine
+      description:
+        type: string
+        description: Short free-text description of the engine (e.g. technique or build).
+        maxLength: 256
+        example: MCTS, 2M playouts/move
+      authors:
+        type: array
+        description: Author names or usernames.
+        items:
+          type: string
+          maxLength: 64
+        example:
+          - team-kraken
+      version:
+        type: string
+        description: Engine version, semver preferred.
+        maxLength: 32
+        example: 1.4.0
+      tags:
+        type: array
+        description: Algorithm or feature tags.
+        items:
+          type: string
+          pattern: "^[a-z0-9-]+$"
+          maxLength: 32
+        example:
+          - mcts
+          - ab-pruning
+  stateless:
+    type: object
+    description: >-
+      The instance answers stateless per-turn requests over the engine protocol.
+      Present only when that mode is supported.
+    required:
+      - versions
+    properties:
+      versions:
+        type: object
+        description: >-
+          Supported stateless protocol versions. An empty object means the mode
+          is named but no version is supported.
+        properties:
+          v1-alpha:
+            type: object
+            description: Support for stateless v1-alpha. Present when this version is supported.
+            properties:
+              api_root:
+                type: string
+                description: >-
+                  Base path of the stateless routes, relative to the engine's
+                  capability document. Defaults to `stateless/v1-alpha`.
+                default: stateless/v1-alpha
+                example: stateless/v1-alpha
+              move_time_limit:
+                type: boolean
+                description: Whether the instance honours a per-request move time limit.
+                example: true
+  basic_websocket:
+    type: object
+    description: >-
+      The instance plays a real-time session over the engine protocol's
+      websocket. Present only when that mode is supported.
+    required:
+      - versions
+    properties:
+      versions:
+        type: object
+        description: >-
+          Supported websocket protocol versions. An empty object means the mode
+          is named but no version is supported.
+        properties:
+          v1-alpha:
+            type: object
+            description: Support for websocket v1-alpha. Present when this version is supported.
+            properties:
+              api_root:
+                type: string
+                description: >-
+                  Base path of the websocket route, relative to the engine's
+                  capability document. Defaults to `bws/v1-alpha`.
+                default: bws/v1-alpha
+                example: bws/v1-alpha
+              move_time_limit:
+                type: boolean
+                description: Whether the instance honours a per-request move time limit.
+                example: true
+              evaluation_time_limit:
+                type: boolean
+                description: >-
+                  Whether the instance honours an evaluation time limit.
+                  Meaningless unless `evaluation` is also set.
+                example: false
+              config:
+                type: object
+                description: The instance accepts a configuration packet. Present when supported.
+                properties:
+                  dynamic:
+                    type: boolean
+                    description: >-
+                      Whether configuration may be applied after any turn rather
+                      than only before the first setup.
+                    example: false
+              free_setup:
+                type: boolean
+                description: Whether the instance accepts any initial position rather than the fixed opening.
+                example: false
+              move_skips:
+                type: boolean
+                description: Whether the caller may submit moves on the instance's behalf and batch them.
+                example: false
+              dual_sided:
+                type: boolean
+                description: Whether the caller may request moves for both sides in one session.
+                example: false
+              free_move_order:
+                type: boolean
+                description: Whether the caller may request moves in any order in one session.
+                example: false
+              evaluation:
+                type: boolean
+                description: Whether the instance can evaluate a position without moving.
+                example: false
+              resettable_state:
+                type: boolean
+                description: Whether the caller may send a setup packet at any point, not just once.
+                example: false
+              interruptible:
+                type: boolean
+                description: Whether the caller may interrupt an in-flight evaluation or move request.
+                example: false
+  matchmaking:
+    type: object
+    description: >-
+      Engine-eligibility facts from the htttx engine protocol, mirrored here
+      as declared. Present when the engine declares matchmaking eligibility in
+      its own capability document. The flags inside are engine-capability facts
+      only; they are never a rating, strength estimate, or pairing-strength
+      input. Which time-control modes a game uses, pairing mode opt-in, rating,
+      and scheduling are play-layer concerns carried in the `ladder` block, not
+      here. The htttx engine spec requires `versions` to be present when this
+      block appears; the play layer does not enforce that constraint on ingest,
+      but a `versions`-less `matchmaking` block will not satisfy the htttx spec
+      and should not be submitted.
+    properties:
+      versions:
+        type: object
+        description: >-
+          Versions of the matchmaking eligibility declaration the engine
+          supports. An empty object means no version is declared.
+        properties:
+          v1-alpha:
+            type: object
+            description: >-
+              Engine matchmaking eligibility under v1-alpha of this declaration.
+            properties:
+              honors_move_time_limit:
+                type: boolean
+                description: >-
+                  Whether the engine honours a per-move time limit when the
+                  platform imposes one. For this to take effect at the protocol
+                  level the bot must also set `move_time_limit` on the
+                  transport it advertises. Engine-eligibility label only.
+                example: true
+  ladder:
+    type: object
+    description: >-
+      **Play-spec-owned ladder eligibility.** Not defined in the engine
+      protocol; this block is added by the play layer. Presence marks the
+      instance as eligible for ladder pairing; the server pairs it on the
+      ladder only when this block is declared. Omit to register an instance
+      reachable by direct challenge but not entered into ladder pairing. The
+      flags inside gate which pairing modes the instance opts into; they are
+      never a rating or pairing-strength input.
+    additionalProperties: false
+    properties:
+      ladderPairing:
+        type: boolean
+        description: >-
+          Whether the instance is eligible for automatic ladder pairing.
+          Eligibility gate only, not a strength signal.
+        default: true
+        example: true
+      bulkPairing:
+        type: boolean
+        description: >-
+          Whether the instance accepts organizer-seeded bulk pairings (eval
+          ladders). Eligibility gate only.
+        default: true
+        example: true
+example:
+  meta:
+    name: KrakenEngine
+    description: MCTS, 2M playouts/move
+    authors:
+      - team-kraken
+    version: 1.4.0
+    tags:
+      - mcts
+  basic_websocket:
+    versions:
+      v1-alpha:
+        api_root: bws/v1-alpha
+        move_time_limit: true
+  matchmaking:
+    versions:
+      v1-alpha:
+        honors_move_time_limit: true
+  ladder:
+    ladderPairing: true
+    bulkPairing: true
