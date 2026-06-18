@@ -39,7 +39,25 @@ example:
     name: KrakenBot
     owner: op_7Qm2Kx
     title: BOT
-    engineDescription: MCTS, 2M playouts/move
+    capabilities:
+      meta:
+        name: KrakenEngine
+        description: MCTS, 2M playouts/move
+        version: 1.4.0
+        tags:
+          - mcts
+      basic_websocket:
+        versions:
+          v1-alpha:
+            api_root: bws/v1-alpha
+            move_time_limit: true
+      matchmaking:
+        versions:
+          v1-alpha:
+            honors_move_time_limit: true
+      ladder:
+        ladderPairing: true
+        bulkPairing: true
     hardware:
       gpu: consumer
       cpu_cores: 16

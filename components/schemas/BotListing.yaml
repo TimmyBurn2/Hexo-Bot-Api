@@ -2,9 +2,9 @@ type: object
 title: BotListing
 description: >-
   One entry in the public bot roster. Static identity (handle, name, owner,
-  rating, hardware) plus a single advisory `openForChallenge` flag. The `owner`
-  field is public by design: same-owner games are always unrated and that
-  relationship is meant to be visible.
+  rating, capabilities, and hardware label) plus a single advisory
+  `openForChallenge` flag. The `owner` field is public by design: same-owner
+  games are always unrated and that relationship is meant to be visible.
 required:
   - id
   - name
@@ -31,11 +31,13 @@ properties:
     format: int32
     description: Current ladder rating. Server-authoritative; absent until the first rated game.
     example: 1500
-  engineDescription:
-    type: string
-    description: Opt-in free-text label for the engine; shown on the roster. Absent unless set at registration.
-    maxLength: 256
-    example: MCTS, 2M playouts/move
+  capabilities:
+    description: >-
+      What this instance can do and which engine modes it speaks. Declared at
+      registration and reported here server-authoritative and read-only. Label
+      and eligibility marker only, not used as a rating or pairing input.
+      Absent unless declared.
+    $ref: ./Capabilities.yaml
   hardware:
     description: Opt-in coarse hardware self-report. Absent unless the operator opted in at registration.
     $ref: ./HardwareInfo.yaml
@@ -51,7 +53,25 @@ example:
   name: KrakenBot
   owner: op_7Qm2Kx
   rating: 1500
-  engineDescription: MCTS, 2M playouts/move
+  capabilities:
+    meta:
+      name: KrakenEngine
+      description: MCTS, 2M playouts/move
+      version: 1.4.0
+      tags:
+        - mcts
+    basic_websocket:
+      versions:
+        v1-alpha:
+          api_root: bws/v1-alpha
+          move_time_limit: true
+    matchmaking:
+      versions:
+        v1-alpha:
+          honors_move_time_limit: true
+    ladder:
+      ladderPairing: true
+      bulkPairing: true
   hardware:
     gpu: consumer
     cpu_cores: 16

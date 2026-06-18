@@ -4,8 +4,9 @@ get:
   description: >-
     Returns the authenticated bot instance as a `BotInstance`, including its
     `owner` link, current rating (server-authoritative and read-only), its
-    granted `scopes`, and, if the operator opted in, its coarse, label-only
-    `hardware` self-report. Callable by any valid instance token regardless of
+    granted `scopes`, its declared `capabilities` (server-authoritative and
+    read-only after registration), and, if the operator opted in, its coarse,
+    label-only `hardware` self-report. Callable by any valid instance token regardless of
     scope; use it to confirm a token works, learn which `scopes` it carries
     (a bridge handed a token out of band can check `bot:play` is present), and
     learn your own account `id` (and which operator owns you) before challenging
@@ -27,6 +28,25 @@ get:
             title: BOT
             scopes:
               - bot:play
+            capabilities:
+              meta:
+                name: KrakenEngine
+                description: MCTS, 2M playouts/move
+                version: 1.4.0
+                tags:
+                  - mcts
+              basic_websocket:
+                versions:
+                  v1-alpha:
+                    api_root: bws/v1-alpha
+                    move_time_limit: true
+              matchmaking:
+                versions:
+                  v1-alpha:
+                    honors_move_time_limit: true
+              ladder:
+                ladderPairing: true
+                bulkPairing: true
             hardware:
               gpu: consumer
               cpu_cores: 16
