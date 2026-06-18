@@ -14,7 +14,7 @@ properties:
     const: gameState
   moves:
     type: array
-    description: All turns played so far, oldest first. Position = ply index. Replay to reconstruct the board.
+    description: All turns played so far, oldest first; position equals ply index.
     items:
       $ref: ./CompoundMove.yaml
   ply:
@@ -24,12 +24,8 @@ properties:
     description: Turns played so far (`moves.length`). The next expected submit `ply` equals this value.
   time:
     description: >-
-      Remaining time per side, in **milliseconds**, under a real clock. Present
-      and meaningful only under the `turn` and `match` time controls: the
-      remaining per-turn budget under `turn`, remaining main time under `match`.
-      Under `unlimited` there is no clock to report, so this is omitted or
-      `null`; a bot must not read a meaningful duration from it then. When
-      present it carries both sides.
+      Remaining time per side in milliseconds. Present under `turn` and `match`
+      controls; omitted or `null` under `unlimited`.
     oneOf:
       - type: object
         additionalProperties: false
@@ -59,10 +55,7 @@ properties:
       - finished
   finishReason:
     type: string
-    description: >-
-      Why the game ended. Present only when `status` is `finished`. Bots are
-      draw-free, so the server's `draw-agreement` reason never appears on this
-      surface.
+    description: Why the game ended. Present only when `status` is `finished`. Bots are draw-free, so `draw-agreement` never appears here.
     enum:
       - surrender
       - timeout
@@ -71,11 +64,8 @@ properties:
       - six-in-a-row
   winner:
     description: >-
-      The winning side, present once `status` is `finished`: the line maker on
-      `six-in-a-row`, the opponent on `surrender`, `timeout`, or `disconnect`.
-      `null` on `terminated`, which ends the game with no winner, and may also be
-      `null` on `disconnect` when no side survives to be awarded the win. Absent
-      while the game is still `started`.
+      Winning side once `status` is `finished`. `null` on `terminated` (no
+      winner) and may be `null` on `disconnect` when no side survives.
     oneOf:
       - $ref: ./Side.yaml
       - type: "null"

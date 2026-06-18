@@ -36,9 +36,8 @@ get:
               games:
                 type: array
                 description: >-
-                  The bot's in-progress games as lightweight pointers. Each is a
-                  `GameEventInfo` in the `gameStart` shape (status omitted). May
-                  be empty.
+                  In-progress games as `GameEventInfo` pointers (`status`
+                  omitted). May be empty.
                 items:
                   $ref: ../components/schemas/GameEventInfo.yaml
           example:

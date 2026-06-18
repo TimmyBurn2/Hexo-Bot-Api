@@ -47,11 +47,7 @@ oneOf:
         minimum: 1
         maximum: 45000
         default: 500
-        description: >-
-          Per-turn budget in milliseconds. Bot turn budgets are fine-grained and
-          sub-second capable: the default is 500 ms, up to the 45000 ms ceiling.
-          The server enforces the exact range and rejects an out-of-range value
-          as `invalid-time-control`.
+        description: Per-turn budget in milliseconds. Out-of-range → `422 invalid-time-control`.
   - type: object
     title: MatchTimeControl
     description: Whole-game clock per side, with an increment after each turn.
