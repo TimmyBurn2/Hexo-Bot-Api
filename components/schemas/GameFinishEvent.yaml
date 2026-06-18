@@ -2,7 +2,7 @@ type: object
 title: GameFinishEvent
 description: >-
   A game you were in has finished. Member of the global event stream union. The
-  per-game stream for this game will also have closed.
+  game's engine session has closed.
 required:
   - type
   - game
