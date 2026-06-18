@@ -5,16 +5,15 @@ description: >-
   names a variant `$ref`s this schema rather than hard-coding a literal.
 
 
-  The current (and only) variant is `httt6`, HeXO's hexagonal tic-tac-toe.
-  Legal placement is within hex-distance 8 of any placed stone; the frontier
-  widens as stones are placed. The server auto-plays the opening centre hex on
-  Player 1's behalf; every submitted turn places two hexes. **Win by connecting
-  six of your own hexes in a straight line along any of the three board axes.**
-  Out-of-frontier placement → `422 out-of-bounds`.
+  The current (and only) variant is `httt6`, HeXO's hexagonal tic-tac-toe. Its
+  board geometry and rules of play (coordinates, legal placement, the opening,
+  win conditions) belong to the **engine protocol**, not this contract; here
+  `httt6` is just the key carried on challenges and games.
 
 
-  This value must match the variant key registered on the server
-  (`hexo.did.science`). If the server adds variants, extend this enum here first.
+  This value **must match the variant key registered on the server**
+  (`hexo.did.science`) and in its variant registry. If the server adds variants,
+  extend this enum here first.
 enum:
   - httt6
 default: httt6
