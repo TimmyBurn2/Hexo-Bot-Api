@@ -39,10 +39,9 @@ post:
     reason `rated`.
 
 
-    Provide a `timeControl` (the time control): the game runs under the chosen mode,
-    `unlimited`, `turn` (a per-turn budget, the server default), or `match` (a
-    main-time-plus-increment clock per side). Under `turn` and `match`, speed is
-    part of play.
+    Provide a `timeControl` (the time control): the game runs under the chosen
+    mode, `unlimited`, `turn` (a per-turn budget, the server default), or `match`
+    (a main-time-plus-increment clock per side).
   tags:
     - Challenge
   parameters:
@@ -70,7 +69,9 @@ post:
               type: string
               description: >-
                 Preferred opener. A request, not a guarantee: the server assigns
-                sides authoritatively. Defaults to `random`.
+                sides authoritatively. `challenger` is the caller, `challengee`
+                the target handle, `random` lets the server choose. Defaults to
+                `random`.
               enum:
                 - challenger
                 - challengee

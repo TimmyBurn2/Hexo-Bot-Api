@@ -124,6 +124,51 @@ the wire shape.
   `draw-agreement` finish never appears (the `finishReason` enums omit it). The
   server does run a live `draw-agreement` path, so bot pairings must never route
   into it: a bot game never finishes as a draw.
+- **Forfeit-on-illegal: `illegal-move` as a new `finishReason` value.** The
+  htttx engine protocol exposes detection of illegal moves (wrong placement
+  count, occupied cell, out-of-radius, wrong side, post-win, first-not-origin,
+  and on the websocket path an out-of-id response); the play layer owns the
+  rated result. An illegal move must forfeit the offending side: the game
+  finishes with `finishReason: illegal-move` and the opponent as `winner`. This
+  `finishReason` value does not exist in the server's current enum
+  (`disconnect`, `surrender`, `timeout`, `terminated`, `six-in-a-row`,
+  `draw-agreement` from `sharedTypes.ts`). It must be added as a new value;
+  silently reusing an existing reason whose server meaning differs (such as
+  `terminated`, which has no winner today) is not permitted. The current server
+  behavior on an illegal move is non-fatal: the placement throw is surfaced as
+  an error message and the socket stays open with no result assigned
+  (`gameSimulation.ts`, `sessionManager.ts`, `createSocketServer.ts`). The
+  server must change to: detect the illegal move, end the game, record
+  `finishReason: illegal-move` with the opponent as winner, and emit the normal
+  `gameFinish` event on the global stream.
+- **Per-game engine session bootstrap.** The `gameStart` event carries an
+  `engine` object with `socketUrl` and `token` that the adapter uses to dial
+  the engine session. Both fields are **server-issued and read-only**; a caller
+  never sets them. The server must: (a) for each started game, generate a
+  per-game engine session locator and a short-lived bearer token; (b) emit
+  `socketUrl` as an **absolute** `wss://` (or `ws://`) URL so a third-party
+  host can issue its own; (c) ensure `token` is scoped to this one game, is not
+  a Personal Access Token, and expires with the game. The server has no engine
+  session or token concept today; this is a net-new server requirement.
+- **Reconnect re-emits `gameStart` with a fresh engine bootstrap.** When the
+  global event stream is opened (or reopened after a drop), the server must
+  re-emit a `gameStart` carrying a fresh `engine` dial bootstrap for each game
+  still in progress, so a restarted adapter can re-dial its live games without
+  a separate recovery call. Note: an alternative design would use a distinct
+  `gameResume` event type rather than reusing `gameStart`; this is an open item
+  if reusing `gameStart` for resumption creates ambiguity. Do not assume one
+  approach without aligning with the server maintainer.
+- **Engine transport: websocket path, with optional `request_id` answer-matching.**
+  The adapter dials the engine over the `socketUrl` websocket. Answer-matching
+  via `request_id` is opt-in: a bot that sets `basic_websocket.v1-alpha.request_id`
+  (or `stateless.v1-alpha.request_id`) echoes the platform-assigned id unchanged
+  on its response; a response whose id does not match the outstanding request id
+  is discarded. Without the flag, answers are matched by the transport's own
+  request/response ordering. The stateless HTTP path carries an optional
+  `request_id` for the same correlation purpose; it is not the rated play path.
+  These transport details belong to the engine protocol layer; they are noted
+  here because the play spec (EngineSession) points to that session as the
+  gameplay path.
 
 ## Open decisions for the maintainer
 

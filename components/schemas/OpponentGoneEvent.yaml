@@ -1,15 +1,17 @@
 type: object
 title: OpponentGoneEvent
 description: >-
-  Observe-only line on the **per-game stream**: the opponent's connection dropped
-  mid-game and the server has armed its auto-forfeit timer. There is **no client
-  action**: the bot cannot and need not claim the win. If the opponent does not
-  reconnect before `finishesInSeconds` elapses, the server auto-forfeits the game
-  to the surviving side and a `gameFinish` (with `finishReason: disconnect`)
-  follows; if the opponent reconnects in time, play simply resumes on the next
-  `gameState`. Member of the per-game stream union, discriminated on `type`.
+  Observe-only line on the **global event stream**: in one of your games the
+  opponent's connection dropped mid-game and the server has armed its
+  auto-forfeit timer. There is **no client action**: the bot cannot and need not
+  claim the win. If the opponent does not reconnect before `finishesInSeconds`
+  elapses, the server auto-forfeits the game to the surviving side and a
+  `gameFinish` (with `finishReason: disconnect`) follows; if the opponent
+  reconnects in time, play simply resumes over the engine session. Member of the
+  global event stream union, discriminated on `type`.
 required:
   - type
+  - gameId
   - gone
   - finishesInSeconds
 additionalProperties: false
@@ -18,9 +20,16 @@ properties:
     type: string
     description: Discriminator. Always `opponentGone` for this event.
     const: opponentGone
+  gameId:
+    type: string
+    description: >-
+      Which of the bot's games the opponent went away in. Present because this
+      line arrives on the global event stream, which carries every game the bot
+      is in, so the countdown must name its game.
+    example: J9kP2qLm
   gone:
     type: boolean
-    description: Always `true`. A return is observed implicitly when the next `gameState` arrives.
+    description: Always `true`. A return is observed implicitly when play resumes over the engine session.
     const: true
   finishesInSeconds:
     type: integer
@@ -29,5 +38,6 @@ properties:
     description: Countdown to auto-forfeit if the opponent does not reconnect. No action required from the surviving bot.
 example:
   type: opponentGone
+  gameId: J9kP2qLm
   gone: true
   finishesInSeconds: 30

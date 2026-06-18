@@ -8,10 +8,13 @@ get:
     holds the connection open and pushes a new line whenever an event occurs.
 
 
-    On connect, the server first replays the bot's current state (any active
-    challenges and games), then streams live events as they happen. Each line
-    is an `Event`; discriminate on its `type` field (`challenge`, `gameStart`,
-    `gameFinish`, `challengeDeclined`, `challengeCanceled`, `challengeExpired`).
+    On connect, the server first replays the bot's current state: a `challenge`
+    for each pending challenge and a `gameStart` (carrying a fresh `engine` dial
+    bootstrap) for each game still in progress, so a reconnecting bot can re-dial
+    its live games. It then streams live events as they happen. Each line is an
+    `Event`; discriminate on its `type` field (`challenge`, `gameStart`,
+    `gameFinish`, `opponentGone`, `challengeDeclined`, `challengeCanceled`,
+    `challengeExpired`).
 
 
     **Keepalive:** while idle, the server emits a **blank line** (just `\n`) **at
@@ -24,8 +27,8 @@ get:
     **One stream per token:** opening a new global event stream **closes any
     previous one for the same token**, so a bot reconnecting after a half-open
     drop need not tear down the stale connection first. Read the stream line by
-    line; on `gameStart`, open the per-game stream at `game.id` (see
-    `/api/bot/game/stream/{gameId}`).
+    line; on `gameStart`, open the engine session from the event's `engine` dial
+    bootstrap to play the game.
   tags:
     - Stream
   responses:
@@ -37,7 +40,7 @@ get:
             $ref: ../components/schemas/Event.yaml
           examples:
             gameStart:
-              summary: A single gameStart line
+              summary: A single gameStart line with the engine dial bootstrap
               value:
                 type: gameStart
                 game:
@@ -50,6 +53,16 @@ get:
                     title: BOT
                   variant: httt6
                   rated: true
+                engine:
+                  socketUrl: wss://hexo.did.science/engine/J9kP2qLm
+                  token: egs_4c1f9b2a7d3e
+            opponentGone:
+              summary: Observe-only line, opponent disconnected in one of your games
+              value:
+                type: opponentGone
+                gameId: J9kP2qLm
+                gone: true
+                finishesInSeconds: 30
             challenge:
               summary: A single challenge line
               value:

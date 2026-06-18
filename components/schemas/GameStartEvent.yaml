@@ -1,11 +1,14 @@
 type: object
 title: GameStartEvent
 description: >-
-  A game you are in has started. Member of the global event stream union. Open
-  the per-game stream at `game.id` to receive `gameFull` then `gameState`.
+  A game you are in has started. Member of the global event stream union. The
+  event carries the `engine` dial bootstrap: open that engine session to play the
+  game. This spec stops at the session boundary; moves are exchanged over the
+  engine protocol, not here.
 required:
   - type
   - game
+  - engine
 additionalProperties: false
 properties:
   type:
@@ -15,6 +18,11 @@ properties:
   game:
     description: Pointer to the started game.
     $ref: ./GameEventInfo.yaml
+  engine:
+    description: >-
+      Server-issued dial bootstrap for this game's engine session: where to
+      connect and the short-lived per-game token to present. Read-only.
+    $ref: ./EngineSession.yaml
 example:
   type: gameStart
   game:
@@ -27,3 +35,6 @@ example:
       title: BOT
     variant: httt6
     rated: true
+  engine:
+    socketUrl: wss://hexo.did.science/engine/J9kP2qLm
+    token: egs_4c1f9b2a7d3e
