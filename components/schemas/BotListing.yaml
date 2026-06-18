@@ -1,19 +1,10 @@
 type: object
 title: BotListing
 description: >-
-  One entry in the public bot roster (`GET /api/bots`). A directory-display view
-  of a registered instance: its permanent handle, display name, owning operator,
-  optional rating and hardware label, and a single coarse `openForChallenge`
-  availability flag. It is a separate schema from `Player` (which is embedded in
-  every challenge and game event and must stay minimal) and from `BotInstance`
-  (the register/whoami unit, which also fronts the instance's own token surface).
-  Apart from that one advisory flag the listing is static identity and carries no
-  timestamps or history. The flag is current-state only: a single response never
-  exposes more than the present open/closed bit, though a caller that polls the
-  roster can of course sample availability over time. It does, by design, make
-  the operator link public: the `owner` field lets any caller see which instances belong to one
-  operator. That linkage is intentional, since same-owner games are always
-  unrated and that relationship is meant to be visible.
+  One entry in the public bot roster. Static identity (handle, name, owner,
+  rating, hardware) plus a single advisory `openForChallenge` flag. The `owner`
+  field is public by design: same-owner games are always unrated and that
+  relationship is meant to be visible.
 required:
   - id
   - name
@@ -23,11 +14,7 @@ additionalProperties: false
 properties:
   id:
     type: string
-    description: >-
-      Permanent, unique handle (the account `id` used everywhere else as a
-      `Player.id`). Feed it directly to `POST /api/challenge/{handle}`. Lowercased
-      ASCII, `^[a-z0-9_]{3,20}$`. Never reused, so a cursor ordered by this field
-      is stable across registrations and retirements.
+    description: Permanent handle, never reused. Feed it directly to `POST /api/challenge/{handle}`.
     pattern: "^[a-z0-9_]{3,20}$"
     example: krakenbot
   name:
@@ -36,54 +23,28 @@ properties:
     example: KrakenBot
   owner:
     type: string
-    description: >-
-      Opaque, server-assigned identifier of the operator that runs this instance:
-      stable, one per operator, never reassigned, so two instances of the same
-      operator carry a byte-identical value. Carries no personal data (it is not a
-      Discord handle, email, or address). It is public to any caller, so the
-      roster reveals which instances share an operator; it exposes no further
-      operator data than this opaque linkage.
+    description: Opaque, server-assigned operator id; stable, never reassigned. Carries no personal data beyond the opaque linkage.
     pattern: "^[A-Za-z0-9_]{3,40}$"
     example: op_7Qm2Kx
   rating:
     type: integer
     format: int32
-    description: >-
-      Current ladder rating for the active variant. Server-authoritative and
-      read-only, never client-set. Absent for a brand-new, unrated instance
-      (optional-absent, never `null`).
+    description: Current ladder rating. Server-authoritative; absent until the first rated game.
     example: 1500
   engineDescription:
     type: string
-    description: >-
-      Opt-in, cosmetic self-report: a short free-text label describing the
-      engine, shown on the roster to keep a multi-instance fleet legible.
-      **Label only, not used as a rating or pairing input.** Present only if the
-      operator set it at registration.
+    description: Opt-in free-text label for the engine; shown on the roster. Absent unless set at registration.
     maxLength: 256
     example: MCTS, 2M playouts/move
   hardware:
-    description: >-
-      Opt-in, coarse hardware self-report. **Label only, not used as a rating or
-      pairing input.** Present only if the operator opted in at registration; the same
-      coarse self-report already carried on `Player`, so the roster exposes
-      nothing finer than gameplay already does.
+    description: Opt-in coarse hardware self-report. Absent unless the operator opted in at registration.
     $ref: ./HardwareInfo.yaml
   openForChallenge:
     type: boolean
     description: >-
-      **Advisory availability.** `true` while the instance is currently taking
-      challenges, `false` otherwise. Opt-in (defaults to `false`) and a coarse
-      hint, never a guarantee: it reflects the bot's intent plus a live event
-      stream, not that its engine is responsive or has a free slot. The
-      authoritative answer is the challenge `POST`, which returns `409
-      not-accepting` if the target is closed by the time the challenge lands. An
-      instance is reported open only while it both advertises open (via `POST
-      /api/bot/status`) and holds its global event stream connected; the server
-      drops it to `false` once it detects that stream has disconnected, no later
-      than one keepalive interval. It means "I am taking challenges", not "I have
-      a free slot": the contract models no capacity, so an open instance may
-      still refuse with `409 at-capacity`.
+      Advisory availability flag. `true` while the instance is taking challenges.
+      The authoritative check is the challenge `POST` (`409 not-accepting`); this
+      flag is a hint, not a capacity guarantee.
     example: true
 example:
   id: krakenbot

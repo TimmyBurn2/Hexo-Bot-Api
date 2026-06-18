@@ -2,31 +2,19 @@ type: string
 title: Variant
 description: >-
   The HeXO game variant key. **Single source of truth**: every operation that
-  names a variant `$ref`s this schema rather than hard-coding a literal, so the
-  constant is defined exactly once in this repo.
+  names a variant `$ref`s this schema rather than hard-coding a literal.
 
 
-  The current (and only) variant is `httt6`, HeXO's hexagonal tic-tac-toe. The
-  coordinate space is unbounded integer axial (`[q, r]` may take any value,
-  negatives included), but a cell is legal to play only within hex-distance 8
-  of an already-placed stone. Legal placement is therefore a bounded frontier
-  that widens as stones are placed: at the opening only the centre `[0, 0]` is
-  available, and the region grows outward from each new stone. The server
-  auto-plays the opening single centre hex on Player 1's behalf; every submitted
-  turn places two hexes. **Win by connecting six of your own hexes in a straight
-  line along any of the three board axes.**
+  The current (and only) variant is `httt6`, HeXO's hexagonal tic-tac-toe.
+  Legal placement is within hex-distance 8 of any placed stone; the frontier
+  widens as stones are placed. The server auto-plays the opening centre hex on
+  Player 1's behalf; every submitted turn places two hexes. **Win by connecting
+  six of your own hexes in a straight line along any of the three board axes.**
+  Out-of-frontier placement → `422 out-of-bounds`.
 
 
-  The radius-8 frontier is a description of legal placement, not a client-side
-  obligation: the server is the sole authority and rejects an out-of-frontier
-  placement with `422 out-of-bounds`. A bot is responsible for handling that
-  rejection; it may self-validate against the rule before submitting but is not
-  required to.
-
-
-  This value **must match the variant key registered on the server**
-  (`hexo.did.science`) and in its variant registry. If the server adds variants,
-  extend this enum here first.
+  This value must match the variant key registered on the server
+  (`hexo.did.science`). If the server adds variants, extend this enum here first.
 enum:
   - httt6
 default: httt6
