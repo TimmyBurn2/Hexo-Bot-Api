@@ -15,20 +15,32 @@ info:
 
     ## Design
 
-    The **server is the referee**: it owns legality, turn order, pairing,
-    clocks, and ratings. **Bots own everything else**: their state, search, time
-    management, and reconnection. The wire protocol is **stateless by design**:
-    a bot rebuilds the whole board by replaying the *cumulative* move list the
-    server sends, so it can crash and rejoin a live game with zero local memory.
-    Where this contract and the server differ, the server is authoritative.
+    The **server is the referee**: it owns pairing, clocks, ratings, and game
+    lifecycle. **Bots own everything else**: their engine, search, time
+    management, and reconnection. This spec is the **server and ladder layer
+    only**: identity, registration, matchmaking, challenges, ratings, and game
+    lifecycle. **Gameplay is not here.** The per-game move exchange runs over the
+    **engine protocol**: when a game starts the server hands the adapter an engine
+    session to dial, and moves are exchanged there. This contract is a **proposal
+    layered on the existing HeXO server**: it mirrors or exposes concepts the
+    server already implements rather than duplicating server-owned logic, and
+    where the two differ the server is authoritative.
 
 
     ## Shape (modelled on the Lichess Bot/Board API)
 
-    - **Two NDJSON streams.** A global event stream (`GET /api/stream/event`) and a per-game stream (`GET /api/bot/game/stream/{gameId}`). Long-lived `application/x-ndjson` GETs; one JSON object per line, with a blank-line keepalive at least every 15 seconds. The global stream carries the challenge lifecycle (`challenge`, `challengeDeclined`, `challengeCanceled`, `challengeExpired`) plus `gameStart`/`gameFinish`; the per-game stream carries `gameFull`, `gameState`, and an observe-only `opponentGone`. Opening a new global event stream closes any previous one for the same token.
+    - **One NDJSON stream.** A global event stream (`GET /api/stream/event`): a
+      long-lived `application/x-ndjson` GET, one JSON object per line, with a
+      blank-line keepalive at least every 15 seconds. It carries the challenge
+      lifecycle (`challenge`, `challengeDeclined`, `challengeCanceled`,
+      `challengeExpired`), `gameStart`/`gameFinish`, and an observe-only
+      `opponentGone`. Opening a new global event stream closes any previous one
+      for the same token.
 
-    - **Moves POST up, state streams down.** Moves are submitted with a separate
-      `POST`; the resulting state arrives on the per-game stream.
+    - **Lifecycle here, gameplay on the engine session.** A `gameStart` event
+      carries the dial bootstrap (a socket URL and a short-lived per-game token);
+      the adapter opens that engine session to play. This spec stops at the
+      session boundary.
 
 
     ## Authentication
@@ -62,16 +74,12 @@ info:
     ## Variant & sides
 
     This API currently serves a single variant, `httt6`, HeXO's hexagonal
-    tic-tac-toe. The coordinate space is an unbounded integer axial hex grid,
-    but a cell is legal to play only within hex-distance 8 of an already-placed
-    stone: at the opening only the centre `[0, 0]` is available. The server
-    rejects an out-of-frontier placement with `422 out-of-bounds`; a bot must
-    handle this but need not pre-validate. **The server auto-plays the opening
-    single centre hex on Player 1 (`p1`)'s behalf; every submitted turn places
-    two hexes.** Win by connecting six of your own hexes in a line along any of
-    the three board axes. The two sides are identified by play order, `p1` and
-    `p2` (not colours). Both constants are defined once in the `Variant` and
-    `Side` schemas and must match the server's registry.
+    tic-tac-toe. The board geometry and rules of play (coordinates, legal
+    placement, the opening, win conditions) belong to the **engine protocol**,
+    not this contract; here `httt6` is just the variant key carried on challenges
+    and games. The two sides are identified by play order, `p1` and `p2` (not
+    colours). Both constants are defined once (see the `Variant` and `Side`
+    schemas) and must match the server's registry.
   license:
     name: MIT
     identifier: MIT
@@ -81,7 +89,10 @@ info:
 
 servers:
   - url: https://hexo.did.science
-    description: HeXO server (proposed, endpoints not yet implemented).
+    description: >-
+      Default deployment (proposed, endpoints not yet implemented). The entry
+      above is the reference host; this contract is implementable by any host.
+      Per-server identity and rating federation are non-goals for this version.
 
 security:
   - bearerAuth: []
@@ -91,19 +102,20 @@ tags:
     description: Account identity and bot instance registration.
   - name: Stream
     description: >-
-      Long-lived NDJSON streams with a blank-line keepalive every 15 seconds.
-      The global event stream closes any previous stream for the same token;
-      the per-game stream closes once the game's `status` reaches `finished`.
+      The long-lived global event stream. It never closes (and opening a new one
+      closes any previous stream for the same token) and sends a blank-line
+      keepalive at least every 15 seconds.
   - name: Bot
-    description: "Bot-only operations: advertising challenge availability, streaming a game, submitting moves, resigning."
+    description: "Bot-only operations: advertising challenge availability, listing active games, and resigning."
   - name: Challenge
     description: Creating, accepting, declining, and canceling challenges (and bulk pairings).
   - name: Directory
     description: >-
-      Read-only, paginated bot roster. Each entry carries static identity
-      (handle, display name, owner, optional rating and hardware label) plus an
-      advisory `openForChallenge` flag. No response carries timestamps or
-      history.
+      Browse the public bot roster to discover opponents. Read-only and
+      paginated; each entry is static identity (handle, display name, owner,
+      optional rating, capabilities, and hardware label) plus a single coarse,
+      advisory, current-state `openForChallenge` flag. No response carries
+      timestamps or history.
 
 paths:
   /api/account:
@@ -122,12 +134,6 @@ paths:
     $ref: ./paths/bot-games.yaml
   /api/stream/event:
     $ref: ./paths/stream-event.yaml
-  /api/bot/game/stream/{gameId}:
-    $ref: ./paths/game-stream.yaml
-  /api/bot/game/{gameId}:
-    $ref: ./paths/game-get.yaml
-  /api/bot/game/{gameId}/move:
-    $ref: ./paths/game-move.yaml
   /api/bot/game/{gameId}/resign:
     $ref: ./paths/game-resign.yaml
   /api/challenges:

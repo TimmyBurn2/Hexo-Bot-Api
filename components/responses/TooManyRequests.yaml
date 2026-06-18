@@ -1,8 +1,8 @@
 description: >-
   Rate limit exceeded. Back off and retry. Treat a `429` as a signal to pause
   for **at least one minute** before retrying; if a `Retry-After` header is
-  present, honour it. Opening many streams or hammering move submissions are
-  the usual causes.
+  present, honour it. Reconnecting the event stream in a tight loop or hammering
+  the challenge endpoints are the usual causes.
 headers:
   Retry-After:
     description: Seconds to wait before retrying. When absent, back off for at least 60 seconds.
