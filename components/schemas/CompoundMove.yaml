@@ -23,10 +23,7 @@ properties:
     $ref: ./Side.yaml
   s:
     type: array
-    description: >-
-      The hex(es) placed this turn, in placement order. Each hex is an integer
-      **axial coordinate** `[q, r]`. Length is **1** only for the auto-played
-      ply-0 opening; otherwise **2**.
+    description: Hexes placed this turn, in placement order; each is an axial coordinate `[q, r]`. Length 1 only for the auto-played ply-0 opening; otherwise 2.
     minItems: 1
     maxItems: 2
     items:

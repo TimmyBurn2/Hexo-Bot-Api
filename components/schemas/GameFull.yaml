@@ -42,9 +42,7 @@ properties:
         $ref: ./Player.yaml
   rated:
     type: boolean
-    description: >-
-      Whether the result affects ratings. Server-authoritative; the bot reads
-      it here (a bulk-paired game has no Challenge object to carry it).
+    description: Whether the result affects ratings. Useful for bulk-paired games that have no Challenge object.
   timeControl:
     description: Time control for the game (`unlimited`, `turn`, or `match`).
     $ref: ./TimeControl.yaml

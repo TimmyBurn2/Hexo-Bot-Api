@@ -8,6 +8,6 @@ properties:
   ok:
     type: boolean
     const: true
-    description: Always `true`. The operation succeeded.
+    description: Always `true`.
 example:
   ok: true

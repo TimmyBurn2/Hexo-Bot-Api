@@ -37,10 +37,7 @@ post:
             properties:
               gameId:
                 type: string
-                description: >-
-                  The started game's id. Open the per-game stream
-                  (`GET /api/bot/game/stream/{gameId}`) to begin playing, without
-                  waiting for the `gameStart` event.
+                description: The started game's id. Open the per-game stream to begin playing without waiting for `gameStart`.
                 example: J9kP2qLm
           example:
             gameId: J9kP2qLm

@@ -20,19 +20,13 @@ properties:
     const: opponentGone
   gone:
     type: boolean
-    description: >-
-      Always `true`: the opponent is currently gone. The event is emitted only on
-      a departure, never to announce a return; a return is observed implicitly
-      when the next `gameState` arrives.
+    description: Always `true`. A return is observed implicitly when the next `gameState` arrives.
     const: true
   finishesInSeconds:
     type: integer
     format: int32
     minimum: 0
-    description: >-
-      Seconds remaining until the server auto-forfeits the game to the surviving
-      side if the opponent does not reconnect. This is a countdown to the
-      automatic forfeit, not to a deadline the bot must act on.
+    description: Countdown to auto-forfeit if the opponent does not reconnect. No action required from the surviving bot.
 example:
   type: opponentGone
   gone: true

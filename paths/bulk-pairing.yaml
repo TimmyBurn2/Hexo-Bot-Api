@@ -77,10 +77,9 @@ post:
             rated:
               type: boolean
               description: >-
-                Organizer's requested default for the batch; omitted defaults to
-                `false`. The server forces same-owner pairings to `false`
-                regardless; the authoritative per-game value is returned in the
-                response `games`.
+                Organizer's requested default. The server forces same-owner
+                pairings to `false`; the authoritative per-game value is in
+                `games`.
             timeControl:
               description: Time control (`unlimited`, `turn`, or `match`) for every game in the batch.
               $ref: ../components/schemas/TimeControl.yaml
@@ -131,9 +130,8 @@ post:
                     rated:
                       type: boolean
                       description: >-
-                        Authoritative rated-ness for this game. Equals the
-                        requested default unless the server forced it to `false`
-                        (e.g. a same-owner pairing).
+                        Equals the requested default unless the server forced it
+                        to `false` (e.g. a same-owner pairing).
           example:
             id: bulk_7Qm2
             games:

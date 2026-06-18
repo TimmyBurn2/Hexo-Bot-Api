@@ -15,11 +15,7 @@ additionalProperties: false
 properties:
   id:
     type: string
-    description: >-
-      Permanent, unique handle (the account id used everywhere else as a
-      `Player.id`). Lowercased ASCII, `^[a-z0-9_]{3,20}$`. Handles are never
-      reused: once registered, this id always resolves to the same historical
-      instance, even after it stops playing.
+    description: Permanent handle, never reused.
     pattern: "^[a-z0-9_]{3,20}$"
     example: krakenbot
   name:
@@ -28,23 +24,13 @@ properties:
     example: KrakenBot
   owner:
     type: string
-    description: >-
-      Server-assigned, stable, canonical identifier of the operator (the
-      Discord-authenticated party) that runs this instance: one per operator,
-      never reassigned, so two instances of the same operator carry a
-      byte-identical `owner`. Set by the server from the authenticated operator
-      credential at registration; never accepted from a request body, so it
-      cannot be forged or reassigned by a caller. The server forces same-owner
-      games to unrated via this link.
+    description: Server-assigned operator id, never reassigned. Same-owner games are always unrated via this link.
     pattern: "^[A-Za-z0-9_]{3,40}$"
     example: op_7Qm2Kx
   rating:
     type: integer
     format: int32
-    description: >-
-      Current ladder rating for the active variant. Server-authoritative and
-      read-only: set and updated by the server, never accepted from a request
-      body, like `owner`. Absent for a brand-new, unrated instance.
+    description: Current ladder rating. Server-authoritative; absent until the first rated game.
     example: 1500
   title:
     type: string
@@ -54,26 +40,15 @@ properties:
     example: BOT
   engineDescription:
     type: string
-    description: >-
-      Opt-in, cosmetic self-report: a short free-text label describing the
-      engine, shown on the roster to keep a multi-instance fleet legible.
-      **Label only, not used as a rating or pairing input.** Absent unless the
-      operator set it at registration.
+    description: Opt-in free-text label for the engine; shown on the roster. Absent unless set at registration.
     maxLength: 256
     example: MCTS, 2M playouts/move
   hardware:
-    description: >-
-      Opt-in, coarse hardware self-report. **Label only, not used as a rating
-      or pairing input.** Absent unless the operator opted in at registration.
+    description: Opt-in coarse hardware self-report. Absent unless the operator opted in at registration.
     $ref: ./HardwareInfo.yaml
   scopes:
     type: array
-    description: >-
-      Scopes carried by this instance's token. A registered instance plays
-      games, so its token carries `bot:play`; an instance token never carries
-      `bot:register` or `bot:organize`. Server-derived and read-only. Lets a
-      bridge handed a token out of band confirm `bot:play` is present before it
-      tries to play.
+    description: Token scopes. Always `bot:play`; instance tokens never carry `bot:register` or `bot:organize`.
     items:
       type: string
       enum:

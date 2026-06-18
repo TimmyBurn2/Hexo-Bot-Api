@@ -111,10 +111,7 @@ get:
                   $ref: ../components/schemas/BotListing.yaml
               cursor:
                 type: string
-                description: >-
-                  Continuation token for the next page. Present only when more
-                  results exist; absent on the last page. Pass it back as the
-                  `cursor` query parameter.
+                description: Continuation token; present only when more results exist. Pass verbatim as the `cursor` query parameter.
           example:
             bots:
               - id: krakenbot

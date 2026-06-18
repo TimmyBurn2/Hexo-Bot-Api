@@ -26,13 +26,7 @@ properties:
     example: hxo_9f3c1a8b2e7d40559c6a1d2e3f4b5a60
   scopes:
     type: array
-    description: >-
-      Scopes granted to `token`, the same set the instance later reports as its
-      `scopes` on whoami (`GET /api/account`). A registered instance plays games,
-      so its token carries `bot:play`. It never carries `bot:register` or
-      `bot:organize`: an instance token cannot register sibling instances or
-      seed pairings, which keeps gameplay authority separate from operator
-      authority.
+    description: Scopes granted to `token`. Always `bot:play`; never `bot:register` or `bot:organize`.
     items:
       type: string
       enum:

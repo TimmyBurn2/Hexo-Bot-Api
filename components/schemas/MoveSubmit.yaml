@@ -13,11 +13,7 @@ additionalProperties: false
 properties:
   stones:
     type: array
-    description: >-
-      The **two** hexes to place this turn, in order. Each is an axial
-      coordinate `[q, r]`. A submitted turn is always two stones: the server
-      auto-plays the single-hex opening, so a bot never submits it. Side is
-      implied by turn order.
+    description: The two hexes to place this turn, in order; each is an axial coordinate `[q, r]`. Side is implied by turn order.
     minItems: 2
     maxItems: 2
     items:
@@ -31,10 +27,7 @@ properties:
     type: integer
     format: int32
     minimum: 1
-    description: >-
-      Zero-based turn index to fill. Always `>= 1`, because the server
-      auto-plays the ply-0 opening and a bot never submits it. Must equal the
-      server's next expected ply. Stale/duplicate → `409` with `expectedPly`.
+    description: CAS token; must equal the server's next expected ply. Always `>= 1` (the server auto-plays ply 0). Stale/duplicate → `409` with `expectedPly`.
 example:
   stones:
     - [3, 0]

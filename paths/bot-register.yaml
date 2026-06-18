@@ -63,32 +63,27 @@ post:
             handle:
               type: string
               description: >-
-                Desired permanent handle, `^[A-Za-z0-9_]{3,20}$`. Lowercased to
-                form the instance's `id`; the lowercased form must be unique and
-                must not be a reserved word. Permanent and never reused.
+                Desired permanent handle. Lowercased to form the instance's
+                `id`; must be unique and not a reserved word.
               pattern: "^[A-Za-z0-9_]{3,20}$"
               minLength: 3
               maxLength: 20
               example: krakenbot
             name:
               type: string
-              description: Optional display name. Defaults to the handle when omitted.
+              description: Display name. Defaults to the handle when omitted.
               maxLength: 64
               example: KrakenBot
             engineDescription:
               type: string
               description: >-
-                Optional, opt-in cosmetic label: a short free-text self-report of
-                the engine (e.g. its technique or version), shown on the roster to
-                keep a multi-instance fleet legible. Label only, never a rating or
-                pairing input. Omit to disclose nothing.
+                Short free-text self-report of the engine (e.g. its technique or
+                version), shown on the roster to keep a multi-instance fleet
+                legible. Omit to disclose nothing.
               maxLength: 256
               example: MCTS, 2M playouts/move
             hardware:
-              description: >-
-                Optional, opt-in coarse hardware self-report. Label only; not
-                used as a rating or pairing input. Omit to register without
-                disclosing anything.
+              description: Coarse hardware self-report. Omit to register without disclosing anything.
               $ref: ../components/schemas/HardwareInfo.yaml
         examples:
           withHardware:

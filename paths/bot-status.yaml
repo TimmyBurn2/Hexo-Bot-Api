@@ -49,9 +49,8 @@ post:
             openForChallenge:
               type: boolean
               description: >-
-                Advertise taking challenges (`true`) or not (`false`). Reported
-                open only while a global event stream is connected; cleared once
-                the server detects that stream has gone.
+                Desired availability. Effective only while a global event stream
+                is connected; cleared when the server detects that stream gone.
               example: true
         example:
           openForChallenge: true
@@ -79,10 +78,8 @@ post:
               openForChallenge:
                 type: boolean
                 description: >-
-                  Resolved live status after this call: the advertised value
-                  ANDed with whether the global event stream is currently
-                  connected. `false` here despite posting `true` means the event
-                  stream is not connected.
+                  Advertised value ANDed with stream presence. `false` here
+                  despite posting `true` means no event stream is connected.
                 example: true
           example:
             openForChallenge: true
