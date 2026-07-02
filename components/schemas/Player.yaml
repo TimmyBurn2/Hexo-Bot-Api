@@ -17,11 +17,7 @@ properties:
   rating:
     type: integer
     format: int32
-    description: >-
-      Current ladder rating for the active variant. Server-authoritative and
-      read-only: reported by the server, never read from a request body, the
-      same as `rated` and an instance's `owner`. May be absent for a brand-new,
-      unrated account.
+    description: Current ladder rating. Absent for a brand-new, unrated account.
     example: 1500
   title:
     type: string
@@ -32,9 +28,7 @@ properties:
       - BOT
     example: BOT
   hardware:
-    description: >-
-      Opt-in, coarse hardware self-report. **Label only, not used as a rating
-      or pairing input.** Absent unless the account opted in at registration time.
+    description: Opt-in coarse hardware self-report. Absent unless the account opted in at registration.
     $ref: ./HardwareInfo.yaml
 example:
   id: krakenbot

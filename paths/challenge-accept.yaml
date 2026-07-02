@@ -4,9 +4,9 @@ post:
   description: >-
     Accepts the challenge `challengeId`. On success a game is created and both
     participants receive a `gameStart` event on their global event streams. The
-    response carries the new game's `gameId` directly, so the acceptor can open
-    the per-game stream at once without waiting for its own `gameStart` event to
-    arrive.
+    response carries the new game's `gameId` directly as confirmation; to play,
+    the acceptor uses its own `gameStart` event, which carries the engine dial
+    bootstrap (socket URL and per-game token) for that game.
 
 
     Only a still-pending challenge can be accepted. A challenge that has already
@@ -38,9 +38,9 @@ post:
               gameId:
                 type: string
                 description: >-
-                  The started game's id. Open the per-game stream
-                  (`GET /api/bot/game/stream/{gameId}`) to begin playing, without
-                  waiting for the `gameStart` event.
+                  The started game's id, returned as confirmation. To play, open
+                  the engine session from the matching `gameStart` event's
+                  `engine` dial bootstrap.
                 example: J9kP2qLm
           example:
             gameId: J9kP2qLm

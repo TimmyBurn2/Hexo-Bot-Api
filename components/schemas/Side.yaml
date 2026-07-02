@@ -5,20 +5,16 @@ description: >-
   schema that names a side `$ref`s this rather than repeating the enum.
 
 
-  The game opens with a **single** centre hex at `[0, 0]`, placed
-  **automatically by the server** on Player 1's behalf at ply 0; `p1` does not
-  submit the opening. Thereafter each turn places two hexes.
+  Sides are identified by **play order**:
+
+  - `p1` = **Player 1**: the side that opens the game.
+
+  - `p2` = **Player 2**: the side that replies.
 
 
-  - `p1` = **Player 1**: the side the auto-played opening belongs to. Its first
-    submitted turn (ply 2) and every turn after place two hexes.
-
-  - `p2` = **Player 2**: makes the first submitted turn (ply 1) and every turn
-    places two hexes.
-
-
-  HeXO has no fixed "colours" in the protocol; the game UI renders the sides
-  visually, but the contract identifies them by play order (`p1`/`p2`).
+  How a turn places hexes, and who opens, belong to the **engine protocol**, not
+  this contract. HeXO has no fixed "colours" in the protocol; the game UI renders
+  the sides visually, but the contract identifies them by play order (`p1`/`p2`).
 enum:
   - p1
   - p2

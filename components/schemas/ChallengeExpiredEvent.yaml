@@ -1,10 +1,8 @@
 type: object
 title: ChallengeExpiredEvent
 description: >-
-  A pending challenge timed out before anyone acted on it. Delivered to the
-  challenger (and to the challenged account too, if it had already been notified
-  of the challenge) when the server's pending-challenge timeout elapses, so both
-  sides learn the pending challenge is gone. Member of the global event stream
+  A pending challenge timed out before anyone acted on it. Delivered to both
+  sides so each learns the challenge is gone. Member of the global event stream
   union.
 required:
   - type

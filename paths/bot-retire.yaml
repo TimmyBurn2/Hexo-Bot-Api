@@ -11,7 +11,7 @@ post:
 
     **Operator authority, owner-scoped.** Only the `bot:register` credential that
     owns the instance may retire it. A per-instance `bot:play` token cannot retire
-    itself or a sibling: gameplay authority is separate from operator authority,
+    itself or a sibling: play authority is separate from operator authority,
     the same separation that governs registration. A token without `bot:register`
     is rejected `403 missing-scope`; a valid operator token aimed at an instance it
     does not own is rejected `403 not-owner` (owners are already public on the
