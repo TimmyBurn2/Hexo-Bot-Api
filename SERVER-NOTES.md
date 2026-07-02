@@ -23,9 +23,9 @@ decisions" to "Requirements" in place once the maintainer settles it.
 What the contract depends on. These are not optional if the server is to honour
 the wire shape.
 
-- **Bot endpoints as a net-new subsystem.** The register, stream, move, resign,
-  status, roster, challenge, and bulk-pairing endpoints do not exist on the
-  server today; they must be built. The contract is a request for this subsystem,
+- **Bot endpoints as a net-new subsystem.** The register, stream, resign,
+  status, roster, challenge, and bulk-pairing endpoints do not exist on the server
+  today; they must be built. The contract is a request for this subsystem,
   not a description of present routes.
 - **Auth: PAT plus three scopes.** A Personal Access Token sent as
   `Authorization: Bearer hxo_...`, carrying one of `bot:play` (gameplay),
@@ -81,21 +81,19 @@ the wire shape.
   token presented on the request and nothing else: never a sibling instance's
   token, never the operator's `bot:register` credential. After revoke the token
   no longer authenticates.
-- **Per-bot session reads.** `GET /api/bot/games` and
-  `GET /api/bot/game/{gameId}` expose the server's live-session data filtered to
-  the authenticated bot's own games, reshaped from the server's
-  `SessionInfo`/`LobbyInfo` into the bot surface's `GameEventInfo`/`GameFull`. A
-  read scoped to a game the caller is not a player in returns `404` (no existence
-  leak). These reads reuse the `winningPlayerId` to `Side` mapping above.
+- **Active-games read.** `GET /api/bot/games` exposes the server's live-session
+  list filtered to the authenticated bot's own in-progress games, reshaped from the
+  server's `SessionInfo`/`LobbyInfo` into the bot surface's `GameEventInfo` pointers.
+  It never reports another bot's games. This read reuses the `winningPlayerId` to
+  `Side` mapping above.
 - **Finished-game retention.** A finished game must stay answerable while it is
-  retained: a move or resign returns `409 game-finished` and the game read
-  returns a `200` snapshot. The natural reap point is when both players have
-  disconnected (mirroring the live-session model; a tournament game holds the
-  stub briefly longer for reconciliation). Once reaped, a late move, resign, or
-  read returns `404`, and the bot reconciles the terminal result from the
+  retained: a resign returns `409 game-finished`. The natural reap point is when
+  both players have disconnected (mirroring the live-session model; a tournament
+  game holds the stub briefly longer for reconciliation). Once reaped, a late
+  resign returns `404`, and the bot reconciles the terminal result from the
   `gameFinish` event, not the status code. The server may retain longer than the
   both-disconnected point, but a freshly finished game whose player is still
-  connected must answer `409`/`200`, never `404`.
+  connected must answer `409`, never `404`.
 - **Challenge retention.** A challenge that has gone terminal (`declined`,
   `canceled`, or `expired`) must stay answerable by
   `GET /api/challenge/{challengeId}/show` for a brief window after the
@@ -111,19 +109,66 @@ the wire shape.
 - **Event-stream supersede.** Opening a new global event stream must close any
   previous one for the same token, so a bot reconnecting after a half-open drop
   can rely on the stale connection being dropped without tearing it down itself.
-- **Stream keepalive bound.** Both NDJSON streams (global event and per-game)
-  must emit a blank-line keepalive at least every 15 seconds while idle, so a
-  client can set a read timeout at a small multiple of that interval to tell an
-  idle-but-alive stream from a dead socket.
+- **Stream keepalive bound.** The global event stream must emit a blank-line
+  keepalive at least every 15 seconds while idle, so a client can set a read
+  timeout at a small multiple of that interval to tell an idle-but-alive stream
+  from a dead socket.
 - **`opponentGone` emission.** The server must emit the observe-only
-  `opponentGone` per-game event from its existing in-game-disconnect orphan
-  timer (the auto-forfeit countdown), reporting in `finishesInSeconds` the time
-  remaining until it auto-forfeits the game to the surviving side. There is no
-  client claim action: the countdown is to the automatic forfeit.
+  `opponentGone` line on the global event stream (carrying the affected `gameId`)
+  from its existing in-game-disconnect orphan timer (the auto-forfeit countdown),
+  reporting in `finishesInSeconds` the time remaining until it auto-forfeits the
+  game to the surviving side. There is no client claim action: the countdown is to
+  the automatic forfeit.
 - **Draw-free bot pairings.** The bot surface states the server's
   `draw-agreement` finish never appears (the `finishReason` enums omit it). The
   server does run a live `draw-agreement` path, so bot pairings must never route
   into it: a bot game never finishes as a draw.
+- **Forfeit-on-illegal: `illegal-move` as a new `finishReason` value.** The
+  htttx engine protocol exposes detection of illegal moves (wrong placement
+  count, occupied cell, out-of-radius, wrong side, post-win, first-not-origin,
+  and on the websocket path an out-of-id response); the play layer owns the
+  rated result. An illegal move must forfeit the offending side: the game
+  finishes with `finishReason: illegal-move` and the opponent as `winner`. This
+  `finishReason` value does not exist in the server's current enum
+  (`disconnect`, `surrender`, `timeout`, `terminated`, `six-in-a-row`,
+  `draw-agreement` from `sharedTypes.ts`). It must be added as a new value;
+  silently reusing an existing reason whose server meaning differs (such as
+  `terminated`, which has no winner today) is not permitted. The current server
+  behavior on an illegal move is non-fatal: the placement throw is surfaced as
+  an error message and the socket stays open with no result assigned
+  (`gameSimulation.ts`, `sessionManager.ts`, `createSocketServer.ts`). The
+  server must change to: detect the illegal move, end the game, record
+  `finishReason: illegal-move` with the opponent as winner, and emit the normal
+  `gameFinish` event on the global stream.
+- **Per-game engine session bootstrap.** The `gameStart` event carries an
+  `engine` object with `socketUrl` and `token` that the adapter uses to dial
+  the engine session. Both fields are **server-issued and read-only**; a caller
+  never sets them. The server must: (a) for each started game, generate a
+  per-game engine session locator and a short-lived bearer token; (b) emit
+  `socketUrl` as an **absolute** `wss://` (or `ws://`) URL so a third-party
+  host can issue its own; (c) ensure `token` is scoped to this one game, is not
+  a Personal Access Token, and expires with the game. The server has no engine
+  session or token concept today; this is a net-new server requirement.
+- **Reconnect re-emits `gameStart` with a fresh engine bootstrap.** When the
+  global event stream is opened (or reopened after a drop), the server must
+  re-emit a `gameStart` carrying a fresh `engine` dial bootstrap for each game
+  still in progress, so a restarted adapter can re-dial its live games without
+  a separate recovery call.
+- **Engine transport: websocket path, with optional `request_id` answer-matching.**
+  The adapter dials the engine over the `socketUrl` websocket. Answer-matching
+  via `request_id` is a bot-side opt-in: a bot that declares
+  `basic_websocket.v1-alpha.request_id` (or `stateless.v1-alpha.request_id`) echoes
+  the platform-assigned id unchanged on its response and can then detect and drop a
+  mismatched or stale answer before submitting it. Without the flag, answers are
+  matched only by the transport's own request/response ordering, so a transient that
+  yields a mismatched or stale response has no correlation guard and is submitted
+  as-is. Either way the play layer holds the bot responsible: a wrong, stale, or
+  mismatched move forfeits the game as `illegal-move`, with no undeserved-forfeit
+  exemption. `request_id` is the bot's tool to avoid that; it does not shift the
+  responsibility. The stateless HTTP path carries the same optional `request_id`
+  for correlation; it is not the rated play path. These transport details belong to
+  the engine protocol layer; they are noted here because the play spec
+  (EngineSession) points to that session as the gameplay path.
 
 ## Open decisions for the maintainer
 
@@ -151,3 +196,8 @@ Requirements in place.
   proposal asks for an opening-only, unrated, no-winner abort so a bot that cannot
   service a freshly started game is not force-rated a loss. The contract exposes
   no abort endpoint until the server defines the semantics.
+- **Resume event type.** Reconnect currently reuses `gameStart` to re-emit each
+  in-progress game with a fresh engine dial bootstrap. If reusing `gameStart` for
+  resumption proves ambiguous against a genuinely new game start, a distinct
+  `gameResume` event type is the alternative. Undecided; align with the server
+  maintainer before the contract adds a separate event.

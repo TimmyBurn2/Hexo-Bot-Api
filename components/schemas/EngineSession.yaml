@@ -1,0 +1,30 @@
+type: object
+title: EngineSession
+description: >-
+  Server-issued dial bootstrap for a started game: the minimal locator an adapter
+  needs to reach the game's engine session and play it over the engine protocol.
+  Gameplay (move exchange, answer-matching) runs over that session, not over this
+  API; this object only points to it. Both fields are **server-issued and
+  read-only**: a caller never sets them, and they are scoped to this one game.
+required:
+  - socketUrl
+  - token
+additionalProperties: false
+properties:
+  socketUrl:
+    type: string
+    format: uri
+    description: >-
+      Engine session locator: the `wss://` (or `ws://`) URL the adapter opens to
+      play this game over the engine protocol. Server-issued and read-only.
+    example: wss://hexo.did.science/engine/J9kP2qLm
+  token:
+    type: string
+    description: >-
+      Short-lived, per-game bearer presented when opening `socketUrl`. Scoped to
+      this single game and expires with it; it is not a Personal Access Token and
+      is not reusable across games. Server-issued and read-only.
+    example: egs_4c1f9b2a7d3e
+example:
+  socketUrl: wss://hexo.did.science/engine/J9kP2qLm
+  token: egs_4c1f9b2a7d3e

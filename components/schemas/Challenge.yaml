@@ -30,10 +30,7 @@ properties:
     $ref: ./Variant.yaml
   rated:
     type: boolean
-    description: >-
-      Whether a win/loss will affect ratings. **Server-authoritative**: the
-      server sets this from its pairing policy; the challenger cannot request it.
-      Same-owner games are always `false`.
+    description: Whether a win/loss will affect ratings. Server-set from pairing policy; same-owner games are always `false`.
     example: true
   timeControl:
     description: Requested time control for the game (`unlimited`, `turn`, or `match`).
@@ -41,24 +38,15 @@ properties:
   status:
     type: string
     description: >-
-      Lifecycle state of the challenge. `created` is the pending state; from
-      `created` a challenge resolves to `declined`, `canceled`, or `expired`, or
-      is accepted internally, which yields a `gameStart` event rather than an
-      `accepted` Challenge, so `accepted` never appears as a status here.
-      `expired` is the terminal state a `created` challenge reaches when nobody
-      acts on it before the server's pending-challenge timeout elapses.
+      Lifecycle state of the challenge. Acceptance yields a `gameStart` event rather
+      than an `accepted` status, so `accepted` never appears here.
     enum:
       - created
       - declined
       - canceled
       - expired
   declineReason:
-    description: >-
-      Why the challenge was declined, present only when `status` is `declined`
-      (the reason the decliner gave, defaulting to `generic`); absent for any
-      other status. This is how a declined challenge's reason reaches the
-      challenger, riding the embedded challenge on the `challengeDeclined` event.
-      Server-set and read-only.
+    description: Why the challenge was declined. Present only when `status` is `declined`, absent otherwise.
     allOf:
       - $ref: ./DeclineReason.yaml
 example:

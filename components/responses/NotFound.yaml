@@ -1,9 +1,9 @@
 description: >-
   The referenced resource (game, challenge, or user) does not exist or is not
-  visible to you. A recently finished game still answers a move or resign as
-  `409 game-finished`; once the server reaps it, a late move, resign, or read
-  receives this `404` instead, so reconcile the terminal result from the
-  `gameFinish` event on the global stream rather than from the status code.
+  visible to you. A recently finished game still answers a resign as `409
+  game-finished`; once the server reaps it, a late resign or read receives this
+  `404` instead, so reconcile the terminal result from the `gameFinish` event on
+  the global stream rather than from the status code.
 content:
   application/json:
     schema:

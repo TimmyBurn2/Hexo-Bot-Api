@@ -7,6 +7,7 @@ oneOf:
   - $ref: ./ChallengeEvent.yaml
   - $ref: ./GameStartEvent.yaml
   - $ref: ./GameFinishEvent.yaml
+  - $ref: ./OpponentGoneEvent.yaml
   - $ref: ./ChallengeDeclinedEvent.yaml
   - $ref: ./ChallengeCanceledEvent.yaml
   - $ref: ./ChallengeExpiredEvent.yaml
@@ -16,6 +17,7 @@ discriminator:
     challenge: ./ChallengeEvent.yaml
     gameStart: ./GameStartEvent.yaml
     gameFinish: ./GameFinishEvent.yaml
+    opponentGone: ./OpponentGoneEvent.yaml
     challengeDeclined: ./ChallengeDeclinedEvent.yaml
     challengeCanceled: ./ChallengeCanceledEvent.yaml
     challengeExpired: ./ChallengeExpiredEvent.yaml

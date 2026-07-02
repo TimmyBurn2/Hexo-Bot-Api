@@ -3,23 +3,23 @@ get:
   summary: List my active games
   description: >-
     Returns the authenticated bot's active (in-progress) games as lightweight
-    pointers, so the bot can resync after a cold start or crash without scraping
-    the global event stream for past `gameStart` lines. Requires `bot:play`.
+    pointers, so the bot can take stock after a cold start or crash. Requires
+    `bot:play`.
 
 
     This exposes the bot's own slice of the server's live-session list: it
     reports only the games this instance is currently a player in, never another
     bot's games. Each entry is the same lightweight `GameEventInfo` pointer the
-    `gameStart` event carries (id, side, opponent, variant, rated), so a bot
-    reopens the per-game stream with `id` and resumes play. Because every game
-    here is in progress, entries omit `status` exactly as a `gameStart` line
+    `gameStart` event carries (id, side, opponent, variant, rated). Because every
+    game here is in progress, entries omit `status` exactly as a `gameStart` line
     does; a finished game drops off this list. The array is empty when the bot
     has no active games.
 
 
-    Live updates still arrive on the streams; this is a point-in-time read for
-    reconciliation, not a substitute for `GET /api/stream/event` or the per-game
-    stream.
+    This is a point-in-time reconciliation read, not a way to reach a game's
+    engine session. To (re)connect and play, reconnect the global event stream:
+    it replays a `gameStart` (with a fresh `engine` dial bootstrap) for each game
+    still in progress.
   tags:
     - Bot
   responses:
@@ -36,9 +36,8 @@ get:
               games:
                 type: array
                 description: >-
-                  The bot's in-progress games as lightweight pointers. Each is a
-                  `GameEventInfo` in the `gameStart` shape (status omitted). May
-                  be empty.
+                  In-progress games as `GameEventInfo` pointers (`status`
+                  omitted). May be empty.
                 items:
                   $ref: ../components/schemas/GameEventInfo.yaml
           example:

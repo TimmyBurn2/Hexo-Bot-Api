@@ -1,9 +1,10 @@
 type: object
 title: GameEventInfo
 description: >-
-  Lightweight pointer to a game, carried by `gameStart` and `gameFinish`
-  events. The bot uses `id` to open the per-game stream
-  (`GET /api/bot/game/stream/{id}`) and `side` to know which side it plays.
+  Lightweight pointer to a game, carried by `gameStart`, `gameFinish`, and the
+  active-games list. `id` identifies the game and `side` is the side this bot
+  plays. On `gameStart` the engine session to play the game is carried alongside
+  on the event.
 required:
   - id
   - side
@@ -14,7 +15,7 @@ additionalProperties: false
 properties:
   id:
     type: string
-    description: The game id. Open the per-game stream with this.
+    description: The game id. Identifies the game across events and the active-games list.
     example: J9kP2qLm
   side:
     description: The side **this bot** plays in the game.
@@ -27,9 +28,7 @@ properties:
     $ref: ./Variant.yaml
   rated:
     type: boolean
-    description: >-
-      Whether the result affects ratings. Server-authoritative; lets a
-      bulk-paired bot know its game's rated-ness without a Challenge object.
+    description: Whether the result affects ratings. Useful for bulk-paired games that have no Challenge object.
   status:
     type: string
     description: >-
@@ -40,20 +39,21 @@ properties:
   finishReason:
     type: string
     description: >-
-      Why the game ended. Present on `gameFinish`. Bots are draw-free, so the
-      server's `draw-agreement` reason never appears on this surface.
+      Why the game ended. Present on `gameFinish`. Bots are draw-free so
+      `draw-agreement` never appears here. `illegal-move` forfeits the side
+      whose move was illegal, misapplied, or otherwise unmatched.
     enum:
       - surrender
       - timeout
       - disconnect
       - terminated
       - six-in-a-row
+      - illegal-move
   winner:
     description: >-
-      The winning side on a decisive `gameFinish`: the line maker on
-      `six-in-a-row`, the opponent on `surrender`, `timeout`, or `disconnect`.
-      `null` on `terminated`, which finishes the game with no winner, and may be
-      `null` on `disconnect` when no side survives to be awarded the win.
+      Winning side: the achiever on `six-in-a-row`, the opponent on `surrender`,
+      `timeout`, `disconnect`, or `illegal-move`. `null` on `terminated`; may
+      be `null` on `disconnect` when no side survives.
     oneOf:
       - $ref: ./Side.yaml
       - type: "null"
