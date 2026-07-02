@@ -20,7 +20,7 @@ Modelled on the [Lichess Bot/Board API](https://github.com/lichess-org/api).
 
 - **Server (proposed):** `https://hexo.did.science`
 - **Product:** [`openapi.yaml`](./openapi.yaml) (split into [`paths/`](./paths) and [`components/`](./components)) + this README.
-- **Scope:** this spec is the **server and ladder layer** only: identity, registration, matchmaking, challenges, ratings, and game lifecycle. The per-game move exchange is the **htttx engine protocol**, reached through the session a `gameStart` event hands you; it is not in this repo.
+- **Scope:** this spec is the **server and ladder layer** only: identity, registration, matchmaking, challenges, ratings, and game lifecycle. The per-game move exchange is the **[htttx engine protocol](https://github.com/hex-tic-tac-toe/htttx-bot-api)**, reached through the session a `gameStart` event hands you; it is not in this repo.
 - **Game:** `httt6`, HeXO's hexagonal tic-tac-toe.
   The board geometry and rules of play (coordinates, legal placement, the opening, win conditions) belong to the **engine protocol**, not this contract; here `httt6` is just the variant key carried on challenges and games.
   The variant key is defined once in [`components/schemas/Variant.yaml`](./components/schemas/Variant.yaml) and must match the server's registry.
