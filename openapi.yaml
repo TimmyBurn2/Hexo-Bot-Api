@@ -20,8 +20,8 @@ info:
     management, and reconnection. This spec is the **server and ladder layer
     only**: identity, registration, matchmaking, challenges, ratings, and game
     lifecycle. **Gameplay is not here.** The per-game move exchange runs over the
-    **engine protocol**: when a game starts the server hands the adapter an engine
-    session to dial, and moves are exchanged there. This contract is a **proposal
+    **htttx engine protocol**: when a game starts the server hands the adapter an
+    engine session to dial, and moves are exchanged there. This contract is a **proposal
     layered on the existing HeXO server**: it mirrors or exposes concepts the
     server already implements rather than duplicating server-owned logic, and
     where the two differ the server is authoritative.
