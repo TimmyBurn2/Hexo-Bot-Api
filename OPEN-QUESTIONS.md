@@ -25,16 +25,16 @@ clock-validation 422 is renamed `invalid-time-control`.
 
 ## 3. Opening auto-play (resolved)
 
-**Resolved: the server auto-plays it.** The server places the opening hex at
-`[0, 0]` at ply 0; a bot never submits it. `MoveSubmit` now requires exactly two
-stones (`ply >= 1`), the bot loop computes two stones every turn, and `Side`,
-`CompoundMove`, and the per-game examples describe the opening as the
-server-placed ply-0 entry that stays in the cumulative move list as history.
+**Resolved: the server auto-plays it.** The server places the opening hex at the
+origin before either side moves; a bot never submits it. This spec does not model
+move mechanics at all: the opening placement, move exchange, and move history live
+on the htttx engine session, outside the play layer. This spec carries only
+lifecycle (`gameStart`/`gameFinish`), so nothing here references the opening.
 
 ## 4. Draws
 
-Bots are draw-free: the bot surface exposes no draw action, and the `gameState` /
-`gameFinish` `finishReason` enum omits the server's `draw-agreement`. The server
+Bots are draw-free: the bot surface exposes no draw action, and the `gameFinish`
+`finishReason` enum omits the server's `draw-agreement`. The server
 itself supports a draw by mutual agreement after 50 turns
 (`DRAW_REQUEST_MIN_TURNS`). Confirm bots stay draw-free, or decide to expose the
 draw action.

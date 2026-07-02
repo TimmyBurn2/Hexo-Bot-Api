@@ -40,8 +40,8 @@ properties:
     type: string
     description: >-
       Why the game ended. Present on `gameFinish`. Bots are draw-free so
-      `draw-agreement` never appears here. `illegal-move` is a new value, not
-      in the server's current enum; requires a server-side addition.
+      `draw-agreement` never appears here. `illegal-move` forfeits the side
+      whose move was illegal, misapplied, or otherwise unmatched.
     enum:
       - surrender
       - timeout
