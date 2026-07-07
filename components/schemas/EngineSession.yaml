@@ -6,6 +6,53 @@ description: >-
   Gameplay (move exchange, answer-matching) runs over that session, not over this
   API; this object only points to it. Both fields are **server-issued and
   read-only**: a caller never sets them, and they are scoped to this one game.
+
+  Binding to the engine session (stated as the contract a clean-room server
+  implements, not as a transcription of any one server):
+
+  - The adapter dials `socketUrl` over WebSocket and authenticates with `token`.
+    The normative mechanism is an `Authorization: Bearer <token>` header on the
+    dial; this is a deliberate spec decision (the per-game token is a bearer
+    credential for the session dial). A server MUST accept the bearer header. A
+    dial without it, or with the wrong token, is rejected (401 / close 1008).
+
+  - Header-less websocket clients: some websocket client libraries (notably
+    browser-native `WebSocket`, and some language clients) cannot set request
+    headers on the upgrade. To widen client support at no cost to the security
+    model, a server SHOULD also accept the token as a `token` query parameter on
+    the `socketUrl` dial (`?token=<token>`). The query-param is a fallback, not
+    the preferred mechanism; the bearer header remains normative. A server that
+    accepts one MUST accept the other; the token is short-lived and per-game in
+    either form, so the exposure surface is identical. This is a deliberate
+    allowance, stated as a decision.
+
+  - Answer-matching: the server MUST match each answer to its request. When the
+    bot declares the `basic_websocket.v1-alpha.request_id` capability and the
+    server assigns a `request_id` on a `move_request`, the bot MUST echo it
+    unchanged on the answering `move_response`, and the server discards any
+    response whose id is not the outstanding one. When the bot does not declare
+    the capability, or the server does not assign ids, the server correlates
+    positionally: at most one move request is outstanding at a time, so the next
+    `move_response` is the answer to the outstanding request. A server MUST
+    support positional correlation for any bot that does not declare
+    `request_id`; a server MAY additionally support `request_id` for bots that
+    do. This pins the safety property (an answer matches its request) without
+    excluding a conformant engine that has no id scheme. The reference server
+    currently assigns `request_id` on every request; that is a server convention,
+    not a contract requirement, and a positional-only server is conformant.
+
+  - Opening board: the starting position arrives in the htttx `setup` packet's
+    `board.cells`, delivered once before the first `move_request`. The bot
+    consumes whatever is delivered and replays the cumulative moves on top of it.
+    The first `move_request` a bot receives carries `previous: []` (the opening
+    is in the setup, not in the move ledger); subsequent requests carry the
+    completed two-stone turns in `previous` in play order. The wire contract
+    does NOT mandate any particular starting position: the standard server
+    delivers one cross at the origin in `setup`, but that is a server convention,
+    not a contract requirement. A conformant server under `free_setup` may
+    deliver a different starting position, and the bot plays it as delivered.
+    A bot never submits the opening; it only submits its own turns.
+
 required:
   - socketUrl
   - token
@@ -16,14 +63,19 @@ properties:
     format: uri
     description: >-
       Engine session locator: the `wss://` (or `ws://`) URL the adapter opens to
-      play this game over the engine protocol. Server-issued and read-only.
+      play this game over the engine protocol. The adapter presents `token` as
+      an `Authorization: Bearer` header on this dial (the normative mechanism),
+      or as a `token` query parameter (the header-less-client fallback).
+      Server-issued and read-only.
     example: wss://hexo.did.science/engine/J9kP2qLm
   token:
     type: string
     description: >-
-      Short-lived, per-game bearer presented when opening `socketUrl`. Scoped to
-      this single game and expires with it; it is not a Personal Access Token and
-      is not reusable across games. Server-issued and read-only.
+      Short-lived, per-game bearer presented as `Authorization: Bearer <token>`
+      on the `socketUrl` dial (or as a `token` query parameter for header-less
+      clients). Scoped to this single game and expires with it; it is not a
+      Personal Access Token and is not reusable across games. Server-issued and
+      read-only.
     example: egs_4c1f9b2a7d3e
 example:
   socketUrl: wss://hexo.did.science/engine/J9kP2qLm

@@ -33,6 +33,14 @@ for each line in event_stream:
 function play_game(game, engine):                        # game.side is "p1" or "p2"
     # engine.socketUrl + engine.token are the dial bootstrap from the gameStart
     # event: server-issued, read-only, scoped to this one game.
+    #
+    # The per-game token is presented as `Authorization: Bearer <engine.token>`
+    # on the socketUrl dial. On a HeXO session the htttx `request_id` is
+    # required: every move_request carries one and the bot echoes it unchanged
+    # on the answering move_response; an answer that does not echo the
+    # outstanding id is discarded and the play layer forfeits the side as
+    # illegal-move. The opening at the origin is delivered in the setup packet,
+    # not in any move_request.previous entry.
     open_engine_session(engine.socketUrl, engine.token)  # speak the ENGINE PROTOCOL here
 
     # Everything from here on (board state, move requests, answer-matching) is the
