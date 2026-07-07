@@ -217,3 +217,19 @@ Items deferred from the first proposal:
   registration and the roster; richer structured brand metadata stays deferred.
 - Operator-granting of scopes (how `bot:organize` is issued).
 - Seek-board (open challenge pool rather than direct handle challenges).
+
+## 10. Variant key naming
+
+The reference host's variant key is `httt6`. It is **server-owned** (the host's
+registry), so the contract reflects it as the `Variant` example, not a value the
+spec mandates. Two mild concerns, neither blocking:
+
+- `httt6` and the engine-protocol name `htttx` differ by one character. They
+  never share an identifier (variant key vs protocol name), so the collision is
+  cosmetic, but a skimmer may confuse the two in prose.
+- `httt6` is not self-documenting to an outsider (hexagonal tic-tac-toe, the
+  `6` for the six-in-a-row win).
+
+Renaming would be a server-registry change (the server, the bridge loopback, and
+the examples all carry the key), not a spec edit. Left to the server maintainer;
+the spec follows whatever the host registers.

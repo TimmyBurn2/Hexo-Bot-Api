@@ -7,7 +7,7 @@
 > Names, shapes, and paths may change before a `1.0.0` release.
 > Treat this as a request-for-comment, not a finalized contract.
 
-The **bot protocol contract** for [HeXO](https://hexo.did.science), the [OpenAPI 3.1](./openapi.yaml) spec a bot speaks to play on `https://hexo.did.science`.
+The **bot protocol contract** for [HeXO](https://hexo.did.science), the [OpenAPI 3.1](./openapi.yaml) spec a bot speaks to play HeXO. The reference host is `https://hexo.did.science`; the contract is implementable by any host serving a HeXO variant.
 
 **Just the contract:** spec + this README.
 No server, no bot; those are separate programs that agree only on `openapi.yaml`.
@@ -18,12 +18,12 @@ Modelled on the [Lichess Bot/Board API](https://github.com/lichess-org/api).
 
 ## 1. What this is
 
-- **Server (proposed):** `https://hexo.did.science`
+- **Reference server (proposed):** `https://hexo.did.science`. The contract is implementable by any host serving a HeXO variant.
 - **Product:** [`openapi.yaml`](./openapi.yaml) (split into [`paths/`](./paths) and [`components/`](./components)) + this README.
-- **Scope:** this spec is the **server and ladder layer** only: identity, registration, matchmaking, challenges, ratings, and game lifecycle. The per-game move exchange is the **[htttx engine protocol](https://github.com/hex-tic-tac-toe/htttx-bot-api)**, reached through the session a `gameStart` event hands you; it is not in this repo.
-- **Game:** `httt6`, HeXO's hexagonal tic-tac-toe.
-  The board geometry and rules of play (coordinates, legal placement, the opening, win conditions) belong to the **engine protocol**, not this contract; here `httt6` is just the variant key carried on challenges and games.
-  The variant key is defined once in [`components/schemas/Variant.yaml`](./components/schemas/Variant.yaml) and must match the server's registry.
+- **Scope:** this spec is the **server and ladder layer** only: identity, registration, matchmaking, challenges, ratings, and game lifecycle. The per-game move exchange is the **[htttx engine protocol](https://github.com/hex-tic-tac-toe/htttx-bot-api)** (pinned at commit `37d2385` for this proposal), reached through the session a `gameStart` event hands you; it is not in this repo.
+- **Game:** the reference host serves `httt6`, HeXO's hexagonal tic-tac-toe.
+  The board geometry and rules of play (coordinates, legal placement, the opening, win conditions) belong to the **engine protocol**, not this contract; here the variant key is just the label carried on challenges and games.
+  The `Variant` field is defined once in [`components/schemas/Variant.yaml`](./components/schemas/Variant.yaml) as an open, server-scoped string; extending the value set is a server-side registry change, not a spec edit.
 - **Sides:** the two players are identified by **play order, `p1` and `p2`** (not colours; the game UI renders colours, the protocol does not).
   Defined once in [`components/schemas/Side.yaml`](./components/schemas/Side.yaml).
 - **Examples:** runnable-shaped samples in [`examples/`](./examples).
@@ -159,18 +159,12 @@ This repo is a **community proposal**, and contributions that sharpen it are wel
 
 - Extend or clarify the spec via pull request; keep it lint-clean (`make lint` → 0 errors) and every operation fully documented (`operationId`, `summary`, `tags`, responses with schemas + an example).
 - **Settle the rating scale.** Bot ratings are relative; whether and how they anchor to a wider scale is an open question.
-- Coordinate new variants or fields with the server's registry; the `Variant` and `Side` keys here must match what `hexo.did.science` accepts.
+- Coordinate new variant keys with the serving host's registry; the `Variant` field is open and server-scoped, the `Side` keys (`p1`/`p2`) are fixed by this contract.
 - **Implement it.** This is a proposal; the endpoints still need to be built on the server side, and a reference **bridge** (a ready-to-run bot adapter that speaks this protocol) is planned as a **separate** repository. This repo stays spec-only.
 - **Add a quickstart.** A step-by-step walkthrough (register an instance → receive its token → stream events → accept a challenge → dial the engine session), built on the files in [`examples/`](./examples), is planned; it was left out of this first proposal to keep the focus on the contract itself.
 
 ---
 
-## 7. Thanks
-
-Thanks to the **HeXO community**:
-
----
-
-## 8. License
+## 7. License
 
 [MIT](./LICENSE)

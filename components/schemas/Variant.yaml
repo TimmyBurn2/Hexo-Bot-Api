@@ -1,20 +1,10 @@
 type: string
 title: Variant
 description: >-
-  The HeXO game variant key. **Single source of truth**: every operation that
-  names a variant `$ref`s this schema rather than hard-coding a literal.
-
-
-  The current (and only) variant is `httt6`, HeXO's hexagonal tic-tac-toe. Its
-  board geometry and rules of play (coordinates, legal placement, the opening,
-  win conditions) belong to the **engine protocol**, not this contract; here
-  `httt6` is just the key carried on challenges and games.
-
-
-  This value **must match the variant key registered on the server**
-  (`hexo.did.science`) and in its variant registry. If the server adds variants,
-  extend this enum here first.
-enum:
-  - httt6
-default: httt6
+  The variant key, scoped to the serving host's registry. **Single source of
+  truth**: every operation that names a variant `$ref`s this. Open string — the
+  contract carries the field, not the value set: the reference host serves
+  `httt6`, another host may serve a different key, and extending the value set
+  is a server-side registry change, not a spec edit. Board geometry and rules
+  belong to the engine protocol, not here.
 example: httt6
