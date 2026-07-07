@@ -52,6 +52,7 @@ What the contract lets a bot do today. Every call is authenticated with a Person
 | **Challenges** | `GET /api/challenges` | List your pending incoming and outgoing challenges (only `created`; accepted, declined, canceled, or expired ones drop off). |
 | **Challenges** | `GET /api/challenge/{challengeId}/show` | Read one challenge by id, including its terminal status (tells "bad id" apart from "just went terminal", with `declineReason` on a decline). |
 | **Organizer** | `POST /api/bulk-pairing` | Seed many games at once for an eval ladder. Requires `bot:organize`. |
+| **Organizer** | `GET /api/bulk-pairing/{batchId}` | Read a batch's game results back (organizer-only, creator-scoped). Requires `bot:organize`. |
 
 Every game carries a time control (`unlimited`, `turn`, or `match`; see section 4). Whether a game is rated is decided by the server, not the caller. Playing a game itself happens over the **engine protocol**: a `gameStart` event hands you a socket URL and a short-lived per-game token to connect with.
 

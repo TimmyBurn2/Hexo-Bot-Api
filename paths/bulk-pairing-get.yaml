@@ -1,0 +1,134 @@
+# Organizer-only batch-results read. Pairs with POST /api/bulk-pairing: the
+# organizer that seeded a batch reads back each game's terminal result so it can
+# tally standings without being a player in the games it seeded.
+get:
+  operationId: getBulkPairing
+  summary: Read a bulk pairing's batch results, organizer-only
+  description: >-
+    **Organizer-only.** Returns the games in a batch the caller created, each
+    with its current state and, once finished, its terminal result
+    (`finishReason`, `winner`). Closes the read gap for an organizer-run eval
+    ladder: the organizer that seeds bot-vs-bot games it does not play in has no
+    party-scoped read of who won, so this endpoint reports the batch's results
+    back to its creator.
+
+
+    **Results read, not a tournament engine.** It reports what happened in the
+    games the caller seeded; it does not compute pairings, rounds, or standings
+    — those stay the server's tournament concern. Scoped to the batch's creator:
+    a `bot:organize` token reads only batches it created; another organizer's
+    batch returns `404` (no existence leak), mirroring the party-scoping of the
+    rest of the bot surface. A reaped batch returns `404`; reconcile from each
+    game's `gameFinish` event.
+  tags:
+    - Challenge
+  parameters:
+    - name: batchId
+      in: path
+      required: true
+      description: The batch id returned by `POST /api/bulk-pairing`.
+      schema:
+        type: string
+      example: bulk_7Qm2
+  responses:
+    "200":
+      description: The batch with each game's current state.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - games
+            properties:
+              id:
+                type: string
+                description: The batch id.
+              games:
+                type: array
+                description: The batch's games, in input order, with their current state.
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - id
+                    - p1
+                    - p2
+                    - rated
+                    - status
+                  properties:
+                    id:
+                      type: string
+                      description: The game id.
+                    p1:
+                      type: string
+                    p2:
+                      type: string
+                    rated:
+                      type: boolean
+                      description: The per-game rated flag reported at batch creation (server-forced `false` on same-owner pairings).
+                    status:
+                      type: string
+                      description: Coarse lifecycle flag. `in-progress` while the game is live; `finished` once the server assigns a result.
+                      enum:
+                        - in-progress
+                        - finished
+                    finishReason:
+                      description: Present only when `status` is `finished`.
+                      allOf:
+                        - $ref: ../components/schemas/FinishReason.yaml
+                    winner:
+                      description: Winning side when `status` is `finished`; `null` on `terminated` and when no side survives a `disconnect`.
+                      oneOf:
+                        - $ref: ../components/schemas/Side.yaml
+                        - type: "null"
+                  # A finished game always carries a result; an in-progress one
+                  # carries neither finishReason nor winner.
+                  allOf:
+                    - if:
+                        required:
+                          - status
+                        properties:
+                          status:
+                            const: finished
+                      then:
+                        required:
+                          - finishReason
+                          - winner
+                    - if:
+                        required:
+                          - status
+                        properties:
+                          status:
+                            const: in-progress
+                      then:
+                        not:
+                          anyOf:
+                            - required:
+                                - finishReason
+                            - required:
+                                - winner
+          example:
+            id: bulk_7Qm2
+            games:
+              - id: J9kP2qLm
+                p1: krakenbot
+                p2: sealbot
+                rated: true
+                status: finished
+                finishReason: six-in-a-row
+                winner: p1
+              - id: K2xR8tNp
+                p1: sealbot
+                p2: krakenbot
+                rated: true
+                status: in-progress
+    "401":
+      $ref: ../components/responses/Unauthorized.yaml
+    "403":
+      $ref: ../components/responses/ForbiddenOrganizer.yaml
+    "404":
+      $ref: ../components/responses/NotFound.yaml
+    "429":
+      $ref: ../components/responses/TooManyRequests.yaml
