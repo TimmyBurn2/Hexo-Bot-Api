@@ -3,14 +3,15 @@ openapi: 3.1.0
 info:
   title: HeXO Bot API
   version: 0.1.0-draft
-  summary: "PROPOSAL: the bot protocol contract for HeXO on hexo.did.science (not yet implemented)."
+  summary: "PROPOSAL: the bot protocol contract for HeXO (not yet implemented)."
   description: >-
     > **Status: WIP, not yet implemented.** Field names, shapes, and
     > paths may change before `1.0.0`. Treat this as a request-for-comment.
 
 
-    The **HeXO Bot API** is the contract a bot speaks to play HeXO on
-    `https://hexo.did.science`.
+    The **HeXO Bot API** is the contract a bot speaks to play HeXO. The
+    reference host is `https://hexo.did.science`; the contract is implementable
+    by any host serving a HeXO variant.
 
 
     ## Design
@@ -73,13 +74,12 @@ info:
 
     ## Variant & sides
 
-    This API currently serves a single variant, `httt6`, HeXO's hexagonal
-    tic-tac-toe. The board geometry and rules of play (coordinates, legal
-    placement, the opening, win conditions) belong to the **engine protocol**,
-    not this contract; here `httt6` is just the variant key carried on challenges
-    and games. The two sides are identified by play order, `p1` and `p2` (not
-    colours). Both constants are defined once (see the `Variant` and `Side`
-    schemas) and must match the server's registry.
+    The reference host serves `httt6`, HeXO's hexagonal tic-tac-toe; another host
+    may serve a different variant key. The `Variant` field is an open,
+    server-scoped string (extending the value set is a server registry change,
+    not a spec edit); board geometry and rules belong to the engine protocol.
+    The two sides are `p1` and `p2` by play order (not colours); see the `Side`
+    schema for the turn-order semantics and the auto-played-opening caveat.
   license:
     name: MIT
     identifier: MIT
