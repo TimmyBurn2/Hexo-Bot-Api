@@ -1,0 +1,15 @@
+type: string
+title: FinishReason
+description: >-
+  Why a game ended. **Single source of truth**: every schema that names a finish
+  reason `$ref`s this. Bots are draw-free, so `draw-agreement` (the server's
+  live-play finish) never appears here. `illegal-move` forfeits the side whose
+  move was illegal, misapplied, or otherwise unmatched.
+enum:
+  - surrender
+  - timeout
+  - disconnect
+  - terminated
+  - six-in-a-row
+  - illegal-move
+example: six-in-a-row
