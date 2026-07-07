@@ -35,12 +35,15 @@ function play_game(game, engine):                        # game.side is "p1" or 
     # event: server-issued, read-only, scoped to this one game.
     #
     # The per-game token is presented as `Authorization: Bearer <engine.token>`
-    # on the socketUrl dial. On a HeXO session the htttx `request_id` is
-    # required: every move_request carries one and the bot echoes it unchanged
-    # on the answering move_response; an answer that does not echo the
-    # outstanding id is discarded and the play layer forfeits the side as
-    # illegal-move. The opening at the origin is delivered in the setup packet,
-    # not in any move_request.previous entry.
+    # on the socketUrl dial. The contract never requires htttx `request_id`:
+    # the reference server assigns one on every move_request, and a bot that
+    # declares the `basic_websocket.v1-alpha.request_id` capability echoes it
+    # unchanged on its move_response, letting it drop a stale or mismatched
+    # answer before submitting. Without that capability, answers are matched
+    # positionally by transport ordering. Either way a wrong, stale, or
+    # mismatched move forfeits the side as `illegal-move`; `request_id` is the
+    # bot's tool to avoid that, not a contract field. The opening at the origin
+    # is delivered in the setup packet, not in any move_request.previous entry.
     open_engine_session(engine.socketUrl, engine.token)  # speak the ENGINE PROTOCOL here
 
     # Everything from here on (board state, move requests, answer-matching) is the

@@ -14,10 +14,10 @@ post:
     explicit list of pairings the caller supplies. It does not compute pairings,
     run rounds, or track standings: those are the server's tournament concern and
     are not duplicated here. Each created game is an ordinary game, exactly like a
-    single-challenge game; the batch is not special-cased. Balancing who opens
-    across the batch is not derived here either: each pairing names its own `p1`
-    (the opener) explicitly, and any cross-batch opener balancing is the caller's
-    list to build or the server's pairing policy.
+    single-challenge game; the batch is not special-cased. Balancing who plays
+    which side across the batch is not derived here either: each pairing names
+    its own `p1` and `p2` explicitly, and any cross-batch side balancing is the
+    caller's list to build or the server's pairing policy.
 
 
     **Requires the `bot:organize` scope**, granted by HeXO to vetted tournament
@@ -67,10 +67,10 @@ post:
                 properties:
                   p1:
                     type: string
-                    description: Account id to play Player 1 (the side that opens the game).
+                    description: Account id to play Player 1 (`p1`; see `Side`).
                   p2:
                     type: string
-                    description: Account id to play Player 2.
+                    description: Account id to play Player 2 (`p2`; see `Side`).
             variant:
               $ref: ../components/schemas/Variant.yaml
             rated:
