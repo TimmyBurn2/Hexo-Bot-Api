@@ -29,7 +29,7 @@ properties:
   rating:
     type: integer
     format: int32
-    description: Current ladder rating. Server-authoritative; absent until the first rated game.
+    description: Current ladder rating on the server's own scale (higher is stronger); server-authoritative and server-local, no cross-server meaning. Absent until the first rated game.
     example: 1500
   capabilities:
     description: >-
