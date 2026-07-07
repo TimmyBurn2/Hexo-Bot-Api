@@ -1,20 +1,16 @@
 type: string
 title: Side
 description: >-
-  Which side a player is on. **Single source of truth** for side identity: every
-  schema that names a side `$ref`s this rather than repeating the enum.
+  Which side a player is on. **Single source of truth**: every schema that names
+  a side `$ref`s this rather than repeating the enum.
 
-
-  Sides are identified by **play order**:
-
-  - `p1` = **Player 1**: the side that opens the game.
-
-  - `p2` = **Player 2**: the side that replies.
-
-
-  How a turn places hexes, and who opens, belong to the **engine protocol**, not
-  this contract. HeXO has no fixed "colours" in the protocol; the game UI renders
-  the sides visually, but the contract identifies them by play order (`p1`/`p2`).
+  `p1` moves first in the server's turn sequence, `p2` second. This is an
+  identity label, not a claim that a `p1` bot makes the first move: the opening
+  turn may be server-auto-played (in the httt6 profile a single stone is placed
+  at the origin before the first `move_request`), and the turn structure belongs
+  to the engine protocol. A bot reads its side from `game.side` and the board
+  from the engine session's `setup` packet. HeXO has no fixed "colours"; the UI
+  renders the sides visually, the contract identifies them by play order.
 enum:
   - p1
   - p2
