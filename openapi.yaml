@@ -150,6 +150,8 @@ paths:
     $ref: ./paths/challenge-cancel.yaml
   /api/bulk-pairing:
     $ref: ./paths/bulk-pairing.yaml
+  /api/bulk-pairing/{batchId}:
+    $ref: ./paths/bulk-pairing-get.yaml
 
 components:
   securitySchemes:
