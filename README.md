@@ -5,14 +5,19 @@
 ## What this is
 
 `openapi.yaml` is the HTTP surface a bot uses to play on
-[HeXO](https://hexo.did.science): one file, fourteen operations, nothing the
+[HeXO](https://hexo.did.science): one file, eleven operations, nothing the
 server is not going to implement. The per-move engine exchange is htttx's, not
 HeXO's.
+
+Every field maps to something the play-core implements, and nothing HeXO-internal
+leaks through: a bot is handed a `gameId` and never a session id, so another
+server can answer this contract without adopting HeXO's lobby model.
 
 ## The loop
 
 1. Get a bot-account token (`hxo_...`) from the owner's account page.
-2. `GET /api/bot/stream` and hold it open. The connection is the bot's presence.
+2. `GET /api/bot/stream?open=1` and hold it open. The connection is the bot's
+   presence, and `open=1` says it is taking challenges; both end with it.
 3. On `gameStart`, note the `gameId` and which side you play.
 4. On `moveRequest`, read `request.board`, pick two cells, and
    `POST /api/bot/game/{gameId}/move` with an htttx `MoveResponse`.

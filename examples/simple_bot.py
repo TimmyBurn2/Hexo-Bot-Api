@@ -55,7 +55,9 @@ class SimpleBot:
 
     def run(self):
         """Read the event stream until it closes, one line at a time."""
-        stream = self.http.get(f"{self.base_url}/api/bot/stream", stream=True, timeout=None)
+        # open=1: take challenges for as long as this connection is held.
+        url = f"{self.base_url}/api/bot/stream?open=1"
+        stream = self.http.get(url, stream=True, timeout=None)
         stream.raise_for_status()
         for line in stream.iter_lines(decode_unicode=True):
             if not line:
