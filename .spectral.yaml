@@ -5,14 +5,7 @@ extends:
   - spectral:oas
 
 rules:
-  # Reinforce the same governance Redocly enforces, so either linter alone
-  # catches an undocumented operation.
+  # Raise these from warn to error, so Spectral alone fails an operation with no
+  # id or an undeclared tag. The rest of spectral:oas is left at its defaults.
   operation-operationId: error
-  operation-operationId-unique: error
   operation-tag-defined: error
-  operation-description: warn
-
-  # Redocly validates examples as errors; Spectral's overlapping heuristic on
-  # the vendored htttx examples adds no signal, so keep it non-fatal.
-  oas3-valid-media-example: warn
-  oas3-valid-schema-example: warn
