@@ -5,7 +5,7 @@ SPEC := openapi.yaml
 BUNDLE := dist/openapi.bundled.yaml
 DOCS := dist/index.html
 
-.PHONY: help lint lint-redocly lint-spectral bundle docs preview clean
+.PHONY: help lint lint-redocly lint-spectral check-htttx bundle docs preview clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -18,6 +18,9 @@ lint-redocly: ## Lint the spec with Redocly (must be 0 errors)
 
 lint-spectral: ## Lint the spec with Spectral (must be 0 errors)
 	npx --yes @stoplight/spectral-cli@latest lint $(SPEC)
+
+check-htttx: ## Diff the vendored htttx block against upstream (needs network)
+	./scripts/check-htttx.sh
 
 bundle: ## Resolve all $refs into a single self-contained file
 	@mkdir -p dist
