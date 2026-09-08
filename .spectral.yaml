@@ -1,5 +1,5 @@
 # Spectral ruleset, secondary linter, extends the built-in OpenAPI rules.
-# Run:  make lint-spectral   (npx @stoplight/spectral-cli@latest lint openapi.yaml)
+# Run:  make lint-spectral
 
 extends:
   - spectral:oas
@@ -12,7 +12,7 @@ rules:
   operation-tag-defined: error
   operation-description: warn
 
-  # The spec is split across many files and uses shared $ref'd examples;
-  # Spectral's duplicate-example heuristic is noisy here and adds no signal.
+  # Redocly validates examples as errors; Spectral's overlapping heuristic on
+  # the vendored htttx examples adds no signal, so keep it non-fatal.
   oas3-valid-media-example: warn
   oas3-valid-schema-example: warn

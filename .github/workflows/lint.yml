@@ -22,10 +22,8 @@ jobs:
       - name: Bundle resolves all $refs
         run: npx --yes @redocly/cli@latest bundle openapi.yaml -o /tmp/bundled.yaml
 
-      # Spectral's external-$ref resolver mis-flags multi-file 3.1 path items,
-      # so we lint the fully-resolved bundle (semantically identical).
       - name: Spectral lint (must be 0 errors)
-        run: npx --yes @stoplight/spectral-cli@latest lint /tmp/bundled.yaml
+        run: npx --yes @stoplight/spectral-cli@latest lint openapi.yaml
 
       - name: Docs render without error
         run: npx --yes @redocly/cli@latest build-docs openapi.yaml -o /tmp/index.html

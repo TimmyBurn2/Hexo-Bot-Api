@@ -1,14 +1,11 @@
-# Redocly CLI config, lint, bundle, and docs for the HeXO Bot API spec.
-# Run:  make lint   (npx @redocly/cli@latest lint openapi.yaml)
-#       make bundle  /  make docs
+# Redocly CLI config: lint, bundle, and docs for the HeXO Bot API spec.
+# Run:  make lint  /  make bundle  /  make docs
 
 extends:
   - recommended
 
 rules:
-  # --- Governance: every operation is fully described -------------------
-  # The spec-repo contract from the project brief. (Tag *presence* is covered
-  # by operation-tag-defined below, every operation here carries a tag.)
+  # Every operation is fully described and uniquely addressable.
   operation-operationId: error
   operation-operationId-unique: error
   operation-summary: error
@@ -17,30 +14,17 @@ rules:
   operation-2xx-response: error
   operation-4xx-response: error
 
-  # The Lichess-style game paths (`.../game/stream/{gameId}` vs
-  # `.../game/{gameId}/move`) are pre-registered by the project brief and
-  # match the upstream API we mirror. A real router resolves them
-  # unambiguously (the `stream` and `/move`/`/resign` segments are literal),
-  # so we silence the conservative static-ambiguity check.
-  no-ambiguous-paths: off
-
-  # No orphan / dangling pieces.
+  # No orphan or dangling pieces.
   no-unused-components: error
   no-unresolved-refs: error
 
-  # Examples must actually validate against their schemas.
+  # Examples must validate against their schemas. The vendored htttx block
+  # carries upstream examples; this catches a bad bump.
   no-invalid-media-type-examples: error
   no-invalid-schema-examples: error
+  no-required-schema-properties-undefined: error
 
-  # Some schemas use `if`/`then` conditionals (e.g. "a finished game must carry
-  # a result") whose `then` legitimately requires properties declared on the
-  # parent schema, not inside the `then` itself. This rule inspects each
-  # subschema in isolation and cannot resolve those parent-defined properties,
-  # so it mis-flags valid conditionals. The example validators above still
-  # reject a genuinely undefined property, so we silence the false positive.
-  no-required-schema-properties-undefined: off
-
-  # Tags used by operations must be declared (with descriptions) at the root.
+  # Tags used by operations must be declared, with descriptions, at the root.
   operation-tag-defined: error
   tag-description: error
 
