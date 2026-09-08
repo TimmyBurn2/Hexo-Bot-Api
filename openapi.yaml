@@ -2,156 +2,286 @@ openapi: 3.1.0
 
 info:
   title: HeXO Bot API
-  version: 0.1.0-draft
-  summary: "PROPOSAL: the bot protocol contract for HeXO (not yet implemented)."
+  version: 0.2.0
+  summary: The HTTP surface a bot uses to play on a HeXO server.
   description: >-
-    > **Status: WIP, not yet implemented.** Field names, shapes, and
-    > paths may change before `1.0.0`. Treat this as a request-for-comment.
+    **Status: 0.2, not served yet.** Nothing under `/api/bot` is deployed.
 
 
-    The **HeXO Bot API** is the contract a bot speaks to play HeXO. The
-    reference host is `https://hexo.did.science`; the contract is implementable
-    by any host serving a HeXO variant.
+    A bot authenticates with a bot-account token
+    (`Authorization: Bearer hxo_...`), holds one NDJSON stream open, and answers
+    each `moveRequest` line by POSTing a move. The server is the referee: it
+    owns pairing, clocks, ratings, and the game lifecycle.
 
 
-    ## Design
-
-    The **server is the referee**: it owns pairing, clocks, ratings, and game
-    lifecycle. **Bots own everything else**: their engine, search, time
-    management, and reconnection. This spec is the **server and ladder layer
-    only**: identity, registration, matchmaking, challenges, ratings, and game
-    lifecycle. **Gameplay is not here.** The per-game move exchange runs over the
-    **htttx engine protocol**: when a game starts the server hands the adapter an
-    engine session to dial, and moves are exchanged there. This contract is a **proposal
-    layered on the existing HeXO server**: it mirrors or exposes concepts the
-    server already implements rather than duplicating server-owned logic, and
-    where the two differ the server is authoritative.
-
-
-    ## Shape (modelled on the Lichess Bot/Board API)
-
-    - **One NDJSON stream.** A global event stream (`GET /api/stream/event`): a
-      long-lived `application/x-ndjson` GET, one JSON object per line, with a
-      blank-line keepalive at least every 15 seconds. It carries the challenge
-      lifecycle (`challenge`, `challengeDeclined`, `challengeCanceled`,
-      `challengeExpired`), `gameStart`/`gameFinish`, and an observe-only
-      `opponentGone`. Opening a new global event stream closes any previous one
-      for the same token.
-
-    - **Lifecycle here, gameplay on the engine session.** A `gameStart` event
-      carries the dial bootstrap (a socket URL and a short-lived per-game token);
-      the adapter opens that engine session to play. This spec stops at the
-      session boundary.
-
-
-    ## Authentication
-
-    All operations require a **Personal Access Token (PAT)**: `Authorization: Bearer hxo_...`. Each registered bot instance has its **own** token, independently revocable. The scope for play is **`bot:play`**; registering instances requires **`bot:register`**; organizer operations (bulk pairing) require **`bot:organize`**. Operators register instances with a `bot:register` token; the per-instance tokens minted by registration carry only `bot:play`. A token missing the required scope → `403`.
-
-
-    ## Time control
-
-    Every game carries a time control, set on the challenge and echoed on the
-    game. It is a union over `mode`:
-
-    - `unlimited`: no time limit.
-    - `turn`: a per-turn budget (`turnTimeMs`, ms); each side gets that long for
-      every turn it is to move. Sub-second capable for bots (500 ms default, 45000 ms ceiling).
-    - `match`: a whole-game clock per side (`mainTimeMs` + `incrementMs`, ms).
-
-    Under `turn` and `match`, the clock measures the whole engine.
-
-
-    ## Hardware telemetry
-
-    A bot may **opt in** to a coarse hardware self-report (`HardwareInfo`: GPU
-    class, CPU cores, RAM GB) at registration time. It is shown as a **label
-    only** and is **not used as a rating or pairing input**. Under a timed
-    control faster hardware can still affect results through move speed; the
-    label carries no rating weight. No serials, MAC addresses, or hostnames are
-    collected.
-
-
-    ## Variant & sides
-
-    The reference host serves `httt6`, HeXO's hexagonal tic-tac-toe; another host
-    may serve a different variant key. The `Variant` field is an open,
-    server-scoped string (extending the value set is a server registry change,
-    not a spec edit); board geometry and rules belong to the engine protocol.
-    The two sides are `p1` and `p2` by play order (not colours); see the `Side`
-    schema for the turn-order semantics and the auto-played-opening caveat.
+    The play layer is HeXO's. The engine exchange (`Coord`, `Board`,
+    `PositionEvaluation`, `Move`, `MoveRequest`, `MoveResponse`) is the htttx
+    stateless `v1-alpha` schema set,
+    vendored verbatim from
+    [htttx-bot-api](https://github.com/hex-tic-tac-toe/htttx-bot-api) at commit
+    `37d2385`. Those schemas use axial `q,r`; converting to HeXO's own axial
+    `x,y` (`x = q + r`, `y = -r`) is the server's job, so a bot only sees `q,r`.
   license:
     name: MIT
     identifier: MIT
   contact:
-    name: HeXO community
+    name: HeXO
     url: https://hexo.did.science
 
 servers:
   - url: https://hexo.did.science
-    description: >-
-      Default deployment (proposed, endpoints not yet implemented). The entry
-      above is the reference host; this contract is implementable by any host.
-      Per-server identity and rating federation are non-goals for this version.
+    description: Reference deployment. The bot endpoints are not served yet.
 
 security:
   - bearerAuth: []
 
 tags:
   - name: Account
-    description: Account identity and bot instance registration.
+    description: Bot identity and challenge availability.
   - name: Stream
-    description: >-
-      The long-lived global event stream. It never closes (and opening a new one
-      closes any previous stream for the same token) and sends a blank-line
-      keepalive at least every 15 seconds.
-  - name: Bot
-    description: "Bot-only operations: advertising challenge availability, listing active games, and resigning."
+    description: The single NDJSON event stream a bot holds open.
+  - name: Game
+    description: Moving, resigning, draws, chat, and joining a session.
   - name: Challenge
-    description: Creating, accepting, declining, and canceling challenges (and bulk pairings).
+    description: Creating, accepting, declining, and cancelling challenges.
   - name: Directory
-    description: >-
-      Browse the public bot roster to discover opponents. Read-only and
-      paginated; each entry is static identity (handle, display name, owner,
-      optional rating, capabilities, and hardware label) plus a single coarse,
-      advisory, current-state `openForChallenge` flag. No response carries
-      timestamps or history.
+    description: The public bot roster.
 
 paths:
-  /api/account:
-    $ref: ./paths/account.yaml
-  /api/token:
-    $ref: ./paths/token.yaml
-  /api/bot/register:
-    $ref: ./paths/bot-register.yaml
-  /api/bot/{handle}/retire:
-    $ref: ./paths/bot-retire.yaml
-  /api/bots:
-    $ref: ./paths/bots.yaml
-  /api/bot/status:
-    $ref: ./paths/bot-status.yaml
-  /api/bot/games:
-    $ref: ./paths/bot-games.yaml
-  /api/stream/event:
-    $ref: ./paths/stream-event.yaml
+  /api/bot/account:
+    get:
+      summary: Read the calling bot's identity, rating, and active games.
+      operationId: getAccount
+      tags: [Account]
+      responses:
+        "200":
+          description: The bot account.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/stream:
+    get:
+      summary: Open the bot's event stream.
+      operationId: openStream
+      tags: [Stream]
+      description: >-
+        One JSON object per line, with a bare newline as keepalive every 10 s.
+        Opening a stream closes the previous one for the same bot. On open,
+        every active game is replayed as a `gameStart`, followed by a fresh
+        `moveRequest` if it is the bot's turn. The connection is also the bot's
+        presence: it is online while the stream is held.
+      responses:
+        "200":
+          description: The event stream.
+          content:
+            application/x-ndjson:
+              schema: { $ref: "#/components/schemas/StreamEvent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/game/{gameId}/move:
+    parameters: [{ $ref: "#/components/parameters/GameId" }]
+    post:
+      summary: Play a move in a game.
+      operationId: playMove
+      tags: [Game]
+      description: >-
+        The body is an htttx `MoveResponse`, carrying exactly two placements.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MoveResponse" }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/MoveRejected" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
   /api/bot/game/{gameId}/resign:
-    $ref: ./paths/game-resign.yaml
-  /api/challenges:
-    $ref: ./paths/challenges.yaml
-  /api/challenge/{handle}:
-    $ref: ./paths/challenge-create.yaml
-  /api/challenge/{challengeId}/show:
-    $ref: ./paths/challenge-get.yaml
-  /api/challenge/{challengeId}/accept:
-    $ref: ./paths/challenge-accept.yaml
-  /api/challenge/{challengeId}/decline:
-    $ref: ./paths/challenge-decline.yaml
-  /api/challenge/{challengeId}/cancel:
-    $ref: ./paths/challenge-cancel.yaml
-  /api/bulk-pairing:
-    $ref: ./paths/bulk-pairing.yaml
-  /api/bulk-pairing/{batchId}:
-    $ref: ./paths/bulk-pairing-get.yaml
+    parameters: [{ $ref: "#/components/parameters/GameId" }]
+    post:
+      summary: Resign a game.
+      operationId: resignGame
+      tags: [Game]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/game/{gameId}/draw:
+    parameters: [{ $ref: "#/components/parameters/GameId" }]
+    post:
+      summary: Offer, accept, or decline a draw.
+      operationId: handleDraw
+      tags: [Game]
+      description: >-
+        One draw request is open at a time. A draw can first be offered after 50
+        completed turns, and again 15 completed turns after a decline; offering
+        earlier is a `400`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [offer, accept, decline] }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/game/{gameId}/chat:
+    parameters: [{ $ref: "#/components/parameters/GameId" }]
+    post:
+      summary: Send a chat message in a game.
+      operationId: sendChat
+      tags: [Game]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, minLength: 1 }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/session/{sessionId}/join:
+    parameters: [{ $ref: "#/components/parameters/SessionId" }]
+    post:
+      summary: Join a lobby by session id.
+      operationId: joinSession
+      tags: [Game]
+      description: >-
+        The entry a human takes with a `?join=` link. The bot learns that the
+        game started from a `gameStart` line on its stream.
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/status:
+    post:
+      summary: Set whether the bot is taking challenges.
+      operationId: setStatus
+      tags: [Account]
+      description: Held only while the bot's stream is open; a drop clears it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [openForChallenges]
+              properties:
+                openForChallenges: { type: boolean }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/challenge/{profileId}:
+    parameters: [{ $ref: "#/components/parameters/ProfileId" }]
+    post:
+      summary: Challenge another account.
+      operationId: createChallenge
+      tags: [Challenge]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [timeControl]
+              properties:
+                timeControl: { $ref: "#/components/schemas/TimeControl" }
+                rated: { type: boolean, default: false }
+                firstPlayer:
+                  type: string
+                  description: HeXO's lobby setting; the challenger is the host.
+                  enum: [host, guest, random]
+                  default: random
+      responses:
+        "200":
+          description: The created challenge.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Challenge" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/challenge/{challengeId}/accept:
+    parameters: [{ $ref: "#/components/parameters/ChallengeId" }]
+    post:
+      summary: Accept a challenge.
+      operationId: acceptChallenge
+      tags: [Challenge]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/challenge/{challengeId}/decline:
+    parameters: [{ $ref: "#/components/parameters/ChallengeId" }]
+    post:
+      summary: Decline a challenge.
+      operationId: declineChallenge
+      tags: [Challenge]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/challenge/{challengeId}/cancel:
+    parameters: [{ $ref: "#/components/parameters/ChallengeId" }]
+    post:
+      summary: Cancel a challenge the bot issued.
+      operationId: cancelChallenge
+      tags: [Challenge]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/challenges:
+    get:
+      summary: List the bot's pending challenges.
+      operationId: listChallenges
+      tags: [Challenge]
+      responses:
+        "200":
+          description: Pending incoming and outgoing challenges.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Challenge" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bots:
+    get:
+      summary: List public bot accounts.
+      operationId: listBots
+      tags: [Directory]
+      security: []
+      parameters:
+        - { name: online, in: query, required: false, schema: { enum: ["1"] } }
+      responses:
+        "200":
+          description: The bot roster; `online=1` narrows it to connected bots.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BotListing" }
+        "400": { $ref: "#/components/responses/BadRequest" }
 
 components:
   securitySchemes:
@@ -160,9 +290,376 @@ components:
       scheme: bearer
       bearerFormat: opaque
       description: >-
-        Personal Access Token (PAT) sent as `Authorization: Bearer hxo_...`.
-        Long-lived, revocable, scoped: play requires `bot:play`, registering
-        instances requires `bot:register`, organizer operations (bulk pairing)
-        require `bot:organize`. Each registered instance has its own token,
-        independently revocable. A token missing the scope an operation requires
-        is rejected with `403`.
+        A bot-account token, `Authorization: Bearer hxo_...`. Issued and rotated
+        by the bot's owner on the website; there is no token endpoint here.
+
+  parameters:
+    GameId:
+      name: gameId
+      in: path
+      required: true
+      description: The game, as carried on `gameStart` and `moveRequest`.
+      schema: { type: string }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: The session (lobby). A rematch keeps it and starts a new game.
+      schema: { type: string }
+    ChallengeId:
+      name: challengeId
+      in: path
+      required: true
+      schema: { type: string }
+    ProfileId:
+      name: profileId
+      in: path
+      required: true
+      description: Profile id of the account being challenged.
+      schema: { type: string }
+
+  responses:
+    Ok:
+      description: Accepted.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Ok" }
+    BadRequest:
+      description: The request was rejected.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    MoveRejected:
+      description: >-
+        The move was rejected. The clock keeps running and the bot may send
+        another move for the same turn.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing, unknown, or rotated token.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Ok:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean, const: true }
+
+    Error:
+      type: object
+      description: Every non-2xx response body.
+      required: [error]
+      properties:
+        error: { type: string, description: Human-readable message; do not parse it. }
+        code:
+          type: string
+          description: >-
+            Stable machine-readable code, present where the caller can act on
+            it. Move rejections use `not-your-turn`, `occupied`,
+            `out-of-range`, `game-over`, or `stale-request`.
+
+    Side:
+      type: string
+      description: Play order. `x` places first, `o` second.
+      enum: [x, o]
+
+    FinishReason:
+      type: string
+      description: HeXO's `zSessionFinishReason`.
+      enum: [aborted, disconnect, surrender, timeout, terminated, six-in-a-row, draw-agreement]
+
+    TimeControl:
+      description: >-
+        A union over `mode`, copied from HeXO's
+        `packages/shared/src/sharedTypes.ts::zGameTimeControl`. Durations are in
+        milliseconds.
+      oneOf:
+        - type: object
+          required: [mode]
+          properties: { mode: { const: unlimited } }
+        - type: object
+          required: [mode, turnTimeMs]
+          properties:
+            mode: { const: turn }
+            turnTimeMs: { type: integer, minimum: 0 }
+        - type: object
+          required: [mode, mainTimeMs, incrementMs]
+          properties:
+            mode: { const: match }
+            mainTimeMs: { type: integer, minimum: 0 }
+            incrementMs: { type: integer, minimum: 0 }
+
+    Player:
+      type: object
+      description: An account in a game or challenge.
+      required: [profileId, displayName, elo]
+      properties:
+        profileId:
+          type: [string, "null"]
+          description: Null for a guest, who plays without an account.
+        displayName: { type: string }
+        elo: { type: integer }
+
+    Account:
+      type: object
+      required: [bot, owner, activeGames]
+      properties:
+        bot: { $ref: "#/components/schemas/Player" }
+        owner: { $ref: "#/components/schemas/Player" }
+        activeGames:
+          type: array
+          items:
+            type: object
+            required: [gameId, sessionId, side]
+            properties:
+              gameId: { type: string }
+              sessionId: { type: string }
+              side: { $ref: "#/components/schemas/Side" }
+
+    BotListing:
+      type: object
+      description: One entry in the public roster.
+      required: [profileId, displayName, elo, online, openForChallenges]
+      properties:
+        profileId: { type: string }
+        displayName: { type: string }
+        elo: { type: integer }
+        owner: { type: string, description: Owner profile id; owner-versus-own games are unrated. }
+        online: { type: boolean, description: True while the bot holds a stream open. }
+        openForChallenges: { type: boolean }
+
+    Challenge:
+      type: object
+      required: [challengeId, challenger, destUser, timeControl, rated, status]
+      properties:
+        challengeId: { type: string }
+        challenger: { $ref: "#/components/schemas/Player" }
+        destUser: { $ref: "#/components/schemas/Player" }
+        timeControl: { $ref: "#/components/schemas/TimeControl" }
+        rated: { type: boolean }
+        status: { type: string, enum: [created, declined, canceled] }
+
+    GameStartEvent:
+      type: object
+      description: A game the bot is in has started, or is replayed on reconnect.
+      required: [type, gameId, sessionId, side, opponent, timeControl, rated]
+      properties:
+        type: { const: gameStart }
+        gameId: { type: string }
+        sessionId: { type: string }
+        side: { $ref: "#/components/schemas/Side" }
+        opponent: { $ref: "#/components/schemas/Player" }
+        timeControl: { $ref: "#/components/schemas/TimeControl" }
+        rated: { type: boolean }
+
+    MoveRequestEvent:
+      type: object
+      description: >-
+        It is the bot's turn. `request.time_limit` is the remaining budget in
+        seconds; `request.request_id` rises monotonically within a game. The
+        origin stone is auto-placed for bots, so every request wants exactly two
+        placements.
+      required: [type, gameId, request]
+      properties:
+        type: { const: moveRequest }
+        gameId: { type: string }
+        request: { $ref: "#/components/schemas/MoveRequest" }
+
+    GameFinishEvent:
+      type: object
+      required: [type, gameId, winner, reason]
+      properties:
+        type: { const: gameFinish }
+        gameId: { type: string }
+        winner:
+          description: The winning side, or `null` on a draw or an aborted game.
+          oneOf:
+            - { $ref: "#/components/schemas/Side" }
+            - { type: "null" }
+        reason: { $ref: "#/components/schemas/FinishReason" }
+
+    ChallengeEvent:
+      type: object
+      description: A challenge involving the bot appeared, was cancelled, or was declined.
+      required: [type, challenge]
+      properties:
+        type: { type: string, enum: [challenge, challengeCanceled, challengeDeclined] }
+        challenge: { $ref: "#/components/schemas/Challenge" }
+
+    StreamEvent:
+      description: One line of `GET /api/bot/stream`, discriminated by `type`.
+      oneOf:
+        - { $ref: "#/components/schemas/GameStartEvent" }
+        - { $ref: "#/components/schemas/MoveRequestEvent" }
+        - { $ref: "#/components/schemas/GameFinishEvent" }
+        - { $ref: "#/components/schemas/ChallengeEvent" }
+
+    # --- BEGIN vendored htttx ---
+    # Verbatim from htttx-bot-api@37d2385
+    # (definitions/stateless/stateless-v1-alpha.yaml). Do not edit by hand;
+    # scripts/check-htttx.sh diffs this block against upstream.
+    Coord:
+      description: Axial hex-coordinate. +q goes right, +r goes top-right.
+      type: object
+      properties:
+        q:
+          type: integer
+        r:
+          type: integer
+      required:
+        - q
+        - r
+
+    Board:
+      description: Current board state.
+      type: object
+      properties:
+        to_move:
+          type: string
+          enum: ["x", "o"]
+        cells:
+          type: array
+          items:
+            type: object
+            properties:
+              q:
+                type: integer
+              r:
+                type: integer
+              p:
+                description: Piece on the coordinate
+                type: string
+                enum: ["x", "o"]
+            required:
+              - q
+              - r
+              - p
+      required:
+        - to_move
+        - cells
+
+    PositionEvaluation:
+      description: Optional evaluation of the position by the bot. Can include any additional fields not defined by this API.
+      type: object
+      properties:
+        heuristic:
+          description: |
+            Heuristical evaluation of the position. Can be any real number.
+            Positive numbers show advantage for crosses. Negative show advantage for circles.
+            Default scale for this value should be between -1 and 1, that's what the client UI will assume as the range
+            of the values, but the bot is not required to clamp them, and the client must support bots which return
+            arbitrarily small or large values.
+          type: number
+        win_in:
+          description: |
+            Should be used when the bot found (or assumes there to be) a win for one of the sides in N turns.
+            If the win is found for crosses, N should be positive. If it is found for circles, N should be negated.
+            A turn is two placements. For example position oooo.oooo, cross to move,
+            would have a "win_in" value of -2. Turn 1 would be cross's turn, and turn 2 is the winning turn of circles.
+          type: integer
+
+    Move:
+      description: |
+        A single move of two placements.
+
+        The move must be legal; the platform detects an illegal move from the response
+        against the board and the turn. A move is illegal if it has:
+          - the wrong number of placements for the turn;
+          - a placement on an occupied cell;
+          - a placement out of range (after the origin, beyond the placement radius of
+            every placed cell);
+          - a first placement not at the origin (0, 0);
+          - a placement for the wrong side or out of turn;
+          - a placement after the game is won.
+
+        On an illegal move a server MAY reject it and SHOULD NOT apply it. This API does
+        not define any further consequence (result, winner, finishReason); that is
+        owned by the play layer.
+      type: object
+      properties:
+        pieces:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coord"
+          minItems: 2
+          maxItems: 2
+        evaluation:
+          $ref: "#/components/schemas/PositionEvaluation"
+      required:
+        - pieces
+      examples:
+        - pieces:
+            - q: 1
+              r: 0
+            - q: -1
+              r: 1
+
+    MoveRequest:
+      description: A request for the bot to evaluate the position and make a move.
+      type: object
+      properties:
+        board:
+          $ref: "#/components/schemas/Board"
+        time_limit:
+          description: |
+            Seconds given to the bot to make a move, if the bot respects the limit,
+            then the "stateless.v1-alpha.move_time_limit" property of the bot's capabilities.json should be set to true.
+
+            Even if the bot supports this capability, the client is not required to provide this field. 
+            In this case, it is assumed that the thinking time is unlimited.
+          type: number
+          minimum: 0
+        request_id:
+          description: |
+            Optional identifier of this request, echoed unchanged on the response. The
+            http request/response pair already correlates the answer and each request
+            carries the full board, so request_id is not required. If the bot sets
+            "stateless.v1-alpha.request_id" it echoes this value when supplied, so the
+            client can double-check the pairing.
+          type: integer
+          minimum: 0
+      required:
+        - board
+      examples:
+        - board:
+            to_move: "o"
+            cells:
+              - q: 0
+                r: 0
+                p: "x"
+          time_limit: 5
+          request_id: 1
+    
+    MoveResponse:
+      description: Moves made
+      type: object
+      properties:
+        move:
+          description: Top move chosen by the bot.
+          $ref: "#/components/schemas/Move"
+        considerations:
+          description: Optional, additional moves the bot has considered, ordered by best to worst.
+          type: array
+          items:
+            $ref: "#/components/schemas/Move"
+        request_id:
+          description: |
+            The request_id of the move request, echoed unchanged when the request
+            carried one (see "stateless.v1-alpha.request_id").
+          type: integer
+          minimum: 0
+      required:
+        - move
+      examples:
+        - move:
+            pieces:
+              - q: 1
+                r: 0
+              - q: -1
+                r: 1
+          request_id: 1
+    # --- END vendored htttx ---

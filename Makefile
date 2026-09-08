@@ -16,10 +16,8 @@ lint: lint-redocly lint-spectral ## Run both linters (Redocly + Spectral)
 lint-redocly: ## Lint the spec with Redocly (must be 0 errors)
 	npx --yes @redocly/cli@latest lint $(SPEC)
 
-# Spectral's external-$ref resolver mis-flags multi-file 3.1 path items, so we
-# lint the bundled single-file spec (semantically identical, fully resolved).
-lint-spectral: bundle ## Lint the bundled spec with Spectral (must be 0 errors)
-	npx --yes @stoplight/spectral-cli@latest lint $(BUNDLE)
+lint-spectral: ## Lint the spec with Spectral (must be 0 errors)
+	npx --yes @stoplight/spectral-cli@latest lint $(SPEC)
 
 bundle: ## Resolve all $refs into a single self-contained file
 	@mkdir -p dist
