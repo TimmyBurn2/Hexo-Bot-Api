@@ -1,6 +1,9 @@
 # Redocly CLI config: lint, bundle, and docs for the HeXO Bot API spec.
 # Run:  make lint  /  make bundle  /  make docs
 
+# No phone-home: the CLI posts OpenTelemetry traces unless this is off.
+telemetry: off
+
 extends:
   - recommended
 
