@@ -37,11 +37,11 @@ security:
 
 tags:
   - name: Account
-    description: Bot identity and challenge availability.
+    description: Bot identity, rating, and active games.
   - name: Stream
-    description: The single NDJSON event stream a bot holds open.
+    description: The single NDJSON event stream a bot holds open, and its availability.
   - name: Game
-    description: Moving, resigning, draws, chat, and joining a session.
+    description: Moving, resigning, and joining a session.
   - name: Challenge
     description: Creating, accepting, declining, and cancelling challenges.
   - name: Directory
@@ -72,6 +72,18 @@ paths:
         every active game is replayed as a `gameStart`, followed by a fresh
         `moveRequest` if it is the bot's turn. The connection is also the bot's
         presence: it is online while the stream is held.
+
+
+        Availability rides on the same connection. `open=1` means the bot is
+        taking challenges for as long as it holds this stream; dropping the
+        stream clears it, so there is no separate status call and no flag to
+        leave stale.
+      parameters:
+        - name: open
+          in: query
+          required: false
+          description: Present as `open=1`, the bot accepts challenges while connected.
+          schema: { enum: ["1"] }
       responses:
         "200":
           description: The event stream.
@@ -109,50 +121,6 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
-  /api/bot/game/{gameId}/draw:
-    parameters: [{ $ref: "#/components/parameters/GameId" }]
-    post:
-      summary: Offer, accept, or decline a draw.
-      operationId: handleDraw
-      tags: [Game]
-      description: >-
-        One draw request is open at a time. A draw can first be offered after 50
-        completed turns, and again 15 completed turns after a decline; offering
-        earlier is a `400`.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [action]
-              properties:
-                action: { type: string, enum: [offer, accept, decline] }
-      responses:
-        "200": { $ref: "#/components/responses/Ok" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-
-  /api/bot/game/{gameId}/chat:
-    parameters: [{ $ref: "#/components/parameters/GameId" }]
-    post:
-      summary: Send a chat message in a game.
-      operationId: sendChat
-      tags: [Game]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [message]
-              properties:
-                message: { type: string, minLength: 1 }
-      responses:
-        "200": { $ref: "#/components/responses/Ok" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-
   /api/bot/session/{sessionId}/join:
     parameters: [{ $ref: "#/components/parameters/SessionId" }]
     post:
@@ -162,26 +130,6 @@ paths:
       description: >-
         The entry a human takes with a `?join=` link. The bot learns that the
         game started from a `gameStart` line on its stream.
-      responses:
-        "200": { $ref: "#/components/responses/Ok" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-
-  /api/bot/status:
-    post:
-      summary: Set whether the bot is taking challenges.
-      operationId: setStatus
-      tags: [Account]
-      description: Held only while the bot's stream is open; a drop clears it.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [openForChallenges]
-              properties:
-                openForChallenges: { type: boolean }
       responses:
         "200": { $ref: "#/components/responses/Ok" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -304,7 +252,9 @@ components:
       name: sessionId
       in: path
       required: true
-      description: The session (lobby). A rematch keeps it and starts a new game.
+      description: >-
+        Opaque lobby id, taken from a `?join=` link a human shared. It is never
+        carried on the stream; a bot only ever learns a `gameId` from the server.
       schema: { type: string }
     ChallengeId:
       name: challengeId
@@ -369,14 +319,14 @@ components:
 
     FinishReason:
       type: string
-      description: HeXO's `zSessionFinishReason`.
-      enum: [aborted, disconnect, surrender, timeout, terminated, six-in-a-row, draw-agreement]
+      description: >-
+        How a game ended. Bot games are draw-free, so a server never finishes
+        one by draw agreement and `winner` is null only on an abort.
+      enum: [aborted, disconnect, surrender, timeout, terminated, six-in-a-row]
 
     TimeControl:
       description: >-
-        A union over `mode`, copied from HeXO's
-        `packages/shared/src/sharedTypes.ts::zGameTimeControl`. Durations are in
-        milliseconds.
+        A union over `mode`. Durations are in milliseconds.
       oneOf:
         - type: object
           required: [mode]
@@ -414,10 +364,9 @@ components:
           type: array
           items:
             type: object
-            required: [gameId, sessionId, side]
+            required: [gameId, side]
             properties:
               gameId: { type: string }
-              sessionId: { type: string }
               side: { $ref: "#/components/schemas/Side" }
 
     BotListing:
@@ -446,11 +395,10 @@ components:
     GameStartEvent:
       type: object
       description: A game the bot is in has started, or is replayed on reconnect.
-      required: [type, gameId, sessionId, side, opponent, timeControl, rated]
+      required: [type, gameId, side, opponent, timeControl, rated]
       properties:
         type: { const: gameStart }
         gameId: { type: string }
-        sessionId: { type: string }
         side: { $ref: "#/components/schemas/Side" }
         opponent: { $ref: "#/components/schemas/Player" }
         timeControl: { $ref: "#/components/schemas/TimeControl" }
@@ -476,7 +424,7 @@ components:
         type: { const: gameFinish }
         gameId: { type: string }
         winner:
-          description: The winning side, or `null` on a draw or an aborted game.
+          description: The winning side, or `null` on an aborted game.
           oneOf:
             - { $ref: "#/components/schemas/Side" }
             - { type: "null" }
