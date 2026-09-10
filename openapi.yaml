@@ -321,7 +321,7 @@ components:
       type: string
       description: >-
         How a game ended. Bot games are draw-free, so a server never finishes
-        one by draw agreement and `winner` is null only on an abort.
+        one by draw agreement.
       enum: [aborted, disconnect, surrender, timeout, terminated, six-in-a-row]
 
     TimeControl:
@@ -352,7 +352,9 @@ components:
           type: [string, "null"]
           description: Null for a guest, who plays without an account.
         displayName: { type: string }
-        elo: { type: integer }
+        elo:
+          type: [integer, "null"]
+          description: Null for a guest, who has no rating to carry.
 
     Account:
       type: object
@@ -424,7 +426,9 @@ components:
         type: { const: gameFinish }
         gameId: { type: string }
         winner:
-          description: The winning side, or `null` on an aborted game.
+          description: >-
+            The winning side, or `null` when there is no winner: an abort, a
+            termination, or a disconnect that left neither side connected.
           oneOf:
             - { $ref: "#/components/schemas/Side" }
             - { type: "null" }
