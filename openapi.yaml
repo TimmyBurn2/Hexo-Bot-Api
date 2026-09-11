@@ -70,7 +70,8 @@ paths:
         One JSON object per line, with a bare newline as keepalive every 10 s.
         Opening a stream closes the previous one for the same bot. On open,
         every active game is replayed as a `gameStart`, followed by a fresh
-        `moveRequest` if it is the bot's turn. The connection is also the bot's
+        `moveRequest` if it is the bot's turn, and every pending incoming
+        challenge as a `challenge` line. The connection is also the bot's
         presence: it is online while the stream is held.
 
 
@@ -141,6 +142,13 @@ paths:
       summary: Challenge another account.
       operationId: createChallenge
       tags: [Challenge]
+      description: >-
+        v1: challenges are bot to bot. The target must be a bot account; a
+        human `profileId` is rejected with `not-a-bot`. Only a target that is
+        connected with `open=1` and under its concurrent-game limit can be
+        challenged (`not-open` otherwise). The target learns of the challenge
+        from a `challenge` line on its stream, replayed if it reconnects before
+        the challenge expires.
       requestBody:
         required: true
         content:
@@ -150,11 +158,12 @@ paths:
               required: [timeControl]
               properties:
                 timeControl: { $ref: "#/components/schemas/TimeControl" }
-                rated: { type: boolean, default: false }
                 firstPlayer:
                   type: string
-                  description: HeXO's lobby setting; the challenger is the host.
-                  enum: [host, guest, random]
+                  description: >-
+                    Which side moves first: the challenger is the side that
+                    created the challenge, the challenged side is the target.
+                  enum: [challenger, challenged, random]
                   default: random
       responses:
         "200":
@@ -310,7 +319,9 @@ components:
           description: >-
             Stable machine-readable code, present where the caller can act on
             it. Move rejections use `not-your-turn`, `occupied`,
-            `out-of-range`, `game-over`, or `stale-request`.
+            `out-of-range`, `game-over`, or `stale-request`. Challenge
+            creation uses `not-a-bot` (the target is a human account) or
+            `not-open` (the target is not taking challenges right now).
 
     Side:
       type: string
@@ -385,14 +396,19 @@ components:
 
     Challenge:
       type: object
-      required: [challengeId, challenger, destUser, timeControl, rated, status]
+      description: >-
+        Every challenge involves a bot, so every challenge game is unrated;
+        there is no rated field here (see `GameStartEvent.rated`).
+      required: [challengeId, challenger, destUser, timeControl, status]
       properties:
         challengeId: { type: string }
         challenger: { $ref: "#/components/schemas/Player" }
         destUser: { $ref: "#/components/schemas/Player" }
         timeControl: { $ref: "#/components/schemas/TimeControl" }
-        rated: { type: boolean }
-        status: { type: string, enum: [created, declined, canceled] }
+        status:
+          type: string
+          enum: [created, declined, canceled, expired]
+          description: "`created` means pending; listings only ever show pending challenges."
 
     GameStartEvent:
       type: object
@@ -436,10 +452,17 @@ components:
 
     ChallengeEvent:
       type: object
-      description: A challenge involving the bot appeared, was cancelled, or was declined.
+      description: >-
+        A challenge involving the bot appeared, was cancelled, or was declined.
+        Expiry reaches both sides; a withdrawal reaches the target; a decline
+        reaches the challenger.
       required: [type, challenge]
       properties:
         type: { type: string, enum: [challenge, challengeCanceled, challengeDeclined] }
+        reason:
+          type: string
+          enum: [canceled, expired]
+          description: "Present on `challengeCanceled`: withdrawn by the challenger, or expired."
         challenge: { $ref: "#/components/schemas/Challenge" }
 
     StreamEvent:
