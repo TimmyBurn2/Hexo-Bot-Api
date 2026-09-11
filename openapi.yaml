@@ -379,7 +379,7 @@ components:
         profileId: { type: string }
         displayName: { type: string }
         elo: { type: integer }
-        owner: { type: string, description: Owner profile id; owner-versus-own games are unrated. }
+        owner: { type: string, description: Owner profile id; games involving a bot are unrated. }
         online: { type: boolean, description: True while the bot holds a stream open. }
         openForChallenges: { type: boolean }
 
@@ -404,7 +404,7 @@ components:
         side: { $ref: "#/components/schemas/Side" }
         opponent: { $ref: "#/components/schemas/Player" }
         timeControl: { $ref: "#/components/schemas/TimeControl" }
-        rated: { type: boolean }
+        rated: { type: boolean, description: Currently always false; games involving a bot are unrated. }
 
     MoveRequestEvent:
       type: object
