@@ -173,6 +173,7 @@ paths:
               schema: { $ref: "#/components/schemas/Challenge" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/bot/challenge/{challengeId}/accept:
     parameters: [{ $ref: "#/components/parameters/ChallengeId" }]
@@ -184,6 +185,7 @@ paths:
         "200": { $ref: "#/components/responses/Ok" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/bot/challenge/{challengeId}/decline:
     parameters: [{ $ref: "#/components/parameters/ChallengeId" }]
@@ -195,6 +197,7 @@ paths:
         "200": { $ref: "#/components/responses/Ok" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/bot/challenge/{challengeId}/cancel:
     parameters: [{ $ref: "#/components/parameters/ChallengeId" }]
@@ -206,6 +209,7 @@ paths:
         "200": { $ref: "#/components/responses/Ok" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/bot/challenges:
     get:
@@ -285,6 +289,11 @@ components:
           schema: { $ref: "#/components/schemas/Ok" }
     BadRequest:
       description: The request was rejected.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: The path names an account or challenge that does not exist.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
