@@ -1,6 +1,9 @@
 # HeXO Bot API
 
-**Status: 0.2, not yet served.** No deployment answers these paths today.
+**Status: 0.3, served in development.** The whole contract is answered by the
+[`TimmyBurn2/HeXO`](https://github.com/TimmyBurn2/HeXO) branch `challenges`
+(behind `BOT_API_ENABLED`); upstreaming is pending the bot-account PR (#125)
+landing first. No production deployment answers these paths today.
 
 ## What this is
 
@@ -11,7 +14,10 @@ HeXO's.
 
 Every field maps to something the play-core implements, and nothing HeXO-internal
 leaks through: a bot is handed a `gameId` and never a session id, so another
-server can answer this contract without adopting HeXO's lobby model.
+server can answer this contract without adopting HeXO's lobby model. The
+website-only surface (the roster's Play button, the owner's challenge routes,
+account management) is deliberately outside this file: it answers to browser
+cookies, not bot tokens.
 
 ## The loop
 
@@ -28,6 +34,12 @@ Reconnecting replays every active game as a `gameStart`, plus a fresh
 `moveRequest` if it is the bot's turn, so a bot needs no local game state. The
 server auto-places the opening stone for bots, so every `moveRequest` wants
 exactly two placements.
+
+## Versions
+
+`0.2` — first cut of the eleven operations. `0.3` — the clock floors on
+`TimeControl`, the `time_limit` rule per clock mode, and the 404 wording on the
+challenge paths; see `CHANGELOG.md`.
 
 ## Engine schemas
 

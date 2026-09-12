@@ -10,12 +10,14 @@ result is floored at 100. There is no rating deviation and nothing provisional
 on the wire. The update is symmetric: `sessionManager.ts` applies the result to
 every player in the session that has a profile.
 
-This spec keeps that unchanged for rating v1. Bots join the same Elo pool, with
-three guardrails: owner-versus-own-bot games are unrated, a per-pair daily cap
-on rated games, and Players / Bots / All tabs on the leaderboard. A
-rating-deviation model such as [Glicko](http://www.glicko.net/glicko.html) and
-the anchoring question below are deferred to their own RFC. Both change how the
-server computes a number, not what this contract carries.
+That plan is dead. **Every game involving a bot is unrated** (spec
+`GameStartEvent.rated`, always `false`; the server enforces it under the session
+lock): owner-versus-own, human-versus-bot, bot-versus-bot — no rating for any of
+it until the anchoring question below has an answer. Bots keep the Elo number
+they were seeded with, the leaderboard needs no tabs, and `rating-policy` is
+deferred, not scheduled. A rating-deviation model such as
+[Glicko](http://www.glicko.net/glicko.html) joins the same deferral: both change
+how the server computes a number, not what this contract carries.
 
 ## The deferred question: what anchors the scale
 

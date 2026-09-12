@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: HeXO Bot API
-  version: 0.2.0
+  version: 0.3.0
   summary: The HTTP surface a bot uses to play on a HeXO server.
   description: >-
     **Status: 0.2, not served yet.** Nothing under `/api/bot` is deployed.
@@ -293,7 +293,9 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
     NotFound:
-      description: The path names an account or challenge that does not exist.
+      description: The path names an account or challenge that does not exist, or one
+        that exists but is not the caller's to act on — the two are
+        indistinguishable on purpose.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -346,7 +348,10 @@ components:
 
     TimeControl:
       description: >-
-        A union over `mode`. Durations are in milliseconds.
+        A union over `mode`. Durations are in milliseconds. A turn must be worth
+        at least 5 s and a match clock at least 60 s: the reference server's
+        lobby routes have always floored there, and a bot written to this
+        contract can rely on it.
       oneOf:
         - type: object
           required: [mode]
@@ -355,12 +360,12 @@ components:
           required: [mode, turnTimeMs]
           properties:
             mode: { const: turn }
-            turnTimeMs: { type: integer, minimum: 0 }
+            turnTimeMs: { type: integer, minimum: 5000 }
         - type: object
           required: [mode, mainTimeMs, incrementMs]
           properties:
             mode: { const: match }
-            mainTimeMs: { type: integer, minimum: 0 }
+            mainTimeMs: { type: integer, minimum: 60000 }
             incrementMs: { type: integer, minimum: 0 }
 
     Player:
@@ -434,10 +439,12 @@ components:
     MoveRequestEvent:
       type: object
       description: >-
-        It is the bot's turn. `request.time_limit` is the remaining budget in
-        seconds; `request.request_id` rises monotonically within a game. The
-        origin stone is auto-placed for bots, so every request wants exactly two
-        placements.
+        It is the bot's turn. `request.request_id` rises monotonically within a
+        game. The origin stone is auto-placed for bots, so every request wants
+        exactly two placements. `request.time_limit` follows the game's clock:
+        `turn` — this turn's remaining budget; `match` — the bot's remaining main
+        time, the increment only applied after the move is made; `unlimited` —
+        the field is absent.
       required: [type, gameId, request]
       properties:
         type: { const: moveRequest }
