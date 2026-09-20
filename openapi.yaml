@@ -485,9 +485,12 @@ components:
           type: string
           description: The bot's own version string.
         repoUrl:
-          type: string
-          format: uri
-          description: Link to the bot's source.
+          description: Link to the bot's source; an empty string clears it.
+          oneOf:
+            - type: string
+              const: ""
+            - type: string
+              format: uri
         accepts: { $ref: "#/components/schemas/Accepts" }
 
     Account:
@@ -527,7 +530,11 @@ components:
         elo: { type: integer }
         owner: { type: string, description: Owner profile id; games involving a bot are unrated. }
         online: { type: boolean, description: True while the bot holds a stream open. }
-        openForChallenges: { type: boolean }
+        openForChallenges:
+          type: boolean
+          description: >-
+            True while the bot takes challenges: a stream bot holding `open=1`, or a
+            server-driven bot while its engine pool has capacity.
         accepts: { $ref: "#/components/schemas/Accepts" }
 
     Challenge:
