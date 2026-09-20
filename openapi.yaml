@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: HeXO Bot API
-  version: 0.4.1
+  version: 0.4.2
   summary: The HTTP surface a bot uses to play on a HeXO server.
   description: >-
     **Status: 0.4, contract-first.** The 0.3 operations run on the reference
@@ -535,6 +535,18 @@ components:
           description: >-
             True while the bot takes challenges: a stream bot holding `open=1`, or a
             server-driven bot while its engine pool has capacity.
+        about:
+          type: string
+          maxLength: 280
+          description: Self-declared through `updateAccount`; absent when never declared.
+        version:
+          type: string
+          description: Self-declared version string; absent when never declared.
+        repoUrl:
+          description: Self-declared link to the bot's source; absent when never declared.
+          oneOf:
+            - type: string
+              format: uri
         accepts: { $ref: "#/components/schemas/Accepts" }
 
     Challenge:

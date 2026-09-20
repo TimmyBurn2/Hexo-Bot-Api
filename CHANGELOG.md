@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.2
+- `BotListing` carries the declaration's text fields (`about`, `version`, `repoUrl`) beside `accepts`, each absent when never declared: one public read serves a bot's whole profile.
+
 ## 0.4.1
 - `Opening.randomStones` (0–6 stones) is `Opening.randomTurns` (0–3 turns of two stones) before anything implemented it: stones come in pairs after the origin, so an odd count left a half turn no engine could answer, and "0 to 6, even" is a rule hidden in a comment. Same reachable openings, expressed in the game's unit.
 
