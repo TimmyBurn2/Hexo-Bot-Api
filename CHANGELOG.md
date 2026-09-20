@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.1
+- `Opening.randomStones` (0–6 stones) is `Opening.randomTurns` (0–3 turns of two stones) before anything implemented it: stones come in pairs after the origin, so an odd count left a half turn no engine could answer, and "0 to 6, even" is a rule hidden in a comment. Same reachable openings, expressed in the game's unit.
+
 ## 0.4.0
 - `PATCH /api/bot/account` (`updateAccount`): the bot declares `about` (≤ 280), `version`, `repoUrl`, and `accepts` — what it will play under; a challenge outside `accepts` answers `not-open`. `Account` reads the declaration back, `BotListing` carries `accepts`.
 - `createChallenge` gains `thinkMs` (required for a server-driven target, ignored otherwise) and `opening: {randomStones}` (0–6 server-placed stones after the origin); `gameStart` carries `opening`.
