@@ -15,6 +15,15 @@ import sys
 
 PLACEMENT_RADIUS = 8
 
+# Sent on connect: what this bot is and what it will play under. The window is
+# generous on purpose: anything the lobby and challenge floors allow, it takes.
+DECLARATION = {
+    "about": "Reference bot: plays the nearest free cells. Legal, never strong.",
+    "version": "1.0",
+    "repoUrl": "https://github.com/TimmyBurn2/Hexo-Bot-Api",
+    "accepts": {"turnMs": [5000, 600000], "match": True, "unlimited": True},
+}
+
 
 def distance(a, b):
     """Hex distance between two axial coordinates."""
@@ -55,6 +64,9 @@ class SimpleBot:
 
     def run(self):
         """Read the event stream until it closes, one line at a time."""
+        # The declaration goes first: what the profile shows and which challenges
+        # land is decided by it, so it is in place before the stream opens.
+        self.patch("/api/bot/account", DECLARATION).raise_for_status()
         # open=1: take challenges for as long as this connection is held.
         url = f"{self.base_url}/api/bot/stream?open=1"
         stream = self.http.get(url, stream=True, timeout=None)
@@ -87,6 +99,9 @@ class SimpleBot:
 
     def post(self, path, body=None):
         return self.http.post(f"{self.base_url}{path}", json=body, timeout=30)
+
+    def patch(self, path, body):
+        return self.http.patch(f"{self.base_url}{path}", json=body, timeout=30)
 
     @staticmethod
     def log(message):
