@@ -2,10 +2,11 @@ openapi: 3.1.0
 
 info:
   title: HeXO Bot API
-  version: 0.3.0
+  version: 0.4.0
   summary: The HTTP surface a bot uses to play on a HeXO server.
   description: >-
-    **Status: 0.2, not served yet.** Nothing under `/api/bot` is deployed.
+    **Status: 0.4, contract-first.** The 0.3 operations run on the reference
+    server in development; the 0.4 additions are not served yet.
 
 
     A bot authenticates with a bot-account token
@@ -37,7 +38,7 @@ security:
 
 tags:
   - name: Account
-    description: Bot identity, rating, and active games.
+    description: Bot identity, rating, active games, and self-declared capabilities.
   - name: Stream
     description: The single NDJSON event stream a bot holds open, and its availability.
   - name: Game
@@ -59,6 +60,31 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Account" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    patch:
+      summary: Declare the bot's about, version, repo, and what it accepts.
+      operationId: updateAccount
+      tags: [Account]
+      description: >-
+        The declaration of the process that holds the token — only it may
+        promise behaviour, which is why this lives here and not on the owner's
+        website surface. Sent on connect; every field optional, each present
+        field replacing the stored one (an empty string clears a text field,
+        `accepts` is replaced wholesale). The declaration narrows `open=1`: a
+        challenge outside `accepts` is answered `not-open`, exactly as if the
+        bot were not taking challenges.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountDeclaration" }
+      responses:
+        "200":
+          description: The updated account.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
   /api/bot/stream:
@@ -92,6 +118,29 @@ paths:
             application/x-ndjson:
               schema: { $ref: "#/components/schemas/StreamEvent" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/bot/game/{gameId}:
+    parameters: [{ $ref: "#/components/parameters/GameId" }]
+    get:
+      summary: Read a game's current board, clock, and status.
+      operationId: getGame
+      tags: [Game]
+      description: >-
+        For observers and adapters: any authenticated bot may read any game,
+        not only one it plays in. The board is the htttx `Board` the players'
+        own `moveRequest`s are cut from, in the engine's `q,r` coordinates.
+      responses:
+        "200":
+          description: The game's current state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GameSnapshot" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Unknown `gameId`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 
   /api/bot/game/{gameId}/move:
     parameters: [{ $ref: "#/components/parameters/GameId" }]
@@ -146,9 +195,13 @@ paths:
         v1: challenges are bot to bot. The target must be a bot account; a
         human `profileId` is rejected with `not-a-bot`. Only a target that is
         connected with `open=1` and under its concurrent-game limit can be
-        challenged (`not-open` otherwise). The target learns of the challenge
-        from a `challenge` line on its stream, replayed if it reconnects before
-        the challenge expires.
+        challenged (`not-open` otherwise) — and only inside what it declared
+        itself willing to play (`accepts`, see `updateAccount`). A
+        server-driven target, one the server moves for, holds no stream: it
+        accepts while it has spare capacity, playing at the requested
+        `thinkMs`, and answers `not-open` otherwise. The target learns of the
+        challenge from a `challenge` line on its stream, replayed if it
+        reconnects before the challenge expires.
       requestBody:
         required: true
         content:
@@ -165,6 +218,14 @@ paths:
                     created the challenge, the challenged side is the target.
                   enum: [challenger, challenged, random]
                   default: random
+                thinkMs:
+                  type: integer
+                  minimum: 1
+                  description: >-
+                    Required when the target is a server-driven bot: how long
+                    it may think per move, in milliseconds, within the range
+                    the server allows. Ignored for every other target.
+                opening: { $ref: "#/components/schemas/Opening" }
       responses:
         "200":
           description: The created challenge.
@@ -332,7 +393,8 @@ components:
             it. Move rejections use `not-your-turn`, `occupied`,
             `out-of-range`, `game-over`, or `stale-request`. Challenge
             creation uses `not-a-bot` (the target is a human account) or
-            `not-open` (the target is not taking challenges right now).
+            `not-open` (the target is not taking challenges right now: not
+            open, out of capacity, or outside what it declared it accepts).
 
     Side:
       type: string
@@ -381,6 +443,53 @@ components:
           type: [integer, "null"]
           description: Null for a guest, who has no rating to carry.
 
+    Accepts:
+      type: object
+      description: >-
+        What a bot will play under, declared by the bot itself through
+        `updateAccount` — its owner cannot promise behaviour for it. A
+        challenge outside this is answered `not-open`, exactly as if the bot
+        were not taking challenges; on `Account` and `BotListing` the field is
+        absent when the bot never declared one.
+      required: [turnMs, match, unlimited]
+      properties:
+        turnMs:
+          type: ["array", "null"]
+          description: >-
+            The accepted turn-clock window, [min, max] in milliseconds with
+            min no greater than max, or null to decline turn clocks entirely.
+            A window below the 5 s floor never matches a legal clock.
+          minItems: 2
+          maxItems: 2
+          items: { type: integer }
+        match:
+          type: boolean
+          description: Whether match-clock games are accepted.
+        unlimited:
+          type: boolean
+          description: Whether unlimited games are accepted.
+
+    AccountDeclaration:
+      type: object
+      description: >-
+        The body of `updateAccount`, sent on connect by the process that holds
+        the token. Every field optional; each present field replaces the
+        stored one — an empty string clears `about` or `repoUrl`, `accepts`
+        replaces wholesale. Nothing here is owner-settable.
+      properties:
+        about:
+          type: string
+          maxLength: 280
+          description: Free text shown on the bot's profile.
+        version:
+          type: string
+          description: The bot's own version string.
+        repoUrl:
+          type: string
+          format: uri
+          description: Link to the bot's source.
+        accepts: { $ref: "#/components/schemas/Accepts" }
+
     Account:
       type: object
       required: [bot, owner, activeGames]
@@ -395,6 +504,18 @@ components:
             properties:
               gameId: { type: string }
               side: { $ref: "#/components/schemas/Side" }
+        about:
+          type: string
+          maxLength: 280
+          description: Self-declared through `updateAccount`; absent when never declared.
+        version:
+          type: string
+          description: Self-declared version string; absent when never declared.
+        repoUrl:
+          type: string
+          format: uri
+          description: Self-declared link to the bot's source; absent when never declared.
+        accepts: { $ref: "#/components/schemas/Accepts" }
 
     BotListing:
       type: object
@@ -407,6 +528,7 @@ components:
         owner: { type: string, description: Owner profile id; games involving a bot are unrated. }
         online: { type: boolean, description: True while the bot holds a stream open. }
         openForChallenges: { type: boolean }
+        accepts: { $ref: "#/components/schemas/Accepts" }
 
     Challenge:
       type: object
@@ -424,6 +546,24 @@ components:
           enum: [created, declined, canceled, expired]
           description: "`created` means pending; listings only ever show pending challenges."
 
+    Opening:
+      type: object
+      description: >-
+        Opening variety, placed by the server so the challenged side cannot
+        dodge it: after the origin stone the server lays `randomStones`
+        alternating random legal stones within placement radius 2, then hands
+        the game to the players — both see the stones in every board. Carried
+        on `createChallenge` (optional, default none) and on `gameStart`
+        (absent when there are none). A fair series — the same opening with
+        colours swapped — is a tournament concern, not a challenge field.
+      required: [randomStones]
+      properties:
+        randomStones:
+          type: integer
+          minimum: 0
+          maximum: 6
+          default: 0
+
     GameStartEvent:
       type: object
       description: A game the bot is in has started, or is replayed on reconnect.
@@ -434,6 +574,7 @@ components:
         side: { $ref: "#/components/schemas/Side" }
         opponent: { $ref: "#/components/schemas/Player" }
         timeControl: { $ref: "#/components/schemas/TimeControl" }
+        opening: { $ref: "#/components/schemas/Opening" }
         rated: { type: boolean, description: Currently always false; games involving a bot are unrated. }
 
     MoveRequestEvent:
@@ -465,6 +606,54 @@ components:
             - { $ref: "#/components/schemas/Side" }
             - { type: "null" }
         reason: { $ref: "#/components/schemas/FinishReason" }
+
+    GameSnapshot:
+      type: object
+      description: >-
+        A game as an observer sees it: the current position in the engine's
+        own `Board` schema, the clock, and whether the game is still going.
+        `winner` and `reason` are present once `status` is `finished`.
+      required: [gameId, board, clock, status]
+      properties:
+        gameId: { type: string }
+        board: { $ref: "#/components/schemas/Board" }
+        clock: { $ref: "#/components/schemas/GameClock" }
+        status:
+          type: string
+          enum: [in-progress, finished]
+        winner:
+          description: See `GameFinishEvent.winner` for when this is null.
+          oneOf:
+            - { $ref: "#/components/schemas/Side" }
+            - { type: "null" }
+        reason: { $ref: "#/components/schemas/FinishReason" }
+
+    GameClock:
+      description: >-
+        The clock at the moment of the read, mirroring `TimeControl`'s modes.
+        Durations are in milliseconds. `turn` carries the remaining budget of
+        the current turn, the side to move's; `match` carries each side's
+        remaining main time, increments for moves already made included;
+        `unlimited` carries nothing.
+      oneOf:
+        - type: object
+          required: [mode]
+          properties: { mode: { const: unlimited } }
+        - type: object
+          required: [mode, remainingTurnMs]
+          properties:
+            mode: { const: turn }
+            remainingTurnMs: { type: integer }
+        - type: object
+          required: [mode, remainingMainMs]
+          properties:
+            mode: { const: match }
+            remainingMainMs:
+              type: object
+              required: [x, o]
+              properties:
+                x: { type: integer, description: Side `x`'s remaining main time. }
+                o: { type: integer, description: Side `o`'s remaining main time. }
 
     ChallengeEvent:
       type: object
