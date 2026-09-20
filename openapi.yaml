@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: HeXO Bot API
-  version: 0.4.0
+  version: 0.4.1
   summary: The HTTP surface a bot uses to play on a HeXO server.
   description: >-
     **Status: 0.4, contract-first.** The 0.3 operations run on the reference
@@ -550,18 +550,21 @@ components:
       type: object
       description: >-
         Opening variety, placed by the server so the challenged side cannot
-        dodge it: after the origin stone the server lays `randomStones`
-        alternating random legal stones within placement radius 2, then hands
-        the game to the players — both see the stones in every board. Carried
-        on `createChallenge` (optional, default none) and on `gameStart`
-        (absent when there are none). A fair series — the same opening with
-        colours swapped — is a tournament concern, not a challenge field.
-      required: [randomStones]
+        dodge it: after the origin stone the server lays `randomTurns` full
+        turns of two alternating random legal stones within placement radius
+        2, then hands the game to the players — both see the stones in every
+        board. The unit is a turn, not a stone, because stones come in pairs
+        after the origin: an odd stone would leave a half turn no engine can
+        answer, and no valid value of this field can express one. Carried on
+        `createChallenge` (optional, default none) and on `gameStart` (absent
+        when there are none). A fair series — the same opening with colours
+        swapped — is a tournament concern, not a challenge field.
+      required: [randomTurns]
       properties:
-        randomStones:
+        randomTurns:
           type: integer
           minimum: 0
-          maximum: 6
+          maximum: 3
           default: 0
 
     GameStartEvent:
