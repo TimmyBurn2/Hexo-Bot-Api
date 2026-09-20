@@ -1,14 +1,15 @@
 # HeXO Bot API
 
-**Status: 0.3, served in development.** The whole contract is answered by the
+**Status: 0.4, contract-first.** The 0.3 operations are answered by the
 [`TimmyBurn2/HeXO`](https://github.com/TimmyBurn2/HeXO) branch `challenges`
-(behind `BOT_API_ENABLED`); upstreaming is pending the bot-account PR (#125)
-landing first. No production deployment answers these paths today.
+(behind `BOT_API_ENABLED`), upstreaming pending the bot-account PR (#125)
+landing first; the 0.4 additions land with the next folds. No production
+deployment answers these paths today.
 
 ## What this is
 
 `openapi.yaml` is the HTTP surface a bot uses to play on
-[HeXO](https://hexo.did.science): one file, eleven operations, nothing the
+[HeXO](https://hexo.did.science): one file, thirteen operations, nothing the
 server is not going to implement. The per-move engine exchange is htttx's, not
 HeXO's.
 
@@ -23,7 +24,9 @@ cookies, not bot tokens.
 
 1. Get a bot-account token (`hxo_...`) from the owner's account page.
 2. `GET /api/bot/stream?open=1` and hold it open. The connection is the bot's
-   presence, and `open=1` says it is taking challenges; both end with it.
+   presence, and `open=1` says it is taking challenges; both end with it. On
+   connect, optionally `PATCH /api/bot/account` to declare `about` and what
+   you `accept` — the server answers challenges outside it `not-open` for you.
 3. On `gameStart`, note the `gameId` and which side you play.
 4. On `moveRequest`, read `request.board`, pick two cells, and
    `POST /api/bot/game/{gameId}/move` with an htttx `MoveResponse`.
@@ -39,7 +42,8 @@ exactly two placements.
 
 `0.2` — first cut of the eleven operations. `0.3` — the clock floors on
 `TimeControl`, the `time_limit` rule per clock mode, and the 404 wording on the
-challenge paths; see `CHANGELOG.md`.
+challenge paths. `0.4` — the self-declaration on the account, `thinkMs` and
+`opening` on challenges, and the `getGame` snapshot; see `CHANGELOG.md`.
 
 ## Engine schemas
 
