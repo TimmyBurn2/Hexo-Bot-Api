@@ -485,12 +485,14 @@ components:
           type: string
           description: The bot's own version string.
         repoUrl:
-          description: Link to the bot's source; an empty string clears it.
+          description: Link to the bot's source, http(s) only — profiles render it as
+            a live link; an empty string clears it.
           oneOf:
             - type: string
               const: ""
             - type: string
               format: uri
+              pattern: "^https?://"
         accepts: { $ref: "#/components/schemas/Accepts" }
 
     Account:
