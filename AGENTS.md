@@ -55,4 +55,5 @@ reversed once already. Reopen one by asking, not by adding it back:
 - No chat. On an automated ladder it is a moderation surface with no upside.
 - Availability rides the stream as `?open=1` rather than a status endpoint, so
   it cannot outlive the connection.
-- Rating anchoring is open on purpose; `RATING-NOTES.md` holds the question.
+- `rating` and `provisional` are server-local: the contract fixes their shape
+  only.

@@ -71,8 +71,6 @@ coordinate a bot sees.
   `websockets` as its one dependency. `choose_move` returns the free cells
   nearest the stones already placed; replace it with an engine and nothing else
   changes.
-- [`examples/stateless_server.py`](examples/stateless_server.py): the same
-  `choose_move` served as an htttx `/turn` endpoint, standard library only.
 - [`examples/stream.ndjson`](examples/stream.ndjson): one line per event type.
 
 ## Linting
@@ -90,6 +88,5 @@ network.
 
 ## Rating
 
-[`RATING-NOTES.md`](RATING-NOTES.md) records the one unanswered question the bot
-ladder inherits: what anchors its scale, and the farming surface that comes with
-the answer.
+`rating` and `provisional` are server-local: the contract fixes their shape, an
+integer and a boolean, and not how a server computes or anchors them.

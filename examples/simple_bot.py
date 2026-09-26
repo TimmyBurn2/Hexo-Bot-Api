@@ -18,6 +18,9 @@ import urllib.error
 import urllib.request
 from urllib.parse import urlencode, urljoin
 
+from websockets.exceptions import ConnectionClosed
+from websockets.sync.client import connect
+
 PLACEMENT_RADIUS = 8
 STREAM_RETRY_SECONDS = 2
 
@@ -74,10 +77,6 @@ class EngineSession(threading.Thread):
         self.socket = None
 
     def run(self):
-        # lazy, so stateless_server.py needs no third-party deps
-        from websockets.exceptions import ConnectionClosed
-        from websockets.sync.client import connect
-
         # The board lives per connection: setup holds the stones before any
         # turn, and each move_request lists in `previous` every turn this
         # connection has not seen, the bot's own and the server's opening
