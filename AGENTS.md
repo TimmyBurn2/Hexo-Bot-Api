@@ -18,20 +18,21 @@ the body goes in the reply to the user instead.
 
 ## The spec
 
-`openapi.yaml` is the whole contract in one self-contained file. It used to be
-split across `paths/` and `components/`; that split was deliberately collapsed,
-so add new paths and schemas inline rather than recreating those directories.
+`openapi.yaml` is the whole contract in one self-contained file. It and
+`examples/stream.ndjson` are generated from the reference server's contract by
+its `pnpm spec:export` (hexarena, `packages/contract`) and never edited by hand:
+change the source there and export again.
 
-Keep it **portable** — another server must be able to implement this contract —
-so nothing HeXO-internal reaches the wire or a description. A bot is handed a
-`gameId` and never a session id, and descriptions name no HeXO source paths or
-Zod type names.
+Keep it **portable**: another server must be able to implement this contract,
+so nothing server-internal reaches the wire or a description.
 
 The block between `# --- BEGIN vendored htttx ---` and its END marker is copied
-verbatim from [htttx-bot-api](https://github.com/hex-tic-tac-toe/htttx-bot-api).
-Edit it only by re-vendoring from upstream, which means bumping the pinned
-commit in all four places it appears: `scripts/check-htttx.sh`, the `info`
-description and the block comment in `openapi.yaml`, and `README.md`.
+verbatim from [htttx-bot-api](https://github.com/hex-tic-tac-toe/htttx-bot-api);
+the export reads it from this file and splices it back unchanged.
+Edit it only by re-vendoring from upstream, the one hand edit `openapi.yaml`
+takes, which means bumping the pinned commit in `scripts/check-htttx.sh`, the block comment in `openapi.yaml`, and
+`README.md`; the next export carries the block comment's commit into the `info`
+description.
 
 ## Checks
 
@@ -39,8 +40,10 @@ description and the block comment in `openapi.yaml`, and `README.md`.
 Spectral warnings are fine. Run `make check-htttx` after touching the vendored
 block — it needs network, so it is not part of `make lint`.
 
-Changing an event schema means updating `examples/stream.ndjson` to match, and
-changing the loop means updating `examples/simple_bot.py`.
+`.redocly.lint-ignore.yaml` holds the two structural exceptions (the websocket
+upgrade answers only 101; nothing references the vendored `MoveResponse`).
+
+Changing the loop means updating `examples/simple_bot.py`.
 
 ## Settled decisions
 

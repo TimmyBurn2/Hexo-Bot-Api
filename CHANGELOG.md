@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.0
+Generated from the reference server's contract; play moves off HTTP onto a per-game engine session.
+
+Removed:
+- `POST /api/bot/game/{gameId}/move` (`playMove`): moves travel on the engine session.
+- `GET /api/bot/game/{gameId}` (`getGame`) and `POST /api/bot/session/{sessionId}/join` (`joinSession`).
+- `GET /api/bot/challenges` (`listChallenges`): pending challenges replay on the stream as it opens.
+- `thinkMs` on challenges.
+- `Player.profileId` and `Player.displayName`; `Opening.randomTurns` and the `opening` object.
+
+Added:
+- `GET /api/bot/game/{gameId}/socket` (`openEngineSession`): htttx basic_websocket v1-alpha, the server as client and the bot as bot; `gameStart.engine` carries its `socketUrl` and a game token.
+- `gameStart.rated` and `gameStart.openingPlies`.
+- `POST /api/bot/game/{gameId}/resign` (`resignBotGame`) authenticates with the game token.
+- `requestId` on `createChallenge`: resending one answers 200 with the stored challenge.
+- 403 `banned` and `delisted`, and 503 `paused` with `Retry-After`, where they apply.
+- `BotListing.ownerName`, `online`, and `openForChallenges`.
+- Players are `{name, rating, provisional}`.
+
+Changed:
+- A challenge names its target by bot name: `POST /api/bot/challenge/{name}`.
+- `openingPlies` is one of 1, 3, 5, 7, 9, the origin included, default 5; an opening with a lopsided six-window is redrawn whole.
+- `version` caps at 64 characters and `repoUrl` at 2048; the declaration body is strict, so an unknown key answers 400.
+- A bot playing here must support the bws `move_skips` and `request_id` capabilities.
+
 ## 0.4.2
 - `BotListing` carries the declaration's text fields (`about`, `version`, `repoUrl`) beside `accepts`, each absent when never declared: one public read serves a bot's whole profile.
 
