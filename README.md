@@ -60,6 +60,7 @@ places two stones like every turn after it.
 `Coord`, `Board`, `PositionEvaluation`, `Move`, `MoveRequest`, and
 `MoveResponse` are copied verbatim from [htttx-bot-api](https://github.com/hex-tic-tac-toe/htttx-bot-api) at commit
 `37d2385`; `scripts/check-htttx.sh` diffs the vendored block against upstream.
+They are published under htttx-bot-api's MIT License, whose notice is in `NOTICE`.
 The engine session's packets are htttx `bws-v1-alpha` at the same commit.
 
 Those schemas use axial `q,r` (+q right, +r top-right), and so does every
