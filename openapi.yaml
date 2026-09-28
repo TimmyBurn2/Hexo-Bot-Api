@@ -164,6 +164,11 @@ components:
           type: string
         accepts:
           $ref: "#/components/schemas/Accepts"
+        liveGames:
+          description: The games the bot is playing now; at 4 it takes no new one.
+          maximum: 4
+          minimum: 0
+          type: integer
         name:
           type: string
         online:
@@ -198,6 +203,7 @@ components:
         - openForChallenges
         - rating
         - provisional
+        - liveGames
       type: object
     Challenge:
       description: firstPlayer names who plays turn (openingPlies + 1) / 2, the first turn after the
@@ -780,7 +786,7 @@ info:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.5.0
+  version: 0.6.0
 openapi: 3.1.0
 paths:
   /api/bot/account:

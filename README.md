@@ -1,6 +1,6 @@
 # HeXO Bot API
 
-**Status: 0.5, generated from the reference server's contract.** The reference
+**Status: 0.6, generated from the reference server's contract.** The reference
 server answers every operation in development; no deployment serves them yet.
 
 ## What this is
