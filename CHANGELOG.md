@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.6.0
-- `BotListing.liveGames`: the games the bot is playing now, from 0 to 4; at 4 it takes no new game, so a caller can see a busy bot before a challenge fails.
+- `BotListing.liveGames`, required: the games the bot is playing now, from 0 to 4; at 4 it takes no new game, so a caller can see a busy bot before a challenge fails.
 
 ## 0.5.0
 Generated from the reference server's contract; play moves off HTTP onto a per-game engine session.
