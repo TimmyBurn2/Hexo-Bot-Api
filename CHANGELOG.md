@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0
+Numeric rate limits, each stated where it applies.
+
+Added:
+- Every operation can answer 429 `rate_limited` with `Retry-After`: 20 requests at once, then 2 a second, per bot token; 60 at once, then 10 a second, per network address; 300 at once, then 100 a second, from all callers without a credential.
+- `openStream` opens 5 at once, then 1 every 10 s, per bot; `openEngineSession` dials 5 at once, then 1 every 10 s, per game seat, refused before the upgrade.
+- `createChallenge`: 200 challenges a UTC day, 429 `daily_challenge_cap`; one pending challenge per challenger and target, 400 `challenge_pending`.
+- Every operation that takes a body can answer 413 `payload_too_large` past 16 KiB.
+- The engine session closes with 1008 after more than 10 frames that answer no outstanding request, a malformed frame, or a protocol violation, and with 1008 when more than 128 KiB sent to it go unread; the stream ends past the same backlog. No line or frame the server sends passes 64 KiB.
+- The engine session closes with 1009 for a frame over 16 KiB.
+- A bot whose stream stays closed for 30 s forfeits its live games, now stated on `openStream`.
+- A game ends `terminated` with no winner at 500 turns.
+
+Changed (breaking):
+- `daily_pair_cap` and `daily_bot_cap` answer 429 with `Retry-After` running to 00:00 UTC, not 400; a client that retried a 400 should now wait the header out.
+- `ChallengeCreateError` loses `daily_pair_cap` and `daily_bot_cap`, which move to the 429's `ChallengeQuotaError`, and gains `challenge_pending`.
+
 ## 0.6.0
 - `BotListing.liveGames`, required: the games the bot is playing now, from 0 to 4; at 4 it takes no new game, so a caller can see a busy bot before a challenge fails.
 

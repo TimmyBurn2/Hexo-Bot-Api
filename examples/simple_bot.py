@@ -18,11 +18,19 @@ import urllib.error
 import urllib.request
 from urllib.parse import urlencode, urljoin
 
-from websockets.exceptions import ConnectionClosed
+from websockets.exceptions import ConnectionClosed, InvalidStatus
 from websockets.sync.client import connect
 
 PLACEMENT_RADIUS = 8
-STREAM_RETRY_SECONDS = 2
+# A dropped stream or engine session redials after 1 s, doubling up to 8 s,
+# well inside the 30 s after which a closed stream forfeits every live game;
+# a refusal's Retry-After, when longer, sets the wait instead.
+RETRY_FIRST_SECONDS = 1
+RETRY_CAP_SECONDS = 8
+# Tries of a request the server refuses with 429 or 503 before giving up.
+REQUEST_TRIES = 3
+# A challenge is open this long after it is sent.
+CHALLENGE_SECONDS = 60
 
 # Sent before the stream opens: what the directory shows, and which clocks
 # this bot plays under. A challenge outside `accepts` is refused for it.
@@ -67,6 +75,21 @@ def log(message):
     print(message, file=sys.stderr, flush=True)
 
 
+def wait_named(status, headers):
+    """The seconds a 429 or 503 asks the caller to wait, or None for any other answer."""
+    if status not in (429, 503):
+        return None
+    try:
+        return max(1, int(headers.get("Retry-After", "")))
+    except (TypeError, ValueError):
+        return 1
+
+
+def retry_after(error):
+    """wait_named for an HTTP error."""
+    return wait_named(error.code, error.headers)
+
+
 class EngineSession(threading.Thread):
     """One game's websocket: the server asks, this bot answers."""
 
@@ -75,29 +98,51 @@ class EngineSession(threading.Thread):
         self.url = url
         self.game_id = game_id
         self.socket = None
+        self.closed = False
+        self.wait = RETRY_FIRST_SECONDS
 
     def run(self):
+        # A closed or refused session forfeits nothing while the clock runs,
+        # so it redials until the game ends or its token stops opening one.
+        self.wait = RETRY_FIRST_SECONDS
+        while not self.closed:
+            try:
+                self.play()
+            except InvalidStatus as error:
+                status = error.response.status_code
+                named = wait_named(status, error.response.headers)
+                if named is None:
+                    log(f"game {self.game_id}: engine session refused: {status}")
+                    return
+                self.wait = max(self.wait, named)
+            except (ConnectionClosed, OSError) as error:
+                log(f"game {self.game_id}: engine session ended: {error}")
+            if self.closed:
+                return
+            time.sleep(self.wait)
+            self.wait = min(self.wait * 2, RETRY_CAP_SECONDS)
+
+    def play(self):
         # The board lives per connection: setup holds the stones before any
         # turn, and each move_request lists in `previous` every turn this
         # connection has not seen, the bot's own and the server's opening
         # included, so a redial rebuilds the whole game.
         cells = {}
-        try:
-            with connect(self.url) as socket:
-                self.socket = socket
-                for message in socket:
-                    packet = json.loads(message)
-                    if packet["type"] == "setup":
-                        cells = {(c["q"], c["r"]): c["p"] for c in packet["board"]["cells"]}
-                    elif packet["type"] == "move_request":
-                        for move in packet["previous"]:
-                            for piece in move["pieces"]:
-                                cells[(piece["q"], piece["r"])] = move["side"]
-                        socket.send(json.dumps(self.answer(packet, cells)))
-                    # A heartbeat needs no answer: this bot replies to every
-                    # move_request at once, so it is never idle while waited on.
-        except (ConnectionClosed, OSError) as error:
-            log(f"game {self.game_id}: engine session ended: {error}")
+        with connect(self.url) as socket:
+            self.socket = socket
+            # A session that opened starts the next redial's wait over.
+            self.wait = RETRY_FIRST_SECONDS
+            for message in socket:
+                packet = json.loads(message)
+                if packet["type"] == "setup":
+                    cells = {(c["q"], c["r"]): c["p"] for c in packet["board"]["cells"]}
+                elif packet["type"] == "move_request":
+                    for move in packet["previous"]:
+                        for piece in move["pieces"]:
+                            cells[(piece["q"], piece["r"])] = move["side"]
+                    socket.send(json.dumps(self.answer(packet, cells)))
+                # A heartbeat needs no answer: this bot replies to every
+                # move_request at once, so it is never idle while waited on.
 
     @staticmethod
     def answer(packet, cells):
@@ -112,6 +157,7 @@ class EngineSession(threading.Thread):
         return response
 
     def close(self):
+        self.closed = True
         if self.socket is not None:
             self.socket.close()
 
@@ -121,6 +167,7 @@ class SimpleBot:
         self.base_url = base_url.rstrip("/") + "/"
         self.token = token
         self.sessions = {}
+        self.backoff = RETRY_FIRST_SECONDS
 
     def request(self, method, path, body=None, timeout=30):
         data = None if body is None else json.dumps(body).encode()
@@ -130,21 +177,49 @@ class SimpleBot:
             request.add_header("Content-Type", "application/json")
         return urllib.request.urlopen(request, timeout=timeout)
 
+    def call(self, method, path, body=None, within=None):
+        """A request whose 429 or 503 is retried after the wait it names,
+        never past `within` seconds from now when that is given."""
+        deadline = None if within is None else time.monotonic() + within
+        for attempt in range(REQUEST_TRIES):
+            try:
+                self.request(method, path, body).close()
+                return
+            except urllib.error.HTTPError as error:
+                wait = retry_after(error)
+                late = deadline is not None and wait is not None and time.monotonic() + wait > deadline
+                if wait is None or late or attempt == REQUEST_TRIES - 1:
+                    raise
+                log(f"{method} {path}: {error.code}; retrying in {wait} s")
+                time.sleep(wait)
+
     def run(self):
-        self.request("PATCH", "/api/bot/account", DECLARATION).close()
+        self.call("PATCH", "/api/bot/account", DECLARATION)
         while True:
+            wait = None
             try:
                 self.hold_stream()
+            except urllib.error.HTTPError as error:
+                # A bad token or a ban never heals by waiting.
+                if error.code in (401, 403):
+                    sys.exit(f"stream refused: {error.code} {error.read().decode()}")
+                wait = retry_after(error)
+                log(f"stream refused: {error.code}")
             except OSError as error:
-                log(f"stream dropped: {error}; redialing")
-            time.sleep(STREAM_RETRY_SECONDS)
+                log(f"stream dropped: {error}")
+            wait = max(self.backoff, wait or 0)
+            log(f"redialing in {wait} s")
+            time.sleep(wait)
+            self.backoff = min(self.backoff * 2, RETRY_CAP_SECONDS)
 
     def hold_stream(self):
         # open=1: take challenges and games for as long as this is held.
         # Opening replays every live game as gameStart, so a redial loses
         # nothing and the bot keeps no state across connections.
+        # One stream per bot: a second one replaces this one on the server.
         with self.request("GET", "/api/bot/stream?open=1", timeout=None) as stream:
             log("stream open")
+            self.backoff = RETRY_FIRST_SECONDS
             for line in stream:
                 if line.strip():
                     self.handle(json.loads(line))
@@ -156,7 +231,8 @@ class SimpleBot:
         elif kind == "challenge":
             challenge_id = event["challenge"]["challengeId"]
             try:
-                self.request("POST", f"/api/bot/challenge/{challenge_id}/accept").close()
+                # Past its life the challenge is gone, so no retry outlasts it.
+                self.call("POST", f"/api/bot/challenge/{challenge_id}/accept", within=CHALLENGE_SECONDS)
             except urllib.error.HTTPError as error:
                 log(f"could not accept {challenge_id}: {error.code} {error.read().decode()}")
         elif kind == "gameFinish":

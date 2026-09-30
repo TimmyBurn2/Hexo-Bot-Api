@@ -61,6 +61,24 @@ components:
       headers:
         Retry-After:
           $ref: "#/components/headers/RetryAfter"
+    PayloadTooLarge:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PayloadTooLargeError"
+      description: The body is larger than 16 KiB (payload_too_large).
+    RateLimited:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RateLimitedError"
+      description: "Too many requests (rate_limited): one client, by network address, makes 60 at once,
+        then 10 a second; operations needing no credential take 300 at once, then 100 a second from
+        all callers together; each bot or game seat makes 20 at once, then 2 a second with its
+        credential. Retry after Retry-After."
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
   schemas:
     Accepts:
       description: The clocks the bot agrees to play.
@@ -284,8 +302,7 @@ components:
             - clock_not_accepted
             - bot_busy
             - inbox_full
-            - daily_pair_cap
-            - daily_bot_cap
+            - challenge_pending
           type: string
         error:
           type: string
@@ -333,6 +350,21 @@ components:
         - error
         - code
       type: object
+    ChallengeQuotaError:
+      properties:
+        code:
+          enum:
+            - daily_challenge_cap
+            - daily_pair_cap
+            - daily_bot_cap
+            - rate_limited
+          type: string
+        error:
+          type: string
+      required:
+        - error
+        - code
+      type: object
     EngineSession:
       properties:
         socketUrl:
@@ -346,6 +378,8 @@ components:
         - token
       type: object
     FinishReason:
+      description: How a game ended. A game is terminated when a side plays an illegal move, which loses,
+        or with no winner when it reaches 500 turns or an unlimited game reaches its wall-time cap.
       enum:
         - aborted
         - disconnect
@@ -490,6 +524,18 @@ components:
         - error
         - code
       type: object
+    PayloadTooLargeError:
+      properties:
+        code:
+          enum:
+            - payload_too_large
+          type: string
+        error:
+          type: string
+      required:
+        - error
+        - code
+      type: object
     Player:
       properties:
         name:
@@ -506,6 +552,18 @@ components:
     Provisional:
       description: True while the rating deviation is above 75.
       type: boolean
+    RateLimitedError:
+      properties:
+        code:
+          enum:
+            - rate_limited
+          type: string
+        error:
+          type: string
+      required:
+        - error
+        - code
+      type: object
     Rating:
       description: The Glicko-2 rating, rounded to a whole point.
       type: integer
@@ -786,7 +844,7 @@ info:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.6.0
+  version: 0.7.0
 openapi: 3.1.0
 paths:
   /api/bot/account:
@@ -804,6 +862,8 @@ paths:
           $ref: "#/components/responses/BotUnauthorized"
         "403":
           $ref: "#/components/responses/Banned"
+        "429":
+          $ref: "#/components/responses/RateLimited"
       security:
         - bearerAuth: []
       summary: Read the bot's own account.
@@ -833,6 +893,10 @@ paths:
           $ref: "#/components/responses/BotUnauthorized"
         "403":
           $ref: "#/components/responses/Banned"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "429":
+          $ref: "#/components/responses/RateLimited"
       security:
         - bearerAuth: []
       summary: Declare the bot's about, version, repo, and what it accepts.
@@ -863,6 +927,8 @@ paths:
           $ref: "#/components/responses/Banned"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
         "503":
           $ref: "#/components/responses/Paused"
       security:
@@ -889,6 +955,8 @@ paths:
           $ref: "#/components/responses/Banned"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
       security:
         - bearerAuth: []
       summary: Cancel a challenge the caller issued.
@@ -913,6 +981,8 @@ paths:
           $ref: "#/components/responses/Banned"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
       security:
         - bearerAuth: []
       summary: Decline a challenge as the challenged bot.
@@ -921,9 +991,9 @@ paths:
   /api/bot/challenge/{name}:
     post:
       description: The target must hold its stream open with open=1 and accept the clock. A bot plays at
-        most 4 games at once. Per UTC day, a bot plays at most 100 bot-vs-bot games, and a pair 20.
-        The target holds at most 10 pending challenges. A challenge expires after 60 s. Resending a
-        requestId answers 200 with the stored challenge.
+        most 4 games at once. The target holds at most 10 pending challenges, 1 from each
+        challenger. A challenge expires after 60 s. Resending a requestId answers 200 with the
+        stored challenge.
       operationId: createChallenge
       parameters:
         - description: The challenged bot's name.
@@ -979,8 +1049,8 @@ paths:
                 $ref: "#/components/schemas/ChallengeCreateError"
           description: Validation failed (bad_request), the target is not open (not_open) or excludes the
             clock (clock_not_accepted), a side is at its game cap (bot_busy), the target's inbox is
-            full (inbox_full), or the pair (daily_pair_cap) or a bot (daily_bot_cap) is at its daily
-            cap.
+            full (inbox_full), or the challenger already has a challenge pending with the target
+            (challenge_pending).
         "401":
           $ref: "#/components/responses/BotUnauthorized"
         "403":
@@ -992,6 +1062,19 @@ paths:
             the challenger's owner is banned (banned).
         "404":
           $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengeQuotaError"
+          description: Per UTC day a bot sends at most 200 challenges (daily_challenge_cap) and plays at most
+            100 bot-vs-bot games (daily_bot_cap), and a pair 20 (daily_pair_cap), with Retry-After
+            running to 00:00 UTC; or too many requests (rate_limited).
+          headers:
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
         "503":
           $ref: "#/components/responses/Paused"
       security:
@@ -1022,6 +1105,8 @@ paths:
           description: Missing, unknown, expired, or rotated game token.
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
       security:
         - gameToken: []
       summary: Resign a game over the engine-session token.
@@ -1045,13 +1130,27 @@ paths:
             type: string
       responses:
         "101":
-          description: Switching protocols; the engine session is open.
+          description: "Switching protocols; the engine session is open. No frame the server sends is larger
+            than 64 KiB. It closes with 1008 after more than 10 frames that answer no outstanding
+            request, a malformed frame, or a protocol violation, with 1008 when more than 128 KiB
+            sent to it go unread, and with 1009 for a frame over 16 KiB. A close forfeits nothing:
+            the clock runs, and the bot may dial again while its game token lives."
         "404":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotFoundError"
           description: Unknown game, or a game token that is expired or rotated.
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RateLimitedError"
+          description: A seat dials at most 5 at once, then 1 every 10 s (rate_limited), or too many requests;
+            refused before the upgrade, so an open session stays. Retry after Retry-After.
+          headers:
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
       security: []
       summary: Open the per-game engine session.
       tags:
@@ -1078,13 +1177,25 @@ paths:
             application/x-ndjson:
               schema:
                 $ref: "#/components/schemas/StreamEvent"
-          description: The event stream, as NDJSON.
+          description: The event stream, as NDJSON; no line is longer than 64 KiB. The server ends a stream
+            that leaves more than 128 KiB unread. A bot whose stream stays closed for 30 s forfeits
+            its live games.
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/BotUnauthorized"
         "403":
           $ref: "#/components/responses/Banned"
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RateLimitedError"
+          description: A bot opens at most 5 at once, then 1 every 10 s (rate_limited), or too many requests;
+            a refused open leaves the open stream alone. Retry after Retry-After.
+          headers:
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
         "503":
           $ref: "#/components/responses/Paused"
       security:
@@ -1117,6 +1228,8 @@ paths:
           description: The roster.
         "400":
           $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/RateLimited"
       security: []
       summary: List public bots.
       tags:

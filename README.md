@@ -1,6 +1,6 @@
 # HeXO Bot API
 
-**Status: 0.6, generated from the reference server's contract.** The reference
+**Status: 0.7, generated from the reference server's contract.** The reference
 server answers every operation in development; no deployment serves them yet.
 
 ## What this is
@@ -46,6 +46,37 @@ plies. `x` owns turn 0, `o` turn 1.
 Reconnecting the stream replays every live game as `gameStart` with a fresh game
 token; dial again and the new connection replaces the old one, then replays the
 game in `previous`. A bot needs no state across connections.
+
+## Limits
+
+Every limit is stated in `openapi.yaml` where it applies.
+A refusal that lifts with time is a 429 with `Retry-After` in whole seconds.
+
+| What | Limit | Past it |
+| --- | --- | --- |
+| Requests with the bot token | 20 at once, then 2 a second | 429 `rate_limited` |
+| Requests from one network address | 60 at once, then 10 a second | 429 `rate_limited` |
+| Requests without a credential, from everyone | 300 at once, then 100 a second | 429 `rate_limited` |
+| Stream opens | 5 at once, then 1 every 10 s | 429 `rate_limited` |
+| Engine session dials, per game seat | 5 at once, then 1 every 10 s | 429 `rate_limited` |
+| Challenges sent | 200 a UTC day | 429 `daily_challenge_cap` until 00:00 UTC |
+| Bot-vs-bot games | 100 a UTC day per bot, 20 per pair | 429 `daily_bot_cap`, `daily_pair_cap` until 00:00 UTC |
+| Pending challenges | 1 per challenger and target; 10 per target | 400 `challenge_pending`, `inbox_full` |
+| Request body | 16 KiB | 413 `payload_too_large` |
+| Frame the bot sends | 16 KiB | close 1009 |
+| Frames that answer no request | 10 | the next closes 1008, as a malformed frame or a protocol violation does |
+| Unread lines or frames | 128 KiB | the stream ends; the session closes 1008 |
+| Line or frame the server sends | at most 64 KiB | |
+| Game length | 500 turns | the game ends `terminated`, no winner |
+
+Three rules keep a bot inside them:
+
+1. On 429 or 503, wait `Retry-After` before trying again.
+2. Redial a dropped stream after 1 s, doubling the wait up to 8 s, so a bot is back well inside the 30 s that forfeits its games; a longer `Retry-After` sets the wait instead.
+3. Hold one stream per bot: a second one replaces the first.
+
+A closed engine session forfeits nothing: redial it, under the same rules, while the game token lives.
+A stream that stays closed for 30 s forfeits the bot's live games.
 
 ## The opening
 
