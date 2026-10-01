@@ -56,8 +56,8 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PausedError"
-      description: "The site is paused: nothing new starts, while open streams and live games run on.
-        Retry after 60 s."
+      description: "The site is paused: no new stream, challenge, or game starts, and open streams and
+        live games continue. Retry after Retry-After."
       headers:
         Retry-After:
           $ref: "#/components/headers/RetryAfter"
@@ -72,21 +72,22 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RateLimitedError"
-      description: "Too many requests (rate_limited): one client, by network address, makes 60 at once,
-        then 10 a second; operations needing no credential take 300 at once, then 100 a second from
-        all callers together; each bot or game seat makes 20 at once, then 2 a second with its
-        credential. Retry after Retry-After."
+      description: "Too many requests (rate_limited). Per network address: 60 at once, then 10 a second.
+        Per bot token, and per game token: 20 at once, then 2 a second. Without a credential, across
+        all callers: 300 at once, then 100 a second. Retry after Retry-After."
       headers:
         Retry-After:
           $ref: "#/components/headers/RetryAfter"
   schemas:
     Accepts:
-      description: The clocks the bot agrees to play.
+      description: The clocks the bot plays; a bot that never declared accepts plays none.
       properties:
         match:
+          description: True to play any match clock.
           type: boolean
         turnMs:
-          description: The accepted turn time window [min, max] in milliseconds, or null for none.
+          description: The turn clocks the bot plays, as the inclusive [min, max] of turnTimeMs; null refuses
+            turn clocks.
           items:
             type: integer
           maxItems: 2
@@ -95,6 +96,7 @@ components:
             - array
             - "null"
         unlimited:
+          description: True to play games with no clock.
           type: boolean
       required:
         - turnMs
@@ -224,8 +226,9 @@ components:
         - liveGames
       type: object
     Challenge:
-      description: firstPlayer names who plays turn (openingPlies + 1) / 2, the first turn after the
-        opening. A random firstPlayer is drawn at acceptance.
+      description: firstPlayer picks who moves first after the opening, on turn (openingPlies + 1) / 2. o
+        plays the odd turns, so after 1, 5, or 9 opening plies the first player is o, and after 3 or
+        7 it is x. random is drawn at acceptance; gameStart.side gives each bot its side.
       properties:
         challengeId:
           type: string
@@ -368,18 +371,23 @@ components:
     EngineSession:
       properties:
         socketUrl:
-          description: The engine-session websocket, origin-relative.
+          description: A path on the API's origin; dial it as wss://, or ws:// where the API is http://.
           type: string
         token:
-          description: The game token, valid for 60 s; each gameStart line carries a fresh one.
+          description: "The game token (hgs_...): it opens this game's engine session and resigns the game
+            until 60 s after this gameStart; reopening the stream replays gameStart with a fresh
+            one."
           type: string
       required:
         - socketUrl
         - token
       type: object
     FinishReason:
-      description: How a game ended. A game is terminated when a side plays an illegal move, which loses,
-        or with no winner when it reaches 500 turns or an unlimited game reaches its wall-time cap.
+      description: "How a game ended. six-in-a-row: the winner completed six in a row. timeout: the
+        loser's clock ran out. surrender: the loser resigned. disconnect: the loser's stream stayed
+        closed for 30 s. terminated: the loser played an illegal move, or, with no winner, the game
+        reached 500 turns or an unlimited game 24 hours. aborted: the operator, a restart, or the
+        end of a human player's session stopped the game, with no winner."
       enum:
         - aborted
         - disconnect
@@ -399,7 +407,7 @@ components:
             - gameFinish
           type: string
         winner:
-          description: Null after an abort, a termination, or a disconnect that left neither side connected.
+          description: Null after aborted, and after terminated at the turn or time cap.
           enum:
             - x
             - o
@@ -426,7 +434,8 @@ components:
         - code
       type: object
     GameStartEvent:
-      description: A game the bot plays has started, or is replayed as the stream opens.
+      description: A game the bot plays has started, or is replayed as the stream opens. A game started by
+        a player on the website or by a tournament arrives with no challenge before it.
       properties:
         engine:
           $ref: "#/components/schemas/EngineSession"
@@ -461,8 +470,8 @@ components:
         - engine
       type: object
     MoveRequestEvent:
-      description: Follows a replayed gameStart when it is the bot's turn; live turns arrive on the engine
-        session.
+      description: Follows a replayed gameStart when the bot is to move, for information; it needs no
+        answer, since the engine session sends its own move_request.
       properties:
         gameId:
           type: string
@@ -501,10 +510,9 @@ components:
     OpeningPlies:
       description: Stones the server places before either player acts, the origin at (0, 0) included. A
         ply is one stone; turn 0 is the origin, and turn t >= 1 is plies 2t-1 and 2t. Each later ply
-        lands in order on an empty cell drawn uniformly from those within hex distance 2 of the
-        origin, for the player who owns that ply. The whole opening is redrawn while any 6
-        consecutive cells on an axis hold 4 or more stones of one player and none of the other. The
-        draw uses a CSPRNG when the game is created, for a challenge at acceptance.
+        lands on an empty cell drawn uniformly from those within hex distance 2 of the origin. The
+        whole opening is redrawn while any 6 consecutive cells on an axis hold 4 or more stones of
+        one player and none of the other.
       enum:
         - 1
         - 3
@@ -602,7 +610,9 @@ components:
         - $ref: "#/components/schemas/ChallengeCanceledEvent"
         - $ref: "#/components/schemas/ChallengeDeclinedEvent"
     TimeControl:
-      description: Durations are in milliseconds.
+      description: turn gives each turn turnTimeMs, and unused time is lost; match gives each side
+        mainTimeMs for the game, adding incrementMs after each of its turns; unlimited has no clock.
+        Each move_request carries the seconds left for that move.
       oneOf:
         - properties:
             mode:
@@ -831,20 +841,18 @@ components:
 info:
   description: >-
     A bot authenticates with its token, holds one NDJSON stream open, and plays each game on the
-    engine session that gameStart hands out. The server is the referee: it owns pairing, clocks,
-    ratings, and the game lifecycle.
+    engine session that gameStart hands out.
 
 
-    The board exchange (Coord, Board, PositionEvaluation, Move, MoveRequest, MoveResponse) is the
-    htttx stateless v1-alpha schema set, vendored verbatim from
-    [htttx-bot-api](https://github.com/hex-tic-tac-toe/htttx-bot-api) at commit `37d2385`. The
-    engine session speaks htttx basic_websocket (bws-v1-alpha) at the same commit. Coordinates are
-    axial q,r: +q right, +r top-right.
+    Coord, Board, PositionEvaluation, Move, MoveRequest, and MoveResponse are vendored verbatim from
+    [htttx-bot-api](https://github.com/hex-tic-tac-toe/htttx-bot-api) at commit `37d2385`, whose
+    basic_websocket v1-alpha the engine session speaks. Coordinates are axial q,r: +q right, +r
+    top-right.
   license:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.7.0
+  version: 0.7.1
 openapi: 3.1.0
 paths:
   /api/bot/account:
@@ -920,7 +928,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChallengeAcceptError"
-          description: The challenged bot is at its game cap (bot_busy); the challenge stays pending.
+          description: The challenged bot is at its game cap, or a side is playing a tournament (bot_busy);
+            the challenge stays pending.
         "401":
           $ref: "#/components/responses/BotUnauthorized"
         "403":
@@ -1048,9 +1057,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengeCreateError"
           description: Validation failed (bad_request), the target is not open (not_open) or excludes the
-            clock (clock_not_accepted), a side is at its game cap (bot_busy), the target's inbox is
-            full (inbox_full), or the challenger already has a challenge pending with the target
-            (challenge_pending).
+            clock (clock_not_accepted), a side is at its game cap or playing a tournament
+            (bot_busy), the target's inbox is full (inbox_full), or the challenger already has a
+            challenge pending with the target (challenge_pending).
         "401":
           $ref: "#/components/responses/BotUnauthorized"
         "403":
@@ -1109,16 +1118,15 @@ paths:
           $ref: "#/components/responses/RateLimited"
       security:
         - gameToken: []
-      summary: Resign a game over the engine-session token.
+      summary: Resign a game with its game token.
       tags:
         - Engine session
   /api/bot/game/{gameId}/socket:
     get:
-      description: Speaks htttx basic_websocket v1-alpha, the server as client and the bot as bot. The bot
-        must support the move_skips and request_id capabilities. A new connection replaces the
-        previous one. Each move_request lists in previous only the turns this connection has not
-        seen. Heartbeats come every 10 s. A move_response must echo request_id, or it is dropped. An
-        illegal move forfeits.
+      description: "Speaks htttx basic_websocket v1-alpha: the bot dials, then answers each move_request
+        with a move_response of two cells that echoes its request_id, or the answer is dropped. The
+        bot declares no capabilities but must handle move_skips, so previous may hold several turns,
+        and request_id. A new connection replaces the previous one. An illegal move forfeits."
       operationId: openEngineSession
       parameters:
         - $ref: "#/components/parameters/GameId"
@@ -1130,11 +1138,17 @@ paths:
             type: string
       responses:
         "101":
-          description: "Switching protocols; the engine session is open. No frame the server sends is larger
-            than 64 KiB. It closes with 1008 after more than 10 frames that answer no outstanding
-            request, a malformed frame, or a protocol violation, with 1008 when more than 128 KiB
-            sent to it go unread, and with 1009 for a frame over 16 KiB. A close forfeits nothing:
-            the clock runs, and the bot may dial again while its game token lives."
+          description: "Switching protocols; the engine session is open. The server first sends setup, whose
+            board holds the origin stone alone. On each of the bot's turns it sends move_request
+            with side, request_id, move_time_limit in seconds when there is a clock, and previous:
+            every turn this connection has not seen, the opening's included, oldest first, as {side,
+            pieces}. Every 10 s it sends heartbeat, with waiting true while it waits on this bot's
+            move; the bot never answers a heartbeat, and a bot that hears waiting true while it is
+            not working on a move hangs up and redials. No frame the server sends exceeds 64 KiB. It
+            closes with 1009 for a bot frame over 16 KiB, with 1008 after more than 10 frames in one
+            session that answer no outstanding request, a malformed frame, or a protocol violation,
+            and with 1008 when more than 128 KiB go unread. A close forfeits nothing, but the clock
+            runs; dial again while the game token is valid."
         "404":
           content:
             application/json:
@@ -1147,7 +1161,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RateLimitedError"
           description: A seat dials at most 5 at once, then 1 every 10 s (rate_limited), or too many requests;
-            refused before the upgrade, so an open session stays. Retry after Retry-After.
+            a refused dial leaves an open session alone. Retry after Retry-After.
           headers:
             Retry-After:
               $ref: "#/components/headers/RetryAfter"
@@ -1163,7 +1177,9 @@ paths:
         the engine session that gameStart hands out.
       operationId: openStream
       parameters:
-        - description: Present as 1, the bot takes challenges and games while the stream is open.
+        - description: "Present as 1, the bot is open while the stream is: other bots may challenge it, and
+            players on the website may start games against it, which arrive as gameStart with no
+            challenge."
           in: query
           name: open
           required: false

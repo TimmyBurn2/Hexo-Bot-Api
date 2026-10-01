@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Reference bot: hold the stream open, play each game on its engine session.
+"""Reference bot: holds the stream open and plays each game on its engine session.
 
     pip install websockets
     HEXO_TOKEN=hxo_... python3 simple_bot.py [base-url]
 
-One dependency: `websockets` for the engine session; HTTP and the NDJSON
-stream use the standard library. Coordinates are htttx axial q,r throughout.
-Replace choose_move with a real engine and nothing else here has to change.
+HTTP and the NDJSON stream use the standard library; coordinates are htttx
+axial q,r. Replace choose_move with an engine.
 """
 
 import json
@@ -23,8 +22,8 @@ from websockets.sync.client import connect
 
 PLACEMENT_RADIUS = 8
 # A dropped stream or engine session redials after 1 s, doubling up to 8 s,
-# well inside the 30 s after which a closed stream forfeits every live game;
-# a refusal's Retry-After, when longer, sets the wait instead.
+# or after a refusal's longer Retry-After; a stream closed for 30 s forfeits
+# every live game.
 RETRY_FIRST_SECONDS = 1
 RETRY_CAP_SECONDS = 8
 # Tries of a request the server refuses with 429 or 503 before giving up.
@@ -32,8 +31,7 @@ REQUEST_TRIES = 3
 # A challenge is open this long after it is sent.
 CHALLENGE_SECONDS = 60
 
-# Sent before the stream opens: what the directory shows, and which clocks
-# this bot plays under. A challenge outside `accepts` is refused for it.
+# Declared before the stream opens; a challenge outside accepts is refused.
 DECLARATION = {
     "about": "Reference bot: plays the nearest free cells. Legal, never strong.",
     "version": "0.5.0",
@@ -49,10 +47,9 @@ def distance(a, b):
 
 
 def choose_move(board):
-    """Two free cells, nearest to the stones already on the board.
+    """Two free cells nearest the stones on the board.
 
-    Legal but weak: it never blocks and never builds a line. `board` is an
-    htttx Board, the return value is the `pieces` list of an htttx Move.
+    `board` is an htttx Board; the result is the `pieces` list of an htttx Move.
     """
     taken = {(cell["q"], cell["r"]) for cell in board["cells"]}
     if not taken:
@@ -102,8 +99,8 @@ class EngineSession(threading.Thread):
         self.wait = RETRY_FIRST_SECONDS
 
     def run(self):
-        # A closed or refused session forfeits nothing while the clock runs,
-        # so it redials until the game ends or its token stops opening one.
+        # A closed session forfeits nothing, so it redials until the game ends
+        # or its token stops opening one.
         self.wait = RETRY_FIRST_SECONDS
         while not self.closed:
             try:
@@ -124,9 +121,8 @@ class EngineSession(threading.Thread):
 
     def play(self):
         # The board lives per connection: setup holds the stones before any
-        # turn, and each move_request lists in `previous` every turn this
-        # connection has not seen, the bot's own and the server's opening
-        # included, so a redial rebuilds the whole game.
+        # turn, and each move_request lists in previous every turn this
+        # connection has not seen, so a redial rebuilds the whole game.
         cells = {}
         with connect(self.url) as socket:
             self.socket = socket
@@ -141,7 +137,7 @@ class EngineSession(threading.Thread):
                         for piece in move["pieces"]:
                             cells[(piece["q"], piece["r"])] = move["side"]
                     socket.send(json.dumps(self.answer(packet, cells)))
-                # A heartbeat needs no answer: this bot replies to every
+                # A heartbeat needs no answer: this bot answers every
                 # move_request at once, so it is never idle while waited on.
 
     @staticmethod
@@ -213,10 +209,9 @@ class SimpleBot:
             self.backoff = min(self.backoff * 2, RETRY_CAP_SECONDS)
 
     def hold_stream(self):
-        # open=1: take challenges and games for as long as this is held.
-        # Opening replays every live game as gameStart, so a redial loses
-        # nothing and the bot keeps no state across connections.
-        # One stream per bot: a second one replaces this one on the server.
+        # open=1 takes challenges and games while the stream is held. Opening
+        # replays every live game as gameStart, so a redial loses nothing; a
+        # second stream would replace this one.
         with self.request("GET", "/api/bot/stream?open=1", timeout=None) as stream:
             log("stream open")
             self.backoff = RETRY_FIRST_SECONDS
