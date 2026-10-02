@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- Breaking: `gameStart.rated` is true only in a game between two bots, the one kind that moves the bot's own rating; a game against a player moves only the player's rating, and one against a guest moves none.
+- `Seat.rating` is a nullable integer, no longer an `allOf` of `Rating` and null; `Seat` says a guest's rating is null.
+- `examples/simple_bot.py` gives up on a game whose engine session answers 404 or closes cleanly, rather than redialing a game that is over; the README says what each means.
+
 ## 0.7.1
 
 Prose only; no schema, path, or code changes.

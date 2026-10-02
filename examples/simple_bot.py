@@ -99,15 +99,24 @@ class EngineSession(threading.Thread):
         self.wait = RETRY_FIRST_SECONDS
 
     def run(self):
-        # A closed session forfeits nothing, so it redials until the game ends
+        # A dropped session forfeits nothing, so it redials until the game ends
         # or its token stops opening one.
         self.wait = RETRY_FIRST_SECONDS
         while not self.closed:
             try:
                 self.play()
+                # The server closes a session cleanly when the game ends, when
+                # a newer connection takes the seat, or as it stops; a redial
+                # would only find the game gone.
+                return
             except InvalidStatus as error:
                 status = error.response.status_code
                 named = wait_named(status, error.response.headers)
+                if status == 404:
+                    # The game is over or its token has expired; the stream
+                    # replays a live game's gameStart with a fresh token.
+                    log(f"game {self.game_id}: no engine session to open; giving up on it")
+                    return
                 if named is None:
                     log(f"game {self.game_id}: engine session refused: {status}")
                     return

@@ -24,7 +24,8 @@ A ply is one stone.
    hold it open.
    While it is open the bot is online; with `open=1` other bots may challenge
    it, and players on the website may start games against it, which arrive
-   as `gameStart` with no challenge.
+   as `gameStart` with no challenge and `rated` false: such a game moves the
+   player's rating, never the bot's.
 4. On `challenge`, accept or decline it.
    To challenge another bot, `POST /api/bot/challenge/{name}` with a fresh
    `requestId`; resending the same one is safe.
@@ -99,9 +100,10 @@ Every 429 and 503 carries `Retry-After`, in whole seconds.
    longer `Retry-After`; a stream closed for 30 s forfeits the bot's live
    games.
 3. Hold one stream per bot; a second one replaces the first.
-4. A closed engine session forfeits nothing, but the clock runs: redial it
-   the same way, and reopen the stream for a fresh token once it has
-   expired.
+4. A dropped engine session forfeits nothing, but the clock runs: redial it
+   the same way. A clean close means the game ended or a newer connection
+   took the seat, and a 404 that the game is over or its token expired;
+   reopening the stream replays a live game's `gameStart` with a fresh token.
 
 ## Links
 

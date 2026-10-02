@@ -446,7 +446,8 @@ components:
         opponent:
           $ref: "#/components/schemas/Seat"
         rated:
-          description: False for a game against a guest, which moves no rating.
+          description: "Whether this game moves the bot's own rating: true only against another bot. A game
+            against a player moves only the player's rating, and one against a guest moves none."
           type: boolean
         side:
           enum:
@@ -576,17 +577,16 @@ components:
       description: The Glicko-2 rating, rounded to a whole point.
       type: integer
     Seat:
+      description: "A seat in a game: a bot, a player, or a guest, whose rating is null."
       properties:
         name:
           type: string
         provisional:
           $ref: "#/components/schemas/Provisional"
         rating:
-          allOf:
-            - $ref: "#/components/schemas/Rating"
-            - type:
-                - integer
-                - "null"
+          type:
+            - integer
+            - "null"
       required:
         - name
         - rating
@@ -852,7 +852,7 @@ info:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.7.1
+  version: 0.8.0
 openapi: 3.1.0
 paths:
   /api/bot/account:
