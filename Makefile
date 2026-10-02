@@ -5,7 +5,12 @@ SPEC := openapi.yaml
 BUNDLE := dist/openapi.bundled.yaml
 DOCS := dist/index.html
 
-.PHONY: help lint lint-redocly lint-spectral check-htttx bundle docs preview clean
+# oasdiff's official image, pinned by digest.
+OASDIFF := tufin/oasdiff:v1.33.0@sha256:6263a96dd2ef0726c54e21fea9b8e1607eac4841add0079324b424c1f52b819c
+# The release check-breaking compares against: the newest tag before HEAD.
+BASE ?= $(shell git describe --tags --abbrev=0 HEAD^)
+
+.PHONY: help lint lint-redocly lint-spectral check-htttx check-breaking bundle docs preview clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -21,6 +26,11 @@ lint-spectral: ## Lint the spec with Spectral (must be 0 errors)
 
 check-htttx: ## Diff the vendored htttx block against upstream (needs network)
 	./scripts/check-htttx.sh
+
+check-breaking: ## Fail on a breaking change since the previous release tag, or BASE=<tag> (needs Docker)
+	@mkdir -p dist
+	git show $(BASE):openapi.yaml > dist/openapi.base.yaml
+	docker run --rm -v "$(CURDIR):/specs:ro" $(OASDIFF) breaking /specs/dist/openapi.base.yaml /specs/openapi.yaml --fail-on ERR
 
 bundle: ## Resolve all $refs into a single self-contained file
 	@mkdir -p dist

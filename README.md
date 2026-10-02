@@ -19,7 +19,8 @@ A ply is one stone.
 2. `PATCH /api/bot/account` with `accepts`, the clocks the bot plays; until
    then it plays none.
    `about`, `version`, and `repoUrl` are optional and show on the public bot
-   list.
+   list; so is `levels`, the strengths a player may pick (see Strength
+   levels).
 3. `GET /api/bot/stream?open=1` with `Authorization: Bearer <bot token>`, and
    hold it open.
    While it is open the bot is online; with `open=1` other bots may challenge
@@ -29,8 +30,9 @@ A ply is one stone.
 4. On `challenge`, accept or decline it.
    To challenge another bot, `POST /api/bot/challenge/{name}` with a fresh
    `requestId`; resending the same one is safe.
-5. On `gameStart`, dial `engine.socketUrl` on the API's origin, `wss://` (or
-   `ws://` over http), with `?token=` set to `engine.token`.
+5. On `gameStart`, set the game up at its `level`, null for the default,
+   and dial `engine.socketUrl` on the API's origin, `wss://` (or `ws://` over
+   http), with `?token=` set to `engine.token`.
 6. The engine session speaks htttx basic_websocket v1-alpha.
    The server sends `setup`, whose board holds the origin stone alone, then a
    `move_request` on each of the bot's turns: `side`, `request_id`,
@@ -71,6 +73,43 @@ Entering commits the bot to hold its stream open throughout: a game waits
 60 s for a bot that is not connected and then scores for its opponent, and a
 bot that misses two pairings in a row is withdrawn.
 
+## Strength levels
+
+A bot may declare 2 to 8 levels in `levels`, weakest first, with `default`
+naming one; a player on the website picks one, and `gameStart.level` names
+it, or is null at the default.
+A level has an `id` (lowercase letters, digits, and hyphens, at most 16,
+unique), a `label` (at most 24 printable ASCII characters), and optionally an
+`about` (120 characters), a `note` (80), and a `budget`.
+The budget holds at least one of `timeMs`, `nodes`, `depthTurns` (HeXO
+turns, not stones), and `playouts`, per turn; the website shows it as the
+bot's own claim.
+The bot's rating belongs to its default: challenges and tournaments play it,
+and a game at any other level is unrated for both sides and counts toward no
+daily cap.
+A bot that no longer declares a level plays its default; `"levels": null`
+clears them.
+
+An alpha-beta engine:
+
+```json
+{ "levels": { "default": "standard", "list": [
+  { "id": "quick", "label": "quick", "budget": { "timeMs": 200 } },
+  { "id": "standard", "label": "standard", "budget": { "nodes": 1000000 } },
+  { "id": "deep", "label": "deep", "budget": { "depthTurns": 8 } }
+] } }
+```
+
+A neural MCTS bot:
+
+```json
+{ "levels": { "default": "800", "list": [
+  { "id": "100", "label": "100 sims", "budget": { "playouts": 100 } },
+  { "id": "800", "label": "800 sims", "budget": { "playouts": 800 } },
+  { "id": "6400", "label": "6400 sims", "budget": { "playouts": 6400, "timeMs": 5000 } }
+] } }
+```
+
 ## Limits
 
 Every 429 and 503 carries `Retry-After`, in whole seconds.
@@ -109,7 +148,8 @@ Every 429 and 503 carries `Retry-After`, in whole seconds.
 
 - [`openapi.yaml`](openapi.yaml): every operation, event, and limit.
 - [`examples/simple_bot.py`](examples/simple_bot.py): the loop above, with
-  `websockets` as its one dependency; replace `choose_move` with an engine.
+  `websockets` as its one dependency, and two levels that set its pace;
+  replace `choose_move` with an engine.
 - [`examples/stream.ndjson`](examples/stream.ndjson): one line per event type.
 - [`CHANGELOG.md`](CHANGELOG.md): what each version changed.
 - [htttx-bot-api](https://github.com/hex-tic-tac-toe/htttx-bot-api) at commit
@@ -125,3 +165,5 @@ server's `pnpm spec:export`; never edit them by hand.
 `make lint` runs Redocly and Spectral, both at 0 errors; `make check-htttx`
 diffs the vendored block against upstream; `make docs` renders
 `dist/index.html`.
+`make check-breaking` fails on a breaking change since the previous release
+tag, with oasdiff in Docker.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0
+
+- `AccountDeclaration.levels`, and `Account.levels` and `BotListing.levels`, null until declared: 2 to 8 strengths a player may pick, weakest first, each with an `id`, a `label`, and an optional `about`, `budget` (`timeMs`, `nodes`, `depthTurns`, `playouts`), and `note`; `null` clears them.
+- `gameStart.level`, required: the declared level the bot plays the game at, null at its default; a level the bot no longer declares plays its default. Challenges and tournaments play the default, and a game at any other level is unrated.
+- Text in a declaration is cleaned, never refused for what it holds: in `about`, `version`, and a level's `about` and `note`, a line break or tab becomes a space, other control and format characters (bidirectional marks, zero-width characters, soft hyphens) are dropped, whitespace runs collapse, and the ends are trimmed; the length caps count the cleaned text. A level's `id` and `label` are refused unless valid as sent.
+- The `Paused` response says a bot with a live game, or with a place in a running tournament, still opens its stream.
+- `examples/simple_bot.py` declares two levels and paces its answers by `gameStart.level`; the README shows two example declarations.
+
 ## 0.8.0
 
 - Breaking: `gameStart.rated` is true only in a game between two bots, the one kind that moves the bot's own rating; a game against a player moves only the player's rating, and one against a guest moves none.

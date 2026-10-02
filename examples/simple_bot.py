@@ -31,12 +31,24 @@ REQUEST_TRIES = 3
 # A challenge is open this long after it is sent.
 CHALLENGE_SECONDS = 60
 
+# The strengths a player on the website may pick, weakest first; a game at
+# any but the default is unrated. Here a level sets only the pause before
+# each answer; an engine maps it to its own budget.
+LEVELS = {
+    "default": "steady",
+    "list": [
+        {"id": "quick", "label": "quick", "budget": {"timeMs": 100}},
+        {"id": "steady", "label": "steady", "budget": {"timeMs": 1000}},
+    ],
+}
+
 # Declared before the stream opens; a challenge outside accepts is refused.
 DECLARATION = {
     "about": "Reference bot: plays the nearest free cells. Legal, never strong.",
     "version": "0.5.0",
     "repoUrl": "https://github.com/TimmyBurn2/Hexo-Bot-Api",
     "accepts": {"turnMs": [5000, 600000], "match": True, "unlimited": True},
+    "levels": LEVELS,
 }
 
 
@@ -68,6 +80,16 @@ def choose_move(board):
     return [{"q": q, "r": r} for q, r in ranked[:2]]
 
 
+def think_seconds(level):
+    """The pause before each answer at a gameStart's level.
+
+    null means the default, and so does a level this bot no longer declares.
+    """
+    declared = {entry["id"]: entry for entry in LEVELS["list"]}
+    entry = declared.get(level) or declared[LEVELS["default"]]
+    return entry["budget"]["timeMs"] / 1000
+
+
 def log(message):
     print(message, file=sys.stderr, flush=True)
 
@@ -90,10 +112,11 @@ def retry_after(error):
 class EngineSession(threading.Thread):
     """One game's websocket: the server asks, this bot answers."""
 
-    def __init__(self, url, game_id):
+    def __init__(self, url, game_id, think):
         super().__init__(daemon=True)
         self.url = url
         self.game_id = game_id
+        self.think = think
         self.socket = None
         self.closed = False
         self.wait = RETRY_FIRST_SECONDS
@@ -149,8 +172,10 @@ class EngineSession(threading.Thread):
                 # A heartbeat needs no answer: this bot answers every
                 # move_request at once, so it is never idle while waited on.
 
-    @staticmethod
-    def answer(packet, cells):
+    def answer(self, packet, cells):
+        # At most a quarter of the clock, so the pause never loses on time.
+        limit = packet.get("move_time_limit")
+        time.sleep(self.think if limit is None else min(self.think, limit / 4))
         board = {
             "to_move": packet["side"],
             "cells": [{"q": q, "r": r, "p": p} for (q, r), p in cells.items()],
@@ -251,7 +276,7 @@ class SimpleBot:
         game_id = event["gameId"]
         log(
             f"game {game_id} vs {event['opponent']['name']}, playing {event['side']},"
-            f" opening of {event['openingPlies']} plies"
+            f" opening of {event['openingPlies']} plies, level {event['level'] or LEVELS['default']}"
         )
         # Each gameStart carries a fresh token, and a new connection replaces
         # the previous one on the server as well.
@@ -260,7 +285,8 @@ class SimpleBot:
             previous.close()
         url = urljoin(self.base_url, event["engine"]["socketUrl"])
         url = url.replace("https://", "wss://", 1).replace("http://", "ws://", 1)
-        session = EngineSession(f"{url}?{urlencode({'token': event['engine']['token']})}", game_id)
+        token = urlencode({"token": event["engine"]["token"]})
+        session = EngineSession(f"{url}?{token}", game_id, think_seconds(event["level"]))
         self.sessions[game_id] = session
         session.start()
 
