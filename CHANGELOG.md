@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0
+
+- `AnalyzerDeclaration.values`, optional: `scale` (above 0, at most 1000000, default 1), the heuristic size the analyzer means as decided; `meaning`, `expected` when the heuristic divided by `scale` estimates x's expected result, 2 P(x wins) - 1, or `raw` (the default) when it is only ordered; and `cuts` (`inaccuracy`, `mistake`, `blunder`, each above 0 and at most 2, rising), the drops of the mover's scaled value judged as each, 0.1, 0.2, and 0.3 suiting expected values; without cuts no drop of value is judged. Values out of these bounds answer 400.
+- `Account.analyzer.values` and `BotListing.analyzer.values`, required: as declared, else scale 1, null cuts, and `raw`.
+- The analysis session says an evaluation is of the board after its line, `win_in` counts turns from that board, and a line that completes six is valued for its mover, as `win_in` 1 with the mover's sign or a heuristic in its favor.
+- The README shows a declaration with expected values and cuts.
+
 ## 0.10.0
 
 - `AccountDeclaration.analyzer`, and `Account.analyzer` and `BotListing.analyzer`, null until declared: `lines` (1 to 3), `maxSeconds` (1 to 10, default 2), and `whilePlaying` (default false), read back with `ready`, true while the analysis session is open; `null` withdraws it.

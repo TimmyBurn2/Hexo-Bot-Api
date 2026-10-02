@@ -209,12 +209,15 @@ components:
         ready:
           description: True while the bot holds its analysis session open.
           type: boolean
+        values:
+          $ref: "#/components/schemas/AnalyzerValues"
         whilePlaying:
           type: boolean
       required:
         - maxSeconds
         - lines
         - whilePlaying
+        - values
         - ready
       type:
         - object
@@ -238,6 +241,8 @@ components:
           maximum: 10
           minimum: 1
           type: integer
+        values:
+          $ref: "#/components/schemas/AnalyzerValuesDeclaration"
         whilePlaying:
           default: false
           description: True to take positions while the bot plays a game; false, the default, takes them only
@@ -248,6 +253,68 @@ components:
       type:
         - object
         - "null"
+    AnalyzerValues:
+      description: "How the analyzer's heuristic reads: scale 1, null cuts, which judge no drop of value,
+        and raw, unless it declared otherwise."
+      properties:
+        cuts:
+          $ref: "#/components/schemas/ValueCuts"
+        meaning:
+          $ref: "#/components/schemas/ValueMeaning"
+        scale:
+          exclusiveMinimum: 0
+          maximum: 1000000
+          type: number
+      required:
+        - scale
+        - cuts
+        - meaning
+      type: object
+    AnalyzerValuesDeclaration:
+      additionalProperties: false
+      description: How the bot's heuristic reads. Absent, the heuristic reads as raw at scale 1 and no
+        drop of value is judged; forced wins are judged either way.
+      properties:
+        cuts:
+          additionalProperties: false
+          description: "The drops of the mover's value, on the scaled range, the site judges a turn by: each
+            above 0 and at most 2, rising from inaccuracy to blunder; 0.1, 0.2, and 0.3 suit
+            expected values. Absent, it judges no drop of value."
+          properties:
+            blunder:
+              exclusiveMinimum: 0
+              maximum: 2
+              type: number
+            inaccuracy:
+              exclusiveMinimum: 0
+              maximum: 2
+              type: number
+            mistake:
+              exclusiveMinimum: 0
+              maximum: 2
+              type: number
+          required:
+            - inaccuracy
+            - mistake
+            - blunder
+          type: object
+        meaning:
+          default: raw
+          description: "expected: the heuristic, divided by scale, is the bot's estimate of x's expected
+            result, 2 P(x wins) - 1. raw, the default: it is only ordered, higher being better for
+            x, and not calibrated."
+          enum:
+            - expected
+            - raw
+          type: string
+        scale:
+          default: 1
+          description: The heuristic size the bot means as decided; the site divides heuristics by it before
+            drawing or judging them. 1 when absent.
+          exclusiveMinimum: 0
+          maximum: 1000000
+          type: number
+      type: object
     BadRequestError:
       properties:
         code:
@@ -850,6 +917,38 @@ components:
         - error
         - code
       type: object
+    ValueCuts:
+      additionalProperties: false
+      description: Drops of the mover's value, on the scaled range, each above 0 and at most 2, rising
+        from inaccuracy to blunder; 0.1, 0.2, and 0.3 suit expected values.
+      properties:
+        blunder:
+          exclusiveMinimum: 0
+          maximum: 2
+          type: number
+        inaccuracy:
+          exclusiveMinimum: 0
+          maximum: 2
+          type: number
+        mistake:
+          exclusiveMinimum: 0
+          maximum: 2
+          type: number
+      required:
+        - inaccuracy
+        - mistake
+        - blunder
+      type:
+        - object
+        - "null"
+    ValueMeaning:
+      description: "What the heuristic, divided by scale, means: expected is the analyzer's estimate of
+        x's expected result, 2 P(x wins) - 1; raw is only ordered, higher being better for x, and
+        not calibrated."
+      enum:
+        - expected
+        - raw
+      type: string
     # --- BEGIN vendored htttx ---
     # Verbatim from htttx-bot-api@37d2385
     # (definitions/stateless/stateless-v1-alpha.yaml). Do not edit by hand;
@@ -1041,7 +1140,7 @@ info:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.10.0
+  version: 0.11.0
 openapi: 3.1.0
 paths:
   /api/bot/account:
@@ -1118,14 +1217,17 @@ paths:
             type: string
       responses:
         "101":
-          description: Switching protocols; the analysis session is open, and a new connection replaces the
+          description: "Switching protocols; the analysis session is open, and a new connection replaces the
             previous one. A bot with a live game is sent nothing unless it declared whilePlaying,
-            and a game's move request never waits on a reading. A reading fails when the answer
-            comes more than 3 s past move_time_limit, a line is no legal turn from the position or
-            repeats one, the move carries no evaluation, or an evaluation contradicts the board or
-            passes a win_in of 1000 or a heuristic of 1000000 either way. 3 failures within 10
-            minutes bench the analyzer for 10 minutes. heartbeat, frame sizes, stray frames, and
-            closes are as on the engine session; withdrawing the declaration closes the session.
+            and a game's move request never waits on a reading. An evaluation is of the board after
+            its line: win_in counts turns from that board, its side to move first; a line that
+            completes six is valued for its mover, as win_in 1 with the mover's sign or a heuristic
+            in its favor. A reading fails when the answer comes more than 3 s past move_time_limit,
+            a line is no legal turn from the position or repeats one, the move carries no
+            evaluation, or an evaluation contradicts the board or passes a win_in of 1000 or a
+            heuristic of 1000000 either way. 3 failures within 10 minutes bench the analyzer for 10
+            minutes. heartbeat, frame sizes, stray frames, and closes are as on the engine session;
+            withdrawing the declaration closes the session."
         "401":
           content:
             application/json:

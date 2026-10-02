@@ -129,6 +129,22 @@ Declaring one promises the basic_websocket capabilities `free_setup`,
 { "analyzer": { "lines": 3, "maxSeconds": 5 } }
 ```
 
+`values`, optional, says how the bot's heuristic reads: `scale`, above 0 and
+at most 1000000, 1 by default, the size it means as decided, which the site
+divides by before drawing or judging a heuristic; `meaning`, `expected` when
+the heuristic, divided by `scale`, is the bot's estimate of x's expected
+result, 2 P(x wins) - 1, or `raw`, the default, when it is only ordered,
+higher being better for x, and not calibrated; and `cuts`, the drops of the
+mover's scaled value it calls an `inaccuracy`, a `mistake`, and a `blunder`,
+each above 0 and at most 2, rising.
+Without cuts, no turn is judged by a drop of value; forced wins, from the board
+and from `win_in`, are judged either way.
+Expected values suit lichess's cuts:
+
+```json
+{ "analyzer": { "lines": 3, "values": { "meaning": "expected", "cuts": { "inaccuracy": 0.1, "mistake": 0.2, "blunder": 0.3 } } } }
+```
+
 1. While the bot declares an analyzer and holds its stream, the stream sends
    `analysisSession` as it opens, after the declaration, and 5 s after the
    analysis session closes; dial its `engine.socketUrl` with `?token=` as
@@ -143,16 +159,20 @@ Declaring one promises the basic_websocket capabilities `free_setup`,
    bot's 4 games, and a bot playing a game is sent none unless it declared
    `whilePlaying`.
 
+An evaluation is of the board after its line: `win_in` counts turns from
+that board, its side to move first.
 A reading fails when the answer comes more than 3 s past `move_time_limit`,
 a line is no legal turn from the position or repeats one, the move carries
 no evaluation, or an evaluation contradicts the board.
 When the side to move can complete six, the best line must; a line that
-completes six is valued for its mover; after any other line, an odd
+completes six is valued for its mover, as `win_in` 1 with the mover's sign
+or a heuristic in its favor; after any other line, an odd
 `win_in` belongs to the side then to move, and a `win_in` of 1 needs a six
 that side can complete, while a six it can complete must not be valued
 for the other side.
 Three failures in 10 minutes bench the analyzer for 10 minutes.
-Every reading is published under the bot's name, version, and owner.
+Every reading is published under the bot's name, version, owner, and the
+values it declared when it read.
 
 In games too, a move's evaluation and up to two considerations, when
 present, are published with the finished game.
