@@ -1,10 +1,12 @@
 # Two structural exceptions Redocly cannot express otherwise; every other
 # problem still fails `make lint`.
-# The engine session is a websocket upgrade, so its only success is 101.
+# The engine and analysis sessions are websocket upgrades, so their only
+# success is 101.
 # MoveResponse arrives with the verbatim htttx block; since 0.5 a bot answers
 # over the engine session, so no operation references it.
 openapi.yaml:
   operation-2xx-response:
     - '#/paths/~1api~1bot~1game~1{gameId}~1socket/get/responses'
+    - '#/paths/~1api~1bot~1analysis~1socket/get/responses'
   no-unused-components:
     - '#/components/schemas/MoveResponse'

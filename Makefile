@@ -30,7 +30,7 @@ check-htttx: ## Diff the vendored htttx block against upstream (needs network)
 check-breaking: ## Fail on a breaking change since the previous release tag, or BASE=<tag> (needs Docker)
 	@mkdir -p dist
 	git show $(BASE):openapi.yaml > dist/openapi.base.yaml
-	docker run --rm -v "$(CURDIR):/specs:ro" $(OASDIFF) breaking /specs/dist/openapi.base.yaml /specs/openapi.yaml --fail-on ERR
+	docker run --rm -v "$(CURDIR):/specs:ro" $(OASDIFF) breaking /specs/dist/openapi.base.yaml /specs/openapi.yaml --fail-on ERR --err-ignore /specs/breaking-ignore.txt
 
 bundle: ## Resolve all $refs into a single self-contained file
 	@mkdir -p dist

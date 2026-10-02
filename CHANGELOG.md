@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0
+
+- `AccountDeclaration.analyzer`, and `Account.analyzer` and `BotListing.analyzer`, null until declared: `lines` (1 to 3), `maxSeconds` (1 to 10, default 2), and `whilePlaying` (default false), read back with `ready`, true while the analysis session is open; `null` withdraws it.
+- `analysisSession` on the stream, sent only to a bot that declares an analyzer, and `GET /api/bot/analysis/socket` (`openAnalysisSession`): a basic_websocket v1-alpha session reading one position at a time with `setup`, `move_request`, and `interrupt`, its failures benching the analyzer.
+- oasdiff reads the new `StreamEvent` member as breaking; `analysisSession` is sent only to a bot that declared `analyzer`, so `breaking-ignore.txt` skips that one change, and `make check-breaking` reads it.
+- `listBots` takes `analyzer=1`, listing only bots that declare an analyzer.
+- A move's evaluation and up to two considerations, when present, are published with the finished game.
+- The README has an Analyzers section.
+
 ## 0.9.0
 
 - `AccountDeclaration.levels`, and `Account.levels` and `BotListing.levels`, null until declared: 2 to 8 strengths a player may pick, weakest first, each with an `id`, a `label`, and an optional `about`, `budget` (`timeMs`, `nodes`, `depthTurns`, `playouts`), and `note`; `null` clears them.

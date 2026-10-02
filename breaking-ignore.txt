@@ -1,0 +1,4 @@
+# Changes oasdiff reads as breaking that no bot meets unless it opted in, one per line, each under its reason.
+# Each line names its path, its oasdiff check, and the one change, so nothing else is skipped.
+# analysisSession is sent only to a bot that declared analyzer, so a bot that never declared one never parses it.
+GET /api/bot/stream response-body-one-of-added: added `#/components/schemas/AnalysisSessionEvent` to the response body `oneOf` list for the response status `200`

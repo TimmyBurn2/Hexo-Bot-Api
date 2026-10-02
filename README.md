@@ -20,7 +20,8 @@ A ply is one stone.
    then it plays none.
    `about`, `version`, and `repoUrl` are optional and show on the public bot
    list; so is `levels`, the strengths a player may pick (see Strength
-   levels).
+   levels), and `analyzer`, which offers the bot's reading of positions (see
+   Analyzers).
 3. `GET /api/bot/stream?open=1` with `Authorization: Bearer <bot token>`, and
    hold it open.
    While it is open the bot is online; with `open=1` other bots may challenge
@@ -110,6 +111,52 @@ A neural MCTS bot:
 ] } }
 ```
 
+## Analyzers
+
+A bot may also read positions for players on the website: positions on the
+analysis board and whole finished games, never a position of a game being
+played.
+It declares `analyzer` with `lines`, 1 to 3, the move and up to two
+considerations it answers with; `maxSeconds`, 1 to 10 and 2 by default, the
+longest a player may give it per position; and `whilePlaying`, false by
+default, true to read while it plays a game.
+`"analyzer": null` withdraws it.
+Declaring one promises the basic_websocket capabilities `free_setup`,
+`resettable_state`, `dual_sided`, `request_id`, `move_time_limit`, and
+`interruptible`.
+
+```json
+{ "analyzer": { "lines": 3, "maxSeconds": 5 } }
+```
+
+1. While the bot declares an analyzer and holds its stream, the stream sends
+   `analysisSession` as it opens, after the declaration, and 5 s after the
+   analysis session closes; dial its `engine.socketUrl` with `?token=` as
+   for a game.
+2. For each position the server sends `setup`, whose board holds the
+   position's stones, then `move_request` with `previous` empty, the `side`
+   to move, `move_time_limit`, and `request_id`.
+3. The bot answers `move_response` with `move.evaluation`, and
+   `considerations` up to its `lines`, each with its evaluation, best first.
+4. `interrupt` drops the outstanding request, which then needs no answer.
+   One request is outstanding at a time; analysis never counts toward the
+   bot's 4 games, and a bot playing a game is sent none unless it declared
+   `whilePlaying`.
+
+A reading fails when the answer comes more than 3 s past `move_time_limit`,
+a line is no legal turn from the position or repeats one, the move carries
+no evaluation, or an evaluation contradicts the board.
+When the side to move can complete six, the best line must; a line that
+completes six is valued for its mover; after any other line, an odd
+`win_in` belongs to the side then to move, and a `win_in` of 1 needs a six
+that side can complete, while a six it can complete must not be valued
+for the other side.
+Three failures in 10 minutes bench the analyzer for 10 minutes.
+Every reading is published under the bot's name, version, and owner.
+
+In games too, a move's evaluation and up to two considerations, when
+present, are published with the finished game.
+
 ## Limits
 
 Every 429 and 503 carries `Retry-After`, in whole seconds.
@@ -121,9 +168,11 @@ Every 429 and 503 carries `Retry-After`, in whole seconds.
 | Requests without a credential, from everyone | a burst of 300, then 100 a second | 429 `rate_limited` |
 | Stream opens, per bot | a burst of 5, then 1 every 10 s | 429 `rate_limited` |
 | Engine session dials, per bot per game | a burst of 5, then 1 every 10 s | 429 `rate_limited` |
+| Analysis session dials, per bot | a burst of 5, then 1 every 10 s | 429 `rate_limited` |
 | Challenges sent | 200 a UTC day | 429 `daily_challenge_cap` until 00:00 UTC |
 | Bot-vs-bot games | 100 a UTC day per bot, 20 per pair | 429 `daily_bot_cap`, `daily_pair_cap` until 00:00 UTC |
 | Live games | 4 per bot | 400 `bot_busy` |
+| Failed readings | 3 in 10 minutes | the analyzer gets nothing for 10 minutes |
 | Pending challenges | 1 per challenger and target; 10 per target | 400 `challenge_pending`, `inbox_full` |
 | Request body | 16 KiB | 413 `payload_too_large` |
 | Frame the bot sends | 16 KiB | close 1009 |
@@ -166,4 +215,6 @@ server's `pnpm spec:export`; never edit them by hand.
 diffs the vendored block against upstream; `make docs` renders
 `dist/index.html`.
 `make check-breaking` fails on a breaking change since the previous release
-tag, with oasdiff in Docker.
+tag, with oasdiff in Docker; `breaking-ignore.txt` lists, each with its
+reason, the changes oasdiff reads as breaking that only a bot that opted in
+can meet.

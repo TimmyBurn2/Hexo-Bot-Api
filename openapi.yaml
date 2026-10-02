@@ -105,13 +105,15 @@ components:
         - unlimited
       type: object
     Account:
-      description: levels is null until the bot declares them.
+      description: levels and analyzer are null until the bot declares them.
       properties:
         about:
           maxLength: 280
           type: string
         accepts:
           $ref: "#/components/schemas/Accepts"
+        analyzer:
+          $ref: "#/components/schemas/Analyzer"
         levels:
           $ref: "#/components/schemas/Levels"
         name:
@@ -136,6 +138,7 @@ components:
         - rating
         - provisional
         - levels
+        - analyzer
       type: object
     AccountDeclaration:
       additionalProperties: false
@@ -149,6 +152,8 @@ components:
           type: string
         accepts:
           $ref: "#/components/schemas/Accepts"
+        analyzer:
+          $ref: "#/components/schemas/AnalyzerDeclaration"
         levels:
           $ref: "#/components/schemas/Levels"
         repoUrl:
@@ -163,6 +168,86 @@ components:
           description: At most 64 characters once cleaned; empty clears it.
           type: string
       type: object
+    AnalysisSession:
+      properties:
+        socketUrl:
+          description: The analysis session's path on the API's origin, dialed as a game's engine session is.
+          type: string
+        token:
+          description: "The analysis token (has_...): it opens the bot's analysis session until 60 s after the
+            line that carried it; a later analysisSession line replaces it."
+          type: string
+      required:
+        - socketUrl
+        - token
+      type: object
+    AnalysisSessionEvent:
+      description: "Sent only to a bot that declares an analyzer: as the stream opens, after a declaration
+        turns it on, and 5 s after its analysis session closes while the stream stays open."
+      properties:
+        engine:
+          $ref: "#/components/schemas/AnalysisSession"
+        type:
+          enum:
+            - analysisSession
+          type: string
+      required:
+        - type
+        - engine
+      type: object
+    Analyzer:
+      description: The analyzer the bot declared; null until it declares one, and once it withdraws.
+      properties:
+        lines:
+          maximum: 3
+          minimum: 1
+          type: integer
+        maxSeconds:
+          maximum: 10
+          minimum: 1
+          type: integer
+        ready:
+          description: True while the bot holds its analysis session open.
+          type: boolean
+        whilePlaying:
+          type: boolean
+      required:
+        - maxSeconds
+        - lines
+        - whilePlaying
+        - ready
+      type:
+        - object
+        - "null"
+    AnalyzerDeclaration:
+      additionalProperties: false
+      description: Opts the bot in to reading positions sent on its analysis session, from the website's
+        analysis board and from finished games. Declaring it promises the htttx basic_websocket
+        capabilities free_setup, resettable_state, dual_sided, request_id, move_time_limit, and
+        interruptible.
+      properties:
+        lines:
+          description: "Lines the bot answers per position: its move, then up to two considerations, each with
+            an evaluation."
+          maximum: 3
+          minimum: 1
+          type: integer
+        maxSeconds:
+          default: 2
+          description: The most seconds the bot reads one position for; a person picks up to it. 2 when absent.
+          maximum: 10
+          minimum: 1
+          type: integer
+        whilePlaying:
+          default: false
+          description: True to take positions while the bot plays a game; false, the default, takes them only
+            between games.
+          type: boolean
+      required:
+        - lines
+      type:
+        - object
+        - "null"
     BadRequestError:
       properties:
         code:
@@ -188,13 +273,16 @@ components:
         - code
       type: object
     BotListing:
-      description: The declaration fields are absent until the bot declares them, and levels is null.
+      description: The declaration fields are absent until the bot declares them, and levels and analyzer
+        are null.
       properties:
         about:
           maxLength: 280
           type: string
         accepts:
           $ref: "#/components/schemas/Accepts"
+        analyzer:
+          $ref: "#/components/schemas/Analyzer"
         levels:
           $ref: "#/components/schemas/Levels"
         liveGames:
@@ -238,6 +326,7 @@ components:
         - provisional
         - liveGames
         - levels
+        - analyzer
       type: object
     Challenge:
       description: firstPlayer picks who moves first after the opening, on turn (openingPlies + 1) / 2. o
@@ -692,6 +781,7 @@ components:
     StreamEvent:
       discriminator:
         mapping:
+          analysisSession: "#/components/schemas/AnalysisSessionEvent"
           challenge: "#/components/schemas/ChallengeCreatedEvent"
           challengeCanceled: "#/components/schemas/ChallengeCanceledEvent"
           challengeDeclined: "#/components/schemas/ChallengeDeclinedEvent"
@@ -706,6 +796,7 @@ components:
         - $ref: "#/components/schemas/ChallengeCreatedEvent"
         - $ref: "#/components/schemas/ChallengeCanceledEvent"
         - $ref: "#/components/schemas/ChallengeDeclinedEvent"
+        - $ref: "#/components/schemas/AnalysisSessionEvent"
     TimeControl:
       description: turn gives each turn turnTimeMs, and unused time is lost; match gives each side
         mainTimeMs for the game, adding incrementMs after each of its turns; unlimited has no clock.
@@ -938,7 +1029,8 @@ components:
 info:
   description: >-
     A bot authenticates with its token, holds one NDJSON stream open, and plays each game on the
-    engine session that gameStart hands out.
+    engine session that gameStart hands out. A bot that declares an analyzer also reads positions on
+    the analysis session that analysisSession hands out.
 
 
     Coord, Board, PositionEvaluation, Move, MoveRequest, and MoveResponse are vendored verbatim from
@@ -949,7 +1041,7 @@ info:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.9.0
+  version: 0.10.0
 openapi: 3.1.0
 paths:
   /api/bot/account:
@@ -976,10 +1068,10 @@ paths:
         - Account
     patch:
       description: Each present field replaces the stored one; an empty string clears a text field,
-        accepts and levels are replaced whole, and levels null clears them. An unknown key answers
-        400. A challenge or game outside accepts answers clock_not_accepted. A player on the website
-        picks a declared level, which gameStart.level names; challenges and tournaments play the
-        default.
+        accepts, levels, and analyzer are replaced whole, and null clears levels or withdraws the
+        analyzer. An unknown key answers 400. A challenge or game outside accepts answers
+        clock_not_accepted. A player on the website picks a declared level, which gameStart.level
+        names; challenges and tournaments play the default.
       operationId: updateAccount
       requestBody:
         content:
@@ -1006,9 +1098,60 @@ paths:
           $ref: "#/components/responses/RateLimited"
       security:
         - bearerAuth: []
-      summary: Declare the bot's about, version, repo, what it accepts, and its levels.
+      summary: Declare the bot's about, version, repo, what it accepts, its levels, and its analyzer.
       tags:
         - Account
+  /api/bot/analysis/socket:
+    get:
+      description: "Speaks htttx basic_websocket v1-alpha, the server as client, one position at a time:
+        setup with the position's stones, then move_request with previous empty, side,
+        move_time_limit, and request_id. The bot answers move_response with move.evaluation and
+        considerations up to its declared lines, best first. interrupt drops the outstanding request
+        unanswered. Analysis never counts toward the game cap."
+      operationId: openAnalysisSession
+      parameters:
+        - description: The analysis token from the analysisSession line.
+          in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "101":
+          description: Switching protocols; the analysis session is open, and a new connection replaces the
+            previous one. A bot with a live game is sent nothing unless it declared whilePlaying,
+            and a game's move request never waits on a reading. A reading fails when the answer
+            comes more than 3 s past move_time_limit, a line is no legal turn from the position or
+            repeats one, the move carries no evaluation, or an evaluation contradicts the board or
+            passes a win_in of 1000 or a heuristic of 1000000 either way. 3 failures within 10
+            minutes bench the analyzer for 10 minutes. heartbeat, frame sizes, stray frames, and
+            closes are as on the engine session; withdrawing the declaration closes the session.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+          description: Missing, unknown, expired, or replaced analysis token.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+          description: The bot no longer declares an analyzer.
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RateLimitedError"
+          description: A bot dials its analysis session at most 5 at once, then 1 every 10 s (rate_limited),
+            or too many requests; a refused dial leaves an open session alone.
+          headers:
+            Retry-After:
+              $ref: "#/components/headers/RetryAfter"
+      security: []
+      summary: Open the analysis session.
+      tags:
+        - Analysis session
   /api/bot/challenge/{challengeId}/accept:
     post:
       description: Only the challenged bot may accept. The game starts at once, and both bots receive gameStart.
@@ -1247,7 +1390,8 @@ paths:
             closes with 1009 for a bot frame over 16 KiB, with 1008 after more than 10 frames in one
             session that answer no outstanding request, a malformed frame, or a protocol violation,
             and with 1008 when more than 128 KiB go unread. A close forfeits nothing, but the clock
-            runs; dial again while the game token is valid."
+            runs; dial again while the game token is valid. A move's evaluation and up to two
+            considerations, when present, are published with the finished game."
         "404":
           content:
             application/json:
@@ -1332,6 +1476,14 @@ paths:
             enum:
               - "1"
             type: string
+        - description: Present as 1, narrows the roster to bots that declare an analyzer.
+          in: query
+          name: analyzer
+          required: false
+          schema:
+            enum:
+              - "1"
+            type: string
       responses:
         "200":
           content:
@@ -1361,6 +1513,8 @@ tags:
     name: Account
   - description: The per-game websocket a bot plays on, and resigning.
     name: Engine session
+  - description: The websocket an analyzer reads positions on.
+    name: Analysis session
   - description: Creating, accepting, declining, and canceling challenges.
     name: Challenge
 webhooks: {}
