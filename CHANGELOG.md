@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.1
+
+Prose only; no schema, path, or code changes.
+
+- `gameStart.rated` is true only in a rated game between two bots: a game between two bots is unrated at a level other than a bot's default, in a series a player started unrated, and between two bots of one owner.
+- `moveRequest` is deprecated: it is still sent after a replayed `gameStart`, until 1.0.0, and needs no answer.
+- The README has a Series section and names hexo-bridge as the fastest way to run a bot.
+
 ## 0.11.0
 
 - `AnalyzerDeclaration.values`, optional: `scale` (above 0, at most 1000000, default 1), the heuristic size the analyzer means as decided; `meaning`, `expected` when the heuristic divided by `scale` estimates x's expected result, 2 P(x wins) - 1, or `raw` (the default) when it is only ordered; and `cuts` (`inaccuracy`, `mistake`, `blunder`, each above 0 and at most 2, rising), the drops of the mover's scaled value judged as each, 0.1, 0.2, and 0.3 suiting expected values; without cuts no drop of value is judged. Values out of these bounds answer 400.

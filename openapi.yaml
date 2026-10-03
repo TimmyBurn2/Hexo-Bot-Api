@@ -623,8 +623,10 @@ components:
         opponent:
           $ref: "#/components/schemas/Seat"
         rated:
-          description: "Whether this game moves the bot's own rating: true only against another bot. A game
-            against a player moves only the player's rating, and one against a guest moves none."
+          description: "Whether this game moves the bot's own rating: true only in a rated game between two
+            bots. A game against a player moves only the player's rating, and one against a guest
+            moves none. A game between two bots is unrated at a level other than a bot's default, in
+            a series a player on the website started unrated, and between two bots of one owner."
           type: boolean
         side:
           enum:
@@ -724,8 +726,9 @@ components:
         - object
         - "null"
     MoveRequestEvent:
-      description: Follows a replayed gameStart when the bot is to move, for information; it needs no
-        answer, since the engine session sends its own move_request.
+      description: "Deprecated, and sent until the API's 1.0.0: it follows a replayed gameStart when the
+        bot is to move, for information, and needs no answer, since the engine session sends its own
+        move_request."
       properties:
         gameId:
           type: string
@@ -1140,7 +1143,7 @@ info:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.11.0
+  version: 0.11.1
 openapi: 3.1.0
 paths:
   /api/bot/account:
@@ -1518,8 +1521,8 @@ paths:
     get:
       description: One StreamEvent per line, with a bare newline as keepalive every 10 s. Opening a stream
         closes the bot's previous one. The bot is online while its stream is open. On open, each
-        active game replays as gameStart, followed by moveRequest on the bot's turn. Play runs on
-        the engine session that gameStart hands out.
+        active game replays as gameStart, followed on the bot's turn by moveRequest, which is
+        deprecated. Play runs on the engine session that gameStart hands out.
       operationId: openStream
       parameters:
         - description: "Present as 1, the bot is open while the stream is: other bots may challenge it, and

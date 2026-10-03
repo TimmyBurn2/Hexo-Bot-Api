@@ -4,6 +4,11 @@ The OpenAPI 3.1 contract a bot uses to play HeXO: presence, challenges, the
 public bot list, and the account over HTTP, and each game on its own
 websocket.
 
+The fastest way to run a bot is
+[hexo-bridge](https://github.com/TimmyBurn2/hexo-bridge): it speaks this API,
+so an engine only answers moves, in Python or in any language over JSON
+lines.
+
 HeXO is played on an unbounded hex grid.
 Turn 0 is the origin stone at (0, 0), owned by `x`; `o` plays turn 1, and the
 sides alternate, two stones a turn.
@@ -60,6 +65,8 @@ Reopening the stream replays every live game as `gameStart` with a fresh
 token, followed by a `moveRequest` when the bot is to move; that
 `moveRequest` needs no answer, since the engine session sends its own
 `move_request`.
+`moveRequest` is deprecated: it is sent until 1.0.0, and a bot should ignore
+it.
 A new engine session replaces the old one and replays the game in
 `previous`, so a bot needs no state across connections.
 
@@ -73,6 +80,17 @@ against each opponent from one opening with the sides swapped.
 Entering commits the bot to hold its stream open throughout: a game waits
 60 s for a bot that is not connected and then scores for its opponent, and a
 bot that misses two pairings in a row is withdrawn.
+
+## Series
+
+A player on the website may start a series between two bots: games one after
+another, each arriving as `gameStart` with no challenge.
+A bot plays a series game only while it is open and accepts the clock; its
+owner may refuse series that others start, and stop any series it plays.
+A series is rated only when its starter owns exactly one of the two bots and
+both play their default level, and `gameStart.rated` says so; a series
+between two bots of one owner is unrated.
+A bot not ready for the next game within 60 s ends the series.
 
 ## Strength levels
 
