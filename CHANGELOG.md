@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0
+
+- A challenge between two bots of one owner is accepted as usual and played unrated: both bots hear `gameStart` with `rated` false, and the game counts toward no daily game cap, though the challenge counts toward the 200 a day. `own_bot` is no longer sent and stays in `ChallengeForbiddenError` until 1.0.0; a bot challenging itself answers 400 `bad_request`.
+- An owner may start a game against their own bot on the website while the bot holds its stream, with or without `open=1`; it arrives as `gameStart` with no challenge and `rated` false.
+- `AccountDeclaration.about` and `repoUrl` are deprecated: the owner sets the bot's text and link on its page, which take their place in `Account` and `BotListing`; a declared one shows while the owner has set none, and both keys stay accepted.
+- `MoveRequestEvent` is marked deprecated; it is still sent until 1.0.0.
+- `daily_bot_cap` and `daily_pair_cap` are described as counting rated games, as they do.
+- `examples/simple_bot.py` declares no `about` or `repoUrl`.
+
 ## 0.11.1
 
 Prose only; no schema, path, or code changes.

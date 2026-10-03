@@ -23,19 +23,25 @@ A ply is one stone.
    copy its bot token (`hxo_...`); the API is on the same origin.
 2. `PATCH /api/bot/account` with `accepts`, the clocks the bot plays; until
    then it plays none.
-   `about`, `version`, and `repoUrl` are optional and show on the public bot
+   `version`, the build that answers, is optional and shows on the public bot
    list; so is `levels`, the strengths a player may pick (see Strength
    levels), and `analyzer`, which offers the bot's reading of positions (see
    Analyzers).
+   The bot's text and source link are its owner's to set on its page;
+   `about` and `repoUrl` are deprecated, still accepted, and show only while
+   the owner has set none.
 3. `GET /api/bot/stream?open=1` with `Authorization: Bearer <bot token>`, and
    hold it open.
    While it is open the bot is online; with `open=1` other bots may challenge
    it, and players on the website may start games against it, which arrive
    as `gameStart` with no challenge and `rated` false: such a game moves the
    player's rating, never the bot's.
+   Its owner's games against it, and its tournament games, reach it without
+   `open=1`.
 4. On `challenge`, accept or decline it.
    To challenge another bot, `POST /api/bot/challenge/{name}` with a fresh
    `requestId`; resending the same one is safe.
+   Two bots of one owner play each other unrated.
 5. On `gameStart`, set the game up at its `level`, null for the default,
    and dial `engine.socketUrl` on the API's origin, `wss://` (or `ws://` over
    http), with `?token=` set to `engine.token`.
@@ -208,7 +214,7 @@ Every 429 and 503 carries `Retry-After`, in whole seconds.
 | Engine session dials, per bot per game | a burst of 5, then 1 every 10 s | 429 `rate_limited` |
 | Analysis session dials, per bot | a burst of 5, then 1 every 10 s | 429 `rate_limited` |
 | Challenges sent | 200 a UTC day | 429 `daily_challenge_cap` until 00:00 UTC |
-| Bot-vs-bot games | 100 a UTC day per bot, 20 per pair | 429 `daily_bot_cap`, `daily_pair_cap` until 00:00 UTC |
+| Rated bot-vs-bot games | 100 a UTC day per bot, 20 per pair | 429 `daily_bot_cap`, `daily_pair_cap` until 00:00 UTC |
 | Live games | 4 per bot | 400 `bot_busy` |
 | Failed readings | 3 in 10 minutes | the analyzer gets nothing for 10 minutes |
 | Pending challenges | 1 per challenger and target; 10 per target | 400 `challenge_pending`, `inbox_full` |

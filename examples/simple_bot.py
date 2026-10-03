@@ -43,10 +43,9 @@ LEVELS = {
 }
 
 # Declared before the stream opens; a challenge outside accepts is refused.
+# The bot's about text and source link are its owner's to set on its page.
 DECLARATION = {
-    "about": "Reference bot: plays the nearest free cells. Legal, never strong.",
     "version": "0.5.0",
-    "repoUrl": "https://github.com/TimmyBurn2/Hexo-Bot-Api",
     "accepts": {"turnMs": [5000, 600000], "match": True, "unlimited": True},
     "levels": LEVELS,
 }
