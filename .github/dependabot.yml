@@ -1,3 +1,5 @@
+# Minor and patch updates arrive grouped once a week; a major version comes
+# alone, so a breaking upgrade is never hidden in a bundle.
 version: 2
 updates:
     - package-ecosystem: github-actions
@@ -8,4 +10,4 @@ updates:
           prefix: ci(deps)
       groups:
           actions:
-              patterns: ["*"]
+              update-types: [minor, patch]
