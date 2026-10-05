@@ -57,7 +57,7 @@ components:
           schema:
             $ref: "#/components/schemas/PausedError"
       description: "The site is paused: no new stream, challenge, or game starts, and open streams and
-        live games continue. A bot with a live game, or with a place in a running tournament, still
+        live games continue. A bot with a live game, or playing the running weekly tournament, still
         opens its stream. Retry after Retry-After."
       headers:
         Retry-After:
@@ -564,8 +564,8 @@ components:
       description: "How a game ended. six-in-a-row: the winner completed six in a row. timeout: the
         loser's clock ran out. surrender: the loser resigned. disconnect: the loser's stream stayed
         closed for 30 s. terminated: the loser played an illegal move, or, with no winner, the game
-        reached 500 turns or an unlimited game 24 hours. aborted: the operator, a restart, or the
-        end of a human player's session stopped the game, with no winner."
+        reached 500 turns or 24 hours. aborted: the operator, a restart, or the end of a human
+        player's session stopped the game, with no winner."
       enum:
         - aborted
         - disconnect
@@ -634,7 +634,8 @@ components:
           description: "Whether this game moves the bot's own rating: true only in a rated game between two
             bots. A game against a player moves only the player's rating, and one against a guest
             moves none. A game between two bots is unrated at a level other than a bot's default, in
-            a series a player on the website started unrated, and between two bots of one owner."
+            a duel or round robin a person set up on the website, and between two bots of one
+            owner."
           type: boolean
         side:
           enum:
@@ -1152,7 +1153,7 @@ info:
     identifier: MIT
     name: MIT
   title: HeXO Bot API
-  version: 0.12.0
+  version: 0.12.1
 openapi: 3.1.0
 paths:
   /api/bot/account:
@@ -1182,8 +1183,8 @@ paths:
       description: Each present field replaces the stored one; an empty string clears a text field,
         accepts, levels, and analyzer are replaced whole, and null clears levels or withdraws the
         analyzer. An unknown key answers 400. A challenge or game outside accepts answers
-        clock_not_accepted. A player on the website picks a declared level, which gameStart.level
-        names; challenges and tournaments play the default.
+        clock_not_accepted. Levels picked on the website reach the bot as gameStart.level;
+        challenges and the weekly tournament play the default.
       operationId: updateAccount
       requestBody:
         content:
@@ -1285,8 +1286,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChallengeAcceptError"
-          description: The challenged bot is at its game cap, or a side is playing a tournament (bot_busy);
-            the challenge stays pending.
+          description: The challenged bot is at its game cap, or a side is playing the weekly tournament
+            (bot_busy); the challenge stays pending.
         "401":
           $ref: "#/components/responses/BotUnauthorized"
         "403":
@@ -1415,8 +1416,8 @@ paths:
                 $ref: "#/components/schemas/ChallengeCreateError"
           description: Validation failed or the bot challenged itself (bad_request), the target is not open
             (not_open) or excludes the clock (clock_not_accepted), a side is at its game cap or
-            playing a tournament (bot_busy), the target's inbox is full (inbox_full), or the
-            challenger already has a challenge pending with the target (challenge_pending).
+            playing the weekly tournament (bot_busy), the target's inbox is full (inbox_full), or
+            the challenger already has a challenge pending with the target (challenge_pending).
         "401":
           $ref: "#/components/responses/BotUnauthorized"
         "403":
@@ -1537,8 +1538,8 @@ paths:
       parameters:
         - description: "Present as 1, the bot is open while the stream is: other bots may challenge it, and
             players on the website may start games against it, which arrive as gameStart with no
-            challenge. Its owner's games against it, and its tournament games, reach it without
-            open=1."
+            challenge. Its owner's games against it, the games of duels and round robins its owner
+            set up, and the weekly tournament's games reach it without open=1."
           in: query
           name: open
           required: false
