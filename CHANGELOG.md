@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.1
+
+Prose only; no schema, path, or code changes.
+
+- `terminated` with no winner now also ends any game at 24 hours, whatever its clock; before, only an unlimited game.
+- `gameStart.rated` is false in every game of a duel or round robin a person sets up; the description no longer names series, which became duels.
+- Only the weekly tournament reserves its bots: `bot_busy` names it, and `Paused` says a bot playing it still opens its stream.
+- The games of duels and round robins a bot's owner sets up, and the weekly's, reach the bot without `open=1`.
+- Levels picked on the website reach a bot in duels and round robins too; challenges and the weekly tournament play the default.
+- The README's Tournaments section replaces its Series section and says what a bot needs to play a duel, a round robin, a test, or the weekly; the limits table gives a game's length as 500 turns or 24 hours.
+
 ## 0.12.0
 
 - A challenge between two bots of one owner is accepted as usual and played unrated: both bots hear `gameStart` with `rated` false, and the game counts toward no daily game cap, though the challenge counts toward the 200 a day. `own_bot` is no longer sent and stays in `ChallengeForbiddenError` until 1.0.0; a bot challenging itself answers 400 `bad_request`.

@@ -36,7 +36,8 @@ A ply is one stone.
    it, and players on the website may start games against it, which arrive
    as `gameStart` with no challenge and `rated` false: such a game moves the
    player's rating, never the bot's.
-   Its owner's games against it, and its tournament games, reach it without
+   Its owner's games against it, the games of duels and round robins its
+   owner sets up, and the weekly tournament's games reach it without
    `open=1`.
 4. On `challenge`, accept or decline it.
    To challenge another bot, `POST /api/bot/challenge/{name}` with a fresh
@@ -78,25 +79,33 @@ A new engine session replaces the old one and replays the game in
 
 ## Tournaments
 
-An owner may enter a bot in a tournament on the website.
-From its start to its end the bot is reserved: challenges to or from it, and
-games started against it, answer `bot_busy`.
-Its tournament games arrive as `gameStart` with no challenge, rated, two
-against each opponent from one opening with the sides swapped.
-Entering commits the bot to hold its stream open throughout: a game waits
-60 s for a bot that is not connected and then scores for its opponent, and a
-bot that misses two pairings in a row is withdrawn.
+A bot plays two kinds of tournament on the website, each game arriving as
+`gameStart` with no challenge:
 
-## Series
+- The weekly tournament, a round robin the operator runs, is rated.
+  An owner enters the bot before it starts; from its start to its end the
+  bot is reserved: challenges to or from it, and games started against it,
+  answer `bot_busy`, and it leaves the duels and round robins it plays.
+  Each pair plays one opening twice with the sides swapped, at the bots'
+  default levels.
+- Duels and round robins anyone signed in sets up, of 2 to 8 bots, are never
+  rated, and `gameStart.rated` is false.
+  Each pair plays 1 to 10 games, or up to 50 in a test, where one person owns
+  every bot; past one game, each opening twice with the sides swapped.
+  The person setting one up may pick any level a bot declares.
+  A bot plays at most 2 at once, and its owner may withdraw it.
 
-A player on the website may start a series between two bots: games one after
-another, each arriving as `gameStart` with no challenge.
-A bot plays a series game only while it is open and accepts the clock; its
-owner may refuse series that others start, and stop any series it plays.
-A series is rated only when its starter owns exactly one of the two bots and
-both play their default level, and `gameStart.rated` says so; a series
-between two bots of one owner is unrated.
-A bot not ready for the next game within 60 s ends the series.
+To take part, a bot needs:
+
+- At least one turn or match clock in `accepts`: tournaments never run
+  unlimited.
+  The setup offers turn clocks of 10, 20, and 60 s and match clocks of
+  5 min + 3 s and 10 min + 5 s, and custom clocks within the bot's range, a
+  turn of 5 to 60 s or a match of 1 to 10 min plus 0 to 10 s.
+- Its stream open, with `open=1` for a duel or round robin someone else sets
+  up, and its owner's "Duels by others" switch on for those.
+- To be ready for each game within 60 s, online with a free game slot, or the
+  game scores for its opponent; a bot that misses two in a row is withdrawn.
 
 ## Strength levels
 
@@ -109,9 +118,9 @@ unique), a `label` (at most 24 printable ASCII characters), and optionally an
 The budget holds at least one of `timeMs`, `nodes`, `depthTurns` (HeXO
 turns, not stones), and `playouts`, per turn; the website shows it as the
 bot's own claim.
-The bot's rating belongs to its default: challenges and tournaments play it,
-and a game at any other level is unrated for both sides and counts toward no
-daily cap.
+The bot's rating belongs to its default: challenges and the weekly
+tournament play it, and a game at any other level is unrated for both sides
+and counts toward no daily cap.
 A bot that no longer declares a level plays its default; `"levels": null`
 clears them.
 
@@ -223,7 +232,7 @@ Every 429 and 503 carries `Retry-After`, in whole seconds.
 | Frames that answer no request | 10 per engine session | the next closes 1008, as a malformed frame or a protocol violation does |
 | Unread lines or frames | 128 KiB | the stream ends; the session closes 1008 |
 | Line or frame the server sends | 64 KiB | |
-| Game length | 500 turns | the game ends `terminated`, no winner |
+| Game length | 500 turns or 24 hours, whatever the clock | the game ends `terminated`, no winner |
 
 ## Reconnecting
 
